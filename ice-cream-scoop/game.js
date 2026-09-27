@@ -1248,7 +1248,7 @@
     example.appendChild(el("p", null, "Say I, C, E. That spells ICE! The number sits in the word."));
     sheet.appendChild(example);
     sheet.appendChild(el("p", null, "Pink boxes mean try a new one. Hint shows one box. It does not fill it in."));
-    sheet.appendChild(makeButton("Let's splash!", "big-btn sun", function () {
+    sheet.appendChild(makeButton("Let's splash!", "big-btn sun sticky-go", function () {
       try { localStorage.setItem(HOWTO_KEY, "yes"); } catch (err) { /* still closes */ }
       howtoOpen = false;
       render();

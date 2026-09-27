@@ -736,6 +736,12 @@ input:focus-visible {
 .big-btn.pink { background: #ff8fbf; color: #16356b; }
 .big-btn.ghost { background: #fff; color: var(--ink); }
 
+.big-btn.sticky-go {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+}
+
 .maker-layout {
   display: flex;
   flex-direction: column;
