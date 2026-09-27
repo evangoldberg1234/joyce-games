@@ -6,6 +6,11 @@
    There are NO secrets in this file.
    No passcodes, no passwords, and no tokens.
    A family code, if you use one, is typed on the iPad and stays in the browser.
+
+   Prices, caps, and star numbers in this file are for display only.
+   The server enforces the real prices, caps, and star balance.
+   Editing this file, or changing localStorage, cannot create stars.
+   The chat cannot change these settings. Only a parent can, by editing this file.
 */
 
 (function () {

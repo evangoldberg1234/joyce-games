@@ -11,7 +11,7 @@ After a balance, earn, or spend response that includes `balance`, this file call
 `POST ${functionsUrl}/kid-stars`
 
 - `{ token, kid, action: "balance" }` → `{ ok: true, kid, balance, earned_today, daily_cap }`. The cap is 100 stars a day. When `earned_today` has reached `daily_cap`, the page says "You've earned all your stars for today!"
-- `{ token, kid, action: "earn", subject, level, qid }` → `{ ok, balance, earned: 1, earned_today }`. `subject` is one of `math`, `verbal`, `english`, `hebrew`, `russian`, `parsha`. `level` is 1–10.
+- `{ token, kid, action: "earn", subject, question_id, qid, answer, level }` → `{ ok, balance, earned: 1, earned_today }`. `subject` is one of `math`, `verbal`, `english`, `hebrew`, `russian`, `parsha`. `question_id` and `qid` name the question. `answer` is what she picked. `level` is that question's difficulty, 1–10. The client does not send a star amount. The server decides `earned`.
 - HTTP 429 `slow_down` includes `retry_after` seconds. This client retries that earn once after that pause (2 seconds when the field is missing). If it is still too fast, that answer is not counted and the question continues.
 - HTTP 429 `daily_cap` shows the same daily-cap sentence. Practice keeps going.
 - `{ token, kid, action: "spend", reason: "hint", item: "<game id>" }` costs 5 and returns `{ ok: true, balance }`, or HTTP 402 `{ ok: false, error: "not_enough_stars", cost, need, balance, message }`. Show `message` as the server wrote it.
@@ -26,7 +26,7 @@ After a balance, earn, or spend response that includes `balance`, this file call
 
 `{ token, kid, action: "set_levels", levels: { subject: 1..10 } }` saves quest levels. Failures are ignored. The `localStorage` copy stays.
 
-With no token, or on 401, show "Ask a grown-up to unlock stars" and point to the chat bubble. If the endpoint is missing (404) or the network fails, show "Stars are waking up..." and let practice continue without counting. Do not keep an authoritative balance in `localStorage`. A last-seen number may be cached in `sessionStorage` for display only.
+With no token, or on 401, show "Ask a grown-up to unlock stars" and point to the chat bubble. If the endpoint is missing (404) or the network fails, show "Stars are waking up..." and let practice continue without counting. The counter shows a balance only after the server sends one, or after the chat reports `kidschat:stars`. Nothing is saved as a balance the child can edit.
 
 ## Levels
 
@@ -34,7 +34,7 @@ On a quest or practice page, if this iPad has no saved quest levels and the serv
 
 ## Mock
 
-`?starsmock=1` keeps an in-memory balance that starts at 20, with `earned_today` and `daily_cap: 100`. It does not call the server. Use it to try earning, a 5-star hint, and the not-enough-stars message.
+`?starsmock=1` keeps an in-memory balance that starts at 20, with `earned_today` and `daily_cap: 100`. It does not call the server, and it does not replace the saved device token. Use it to try earning, a hint, and the not-enough-stars message.
 
 ```javascript
 KidsStars.balance()

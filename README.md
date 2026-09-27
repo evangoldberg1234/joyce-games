@@ -52,6 +52,10 @@ Joyce and Miriam each have saved levels for math, word problems, word match (Eng
 node brain-break/test.js
 ```
 
+## Safety rules
+
+Stars and prices are enforced on the server only. The site can show a balance the server sent. It cannot grant stars. Editing `settings.js` or the data saved on the iPad cannot create stars. The chat cannot change settings. Only a parent can change settings, by editing `settings.js`.
+
 ## Set this up for your own kids
 
 You can make a copy of this site for your own child.

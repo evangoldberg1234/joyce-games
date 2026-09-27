@@ -1,8 +1,10 @@
 /* Star ledger. The server is the authority. This file displays a balance
-   and sends earn, spend, and level-sync calls. Mock mode (?starsmock=1)
-   keeps an in-memory balance that starts at 20. Read kid id and
-   functionsUrl from window.KIDS_CHAT. A new game is charged in chat, so
-   this file never sends spend reason "game". */
+   the server already decided, and sends earn, spend, and level-sync calls.
+   Requests never include a star amount, price, or balance for the server
+   to trust. Mock mode (?starsmock=1) stays in memory: it does not call the
+   server, and it does not write the saved token or a saved balance.
+   Read kid id and functionsUrl from window.KIDS_CHAT. A new game is charged
+   in chat, so this file never sends spend reason "game". */
 (function () {
   var HINT_COST = 5;
   var GAME_COST = 20;
@@ -55,25 +57,15 @@
     }
   }
 
-  function cacheKey() {
-    return "kidsStars.display." + (config().kid || "kid");
-  }
+  /* The server decides stars. These keys are never copied into a request. */
+  var UNTRUSTED = ["amount", "balance", "price", "cost", "cap", "delta", "stars", "stars_earned", "score", "earned"];
 
-  function readCache() {
-    try {
-      var n = Number(sessionStorage.getItem(cacheKey()));
-      return isNaN(n) ? null : n;
-    } catch (err) {
-      return null;
-    }
-  }
-
-  function writeCache(n) {
-    lastSeen = n;
-    try { sessionStorage.setItem(cacheKey(), String(n)); } catch (err) { /* display only */ }
+  function untrusted(key) {
+    return UNTRUSTED.indexOf(key) !== -1;
   }
 
   function saveToken(value) {
+    if (mockOn()) return;
     var kid = config().kid;
     if (!kid || !value) return;
     try { localStorage.setItem("kidsChat." + kid + ".token", String(value)); } catch (err) { /* display still works */ }
@@ -146,7 +138,7 @@
 
   function emit(res) {
     if (res && typeof res.balance === "number") {
-      writeCache(res.balance);
+      lastSeen = res.balance;
       pushChat(res.balance);
     }
     listeners.forEach(function (fn) {
@@ -240,12 +232,18 @@
   }
 
   function post(body, path) {
-    if (mockOn() && path !== "/kid-homework") return Promise.resolve(mockResult(body));
+    if (mockOn()) {
+      if (path === "/kid-homework") return Promise.resolve({ ok: false, error: "mock", mock: true });
+      return Promise.resolve(mockResult(body));
+    }
     var cfg = config();
     var auth = token();
     if (!auth || !cfg.functionsUrl) return Promise.resolve({ ok: false, error: "locked" });
     var payload = {};
-    Object.keys(body || {}).forEach(function (key) { payload[key] = body[key]; });
+    Object.keys(body || {}).forEach(function (key) {
+      if (untrusted(key)) return;
+      payload[key] = body[key];
+    });
     payload.token = auth;
     payload.kid = cfg.kid;
     return fetch(cfg.functionsUrl + (path || "/kid-stars"), {
@@ -340,11 +338,15 @@
     opts = opts || {};
     var subject = String(opts.subject || "");
     if (!SUBJECTS[subject]) return Promise.resolve(emit({ ok: false, error: "asleep" }));
+    /* What happened. The server decides whether this earns a star. */
+    var questionId = String(opts.question_id || opts.qid || "");
     var body = {
       action: "earn",
       subject: subject,
-      level: clampLevel(opts.level),
-      qid: String(opts.qid || "")
+      question_id: questionId,
+      qid: questionId,
+      answer: opts.answer == null ? "" : String(opts.answer),
+      level: clampLevel(opts.level)
     };
     return post(body).then(function (res) {
       if (res.error !== "slow_down") return res;
@@ -357,6 +359,7 @@
   function spend(opts) {
     opts = opts || {};
     if (opts.reason && opts.reason !== "hint") return Promise.resolve({ ok: false, error: "hint_only" });
+    /* No amount. The server prices a hint. */
     return call({ action: "spend", reason: "hint", item: String(opts.item || "") });
   }
 
@@ -395,6 +398,7 @@
   }
 
   function setLevels(levels) {
+    /* Practice difficulty only. This does not award stars. */
     var clean = cleanLevels(levels);
     if (!Object.keys(clean).length) return Promise.resolve({ ok: false });
     if (!starsEnabled()) return Promise.resolve({ ok: true, source: "local", levels: clean });
@@ -409,7 +413,7 @@
     atCap: atCap,
     capMessage: function () { return CAP_TEXT; },
     lastBalance: function () {
-      return lastSeen != null ? lastSeen : readCache();
+      return lastSeen;
     },
     onChange: function (fn) { listeners.push(fn); },
     messageFor: messageFor,
@@ -417,7 +421,7 @@
     postJson: function (path, body) { return post(body, path); },
     applyStars: function (balance) {
       if (typeof balance !== "number") return;
-      writeCache(balance);
+      lastSeen = balance;
       paint({ ok: true, balance: balance });
       pushChat(balance);
     },
@@ -438,7 +442,7 @@
     var kid = config().kid;
     if (detail.kid && kid && String(detail.kid) !== String(kid)) return;
     if (typeof detail.stars !== "number") return;
-    writeCache(detail.stars);
+    lastSeen = detail.stars;
     paint({ ok: true, balance: detail.stars });
   });
 
@@ -455,10 +459,6 @@
   }
 
   if (starsEnabled() && document.getElementById("starbar")) {
-    var cached = readCache();
-    if (cached != null && (mockOn() || token())) {
-      document.getElementById("starbar").textContent = "★ " + cached;
-    }
     window.KidsStars.balance();
   }
 })();

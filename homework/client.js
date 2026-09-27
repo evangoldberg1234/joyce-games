@@ -1,9 +1,9 @@
 /* Homework photo check. Posts through KidsStars.postJson so the device
    token, renewed token, and error mapping match the star ledger.
-   ?starsmock=1 simulates the contract. ?hwmock=checked|retake|duplicate|
-   not_homework|cap|slow picks one. Status stays "checking" until about 6
-   seconds have passed, then returns the result. slow stays on checking.
-   With no hwmock, each upload cycles through those screens. */
+   ?starsmock=1 simulates the contract in memory and does not call the
+   server. Each upload cycles through the screens. Status stays "checking"
+   until about 6 seconds have passed, then returns the result. slow stays
+   on checking. The upload never sends a star amount. */
 (function () {
   var ORDER = ["checked", "retake", "duplicate", "not_homework", "cap", "slow"];
   var MOCK_READY = 6000;
@@ -21,15 +21,6 @@
     }
   }
 
-  function hwMock() {
-    try {
-      var match = /(?:^|[?&])hwmock=([a-z_]+)/.exec(window.location.search || "");
-      return match ? match[1] : "";
-    } catch (err) {
-      return "";
-    }
-  }
-
   function wait(ms) {
     return new Promise(function (resolve) { setTimeout(resolve, ms); });
   }
@@ -39,8 +30,6 @@
   }
 
   function nextKind() {
-    var forced = hwMock();
-    if (ORDER.indexOf(forced) !== -1) return forced;
     var step = 0;
     try { step = Number(sessionStorage.getItem("kidsHomework.mockStep") || "0"); } catch (err) { step = 0; }
     if (!(step >= 0)) step = 0;
@@ -50,8 +39,6 @@
   }
 
   function kindNow() {
-    var forced = hwMock();
-    if (ORDER.indexOf(forced) !== -1) return forced;
     return storedKind() || "checked";
   }
 

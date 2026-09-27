@@ -190,6 +190,7 @@
     var queue = progress.queue || [];
     window.LevelStore.save(data);
     if (window.KidsStars && KidsStars.setLevels) {
+      /* Difficulty for later practice. Not a star award. */
       var synced = {};
       Object.keys(data.results).forEach(function (name) {
         synced[name] = data.results[name].level;

@@ -138,7 +138,10 @@
     return { ok: false, error: "asleep", mock: true };
   }
 
+  var UNTRUSTED = ["amount", "balance", "price", "cost", "cap", "delta", "stars", "stars_earned", "score", "earned"];
+
   function saveToken(value) {
+    if (mockOn()) return;
     var kid = config().kid;
     if (!kid || !value) return;
     try { localStorage.setItem("kidsChat." + kid + ".token", String(value)); } catch (err) { /* the page can still show the reply */ }
@@ -151,6 +154,7 @@
     var payload = {};
     Object.keys(body || {}).forEach(function (key) {
       if (key === "pages" || key === "min_pages" || key === "page_count") return;
+      if (UNTRUSTED.indexOf(key) !== -1) return;
       payload[key] = body[key];
     });
     var auth = token();

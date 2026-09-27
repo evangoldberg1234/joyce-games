@@ -34,6 +34,6 @@ Other errors match the star ledger: HTTP 401 `locked`, `bad_token`, and `token_e
 
 ## Mock
 
-Open `homework/index.html?starsmock=1`. Each photo cycles through checked, retake, duplicate, not homework, the daily cap, and a long checking wait. Pin one with `?hwmock=checked`, `retake`, `duplicate`, `not_homework`, `cap`, or `slow`.
+Open `homework/index.html?starsmock=1`. Each photo cycles through checked, retake, duplicate, not homework, the daily cap, and a long checking wait. That preview stays on this iPad and does not call the server or change a real star balance.
 
 Mock status stays `checking` for about 6 seconds, then returns the result. `slow` stays on checking and shows the long-wait line quickly, so that screen can be screenshotted. Nothing is uploaded.

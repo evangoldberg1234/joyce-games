@@ -172,7 +172,17 @@
   // ---------------------------------------------------------------------------------------------
   // Network
   // ---------------------------------------------------------------------------------------------
+  function mockStars() {
+    try {
+      return /(?:^|[?&])starsmock=1(?:&|$)/.test(window.location.search);
+    } catch (err) {
+      return false;
+    }
+  }
+
   function api(fn, payload, method) {
+    /* Mock mode must not call the server or replace the saved token. */
+    if (mockStars()) return Promise.resolve({ ok: false, error: "offline", mock: true, status: 0 });
     var url = cfg.functionsUrl + "/" + fn;
     var opts = { method: method || "POST", headers: {}, cache: "no-store" };
     if (opts.method === "GET") {
@@ -541,6 +551,7 @@
     messages.push(local);
     if (textarea && textarea.value.trim() === text) { textarea.value = ""; onType(); }
     drawMessages();
+    /* game_request asks the server to charge its own price. No cost is sent. */
     var payload = { token: token, text: text };
     if (opts.game) { payload.game_request = true; if (opts.forFriend) payload.for_friend = true; }
     api("kid-chat-send", payload).then(function (r) {

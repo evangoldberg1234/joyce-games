@@ -127,7 +127,12 @@
       showNext();
       return;
     }
-    window.KidsStars.earn({ subject: subject, level: askedLevel, qid: qid }).then(function (res) {
+    window.KidsStars.earn({
+      subject: subject,
+      question_id: qid,
+      answer: choice,
+      level: askedLevel
+    }).then(function (res) {
       if (res && res.ok) {
         starNote = "1 star earned";
         if (window.KidsStars.atCap(res)) starNote = starNote + " " + window.KidsStars.capMessage();
