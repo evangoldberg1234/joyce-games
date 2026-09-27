@@ -441,11 +441,7 @@
         showFlash(index, puzzle().solution[index]);
         return;
       }
-      if (res.error === "not_enough_stars") {
-        message = "Not enough stars. A hint costs 5. You have " + res.balance + ".";
-      } else {
-        message = window.KidsStars.messageFor(res);
-      }
+      message = window.KidsStars.messageFor(res);
       render();
     });
   }

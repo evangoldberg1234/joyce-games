@@ -189,6 +189,13 @@
     };
     var queue = progress.queue || [];
     window.LevelStore.save(data);
+    if (window.KidsStars && KidsStars.setLevels) {
+      var synced = {};
+      Object.keys(data.results).forEach(function (name) {
+        synced[name] = data.results[name].level;
+      });
+      KidsStars.setLevels(synced);
+    }
     seedNow().then(function (seeded) {
       if (queue.length) {
         begin(queue[0], queue.slice(1));
@@ -246,4 +253,12 @@
   }
 
   showMap();
+  if (window.KidsStars && KidsStars.syncLevels) {
+    KidsStars.syncLevels().then(function (res) {
+      if (!res || res.source !== "server") return;
+      if (app.getAttribute("data-screen") !== "map") return;
+      data = window.LevelStore.load();
+      showMap();
+    }, function () { /* level sync stays quiet */ });
+  }
 })();

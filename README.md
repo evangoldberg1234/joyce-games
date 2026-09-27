@@ -21,7 +21,7 @@ python3 animal-puzzle/puzzle_tool.py verify
 
 ## Treasure Map and stars
 
-Treasure Map (`level-test/`) finds a level in math, verbal, English, Hebrew, Russian, and Parsha, then seeds Brain Breaks. Practice (`practice/`) asks more questions at that level. A right answer can earn one star. Animal Puzzle hints cost 5 stars. Asking Sofie for a new game costs 20 stars. The shared pieces are `questions/`, `level-test/`, `practice/`, and `stars/`.
+Treasure Map (`level-test/`) finds a level in math, verbal, English, Hebrew, Russian, and Parsha, then seeds Brain Breaks and saves those levels on the star server. Practice (`practice/`) asks more questions at that level. A right answer can earn one star, up to 100 a day. Animal Puzzle hints cost 5 stars. Asking Sofie for a new game costs 20 stars, and that charge happens in the chat. The shared pieces are `questions/`, `level-test/`, `practice/`, and `stars/`.
 
 ## Brain Breaks
 

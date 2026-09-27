@@ -14,6 +14,8 @@ Fun names run from Pebble (1) to Treasure (10).
 
 Results are stored in `localStorage` under `level-test.<kid>`, with the date. Retaking a subject replaces that result.
 
+When a subject finishes, the page also calls `KidsStars.setLevels` with the saved levels (1–10). On load, if this iPad has no saved levels and the server does, `KidsStars.syncLevels` copies the server levels in. A sync failure changes nothing.
+
 ## Brain Breaks
 
 When a subject finishes, the page calls:

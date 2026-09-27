@@ -1,11 +1,17 @@
-/* Star ledger. The server is the authority. This file only displays a
-   balance and sends earn/spend calls. Mock mode (?starsmock=1) keeps an
-   in-memory balance that starts at 20, for screenshots and local trials.
-   Read kid id and functionsUrl from window.KIDS_CHAT. */
+/* Star ledger. The server is the authority. This file displays a balance
+   and sends earn, spend, and level-sync calls. Mock mode (?starsmock=1)
+   keeps an in-memory balance that starts at 20. Read kid id and
+   functionsUrl from window.KIDS_CHAT. A new game is charged in chat, so
+   this file never sends spend reason "game". */
 (function () {
   var HINT_COST = 5;
   var GAME_COST = 20;
+  var DAILY_CAP = 100;
+  var CAP_TEXT = "You've earned all your stars for today!";
+  var SUBJECTS = { math: 1, verbal: 1, english: 1, hebrew: 1, russian: 1, parsha: 1 };
   var mockBalance = null;
+  var mockEarnedToday = 0;
+  var mockLevels = {};
   var lastSeen = null;
   var listeners = [];
 
@@ -55,8 +61,67 @@
     try { sessionStorage.setItem(cacheKey(), String(n)); } catch (err) { /* display only */ }
   }
 
+  function clampLevel(n) {
+    n = Math.round(Number(n));
+    if (!n || n < 1) return 1;
+    if (n > 10) return 10;
+    return n;
+  }
+
+  function cleanLevels(levels) {
+    var out = {};
+    if (!levels || typeof levels !== "object") return out;
+    Object.keys(SUBJECTS).forEach(function (name) {
+      if (!Object.prototype.hasOwnProperty.call(levels, name)) return;
+      var n = Math.round(Number(levels[name]));
+      if (n >= 1 && n <= 10) out[name] = n;
+    });
+    return out;
+  }
+
+  function atCap(res) {
+    if (!res) return false;
+    if (res.error === "daily_cap") return true;
+    if (typeof res.earned_today !== "number" || typeof res.daily_cap !== "number") return false;
+    return res.earned_today >= res.daily_cap;
+  }
+
+  function capEl() {
+    var el = document.getElementById("starcap");
+    var bar = document.getElementById("starbar");
+    if (!bar) return el;
+    if (!el) {
+      el = document.createElement("p");
+      el.id = "starcap";
+      el.className = "star-cap";
+      el.setAttribute("role", "status");
+      el.hidden = true;
+    }
+    var top = bar.closest ? bar.closest(".quest-top") : null;
+    if (top && top.parentNode) {
+      if (el.parentNode !== top.parentNode) top.parentNode.insertBefore(el, top.nextSibling);
+    } else if (el.parentNode !== bar.parentNode) {
+      bar.parentNode.insertBefore(el, bar.nextSibling);
+    }
+    return el;
+  }
+
+  function showCap(res) {
+    var el = capEl();
+    if (!el) return;
+    if (atCap(res)) {
+      el.hidden = false;
+      el.textContent = CAP_TEXT;
+      return;
+    }
+    if (res && typeof res.earned_today === "number" && typeof res.daily_cap === "number") {
+      el.hidden = true;
+      el.textContent = "";
+    }
+  }
+
   function emit(res) {
-    if (res && res.ok && typeof res.balance === "number") writeCache(res.balance);
+    if (res && typeof res.balance === "number") writeCache(res.balance);
     listeners.forEach(function (fn) {
       try { fn(res); } catch (err) { /* a listener must not break the ledger */ }
     });
@@ -66,96 +131,226 @@
 
   function paint(res) {
     var el = document.getElementById("starbar");
-    if (!el) return;
+    if (!el) {
+      showCap(res);
+      return;
+    }
     if (!res) {
       el.textContent = "★";
       return;
     }
+    if (typeof res.balance === "number" && res.error !== "locked") el.textContent = "★ " + res.balance;
     if (res.ok) {
       el.textContent = "★ " + res.balance;
+      showCap(res);
       return;
     }
     if (res.error === "locked") {
       el.textContent = "Ask a grown-up to unlock stars";
+      showCap({ earned_today: 0, daily_cap: DAILY_CAP });
+      return;
+    }
+    if (res.error === "daily_cap" || res.error === "slow_down" || res.error === "not_enough_stars") {
+      showCap(res);
       return;
     }
     el.textContent = "Stars are waking up...";
+    showCap({ earned_today: 0, daily_cap: DAILY_CAP });
   }
 
   function mockResult(body) {
     if (mockBalance == null) mockBalance = 20;
+    var kid = config().kid;
     if (body.action === "balance") {
-      return { ok: true, kid: config().kid, balance: mockBalance, mock: true };
+      return { ok: true, kid: kid, balance: mockBalance, earned_today: mockEarnedToday, daily_cap: DAILY_CAP, mock: true };
     }
     if (body.action === "earn") {
+      if (mockEarnedToday >= DAILY_CAP) {
+        return { ok: false, error: "daily_cap", balance: mockBalance, earned_today: mockEarnedToday, daily_cap: DAILY_CAP, mock: true };
+      }
       mockBalance += 1;
-      return { ok: true, balance: mockBalance, earned: 1, mock: true };
+      mockEarnedToday += 1;
+      return { ok: true, balance: mockBalance, earned: 1, earned_today: mockEarnedToday, daily_cap: DAILY_CAP, mock: true };
     }
     if (body.action === "spend") {
-      var cost = body.reason === "game" ? GAME_COST : HINT_COST;
-      if (mockBalance < cost) {
-        return { ok: false, error: "not_enough_stars", balance: mockBalance, cost: cost, mock: true };
+      if (mockBalance < HINT_COST) {
+        return {
+          ok: false,
+          error: "not_enough_stars",
+          balance: mockBalance,
+          cost: HINT_COST,
+          need: HINT_COST - mockBalance,
+          message: "Not enough stars. A hint costs 5. You have " + mockBalance + ".",
+          mock: true
+        };
       }
-      mockBalance -= cost;
-      return { ok: true, balance: mockBalance, cost: cost, mock: true };
+      mockBalance -= HINT_COST;
+      return { ok: true, balance: mockBalance, cost: HINT_COST, mock: true };
+    }
+    if (body.action === "get_levels") {
+      return { ok: true, levels: mockLevels, mock: true };
+    }
+    if (body.action === "set_levels") {
+      mockLevels = cleanLevels(body.levels);
+      return { ok: true, levels: mockLevels, mock: true };
     }
     return { ok: false, error: "asleep", mock: true };
   }
 
-  function call(body) {
-    if (mockOn()) return Promise.resolve(emit(mockResult(body)));
+  function post(body) {
+    if (mockOn()) return Promise.resolve(mockResult(body));
     var cfg = config();
     var auth = token();
-    if (!auth || !cfg.functionsUrl) return Promise.resolve(emit({ ok: false, error: "locked" }));
-    body.token = auth;
+    if (!auth || !cfg.functionsUrl) return Promise.resolve({ ok: false, error: "locked" });
+    var payload = {};
+    Object.keys(body || {}).forEach(function (key) { payload[key] = body[key]; });
+    payload.token = auth;
+    payload.kid = cfg.kid;
     return fetch(cfg.functionsUrl + "/kid-stars", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body)
+      body: JSON.stringify(payload)
     }).then(function (res) {
       return res.json().catch(function () { return {}; }).then(function (data) {
+        if (res.status === 401) return { ok: false, error: "locked" };
         if (res.status === 404) return { ok: false, error: "asleep" };
-        if (res.status === 401 || data.error === "locked") return { ok: false, error: "locked", balance: data.balance };
-        if (res.status === 402) return { ok: false, error: "not_enough_stars", balance: data.balance, cost: data.cost || HINT_COST };
-        if (res.status === 429) return { ok: false, error: "slow_down", balance: data.balance };
+        if (res.status === 402) {
+          return {
+            ok: false,
+            error: data.error || "not_enough_stars",
+            balance: data.balance,
+            cost: data.cost,
+            need: data.need,
+            message: data.message
+          };
+        }
+        if (res.status === 429) {
+          var reason = data.error === "daily_cap" ? "daily_cap" : "slow_down";
+          return {
+            ok: false,
+            error: reason,
+            balance: data.balance,
+            earned_today: data.earned_today,
+            daily_cap: data.daily_cap
+          };
+        }
         if (!res.ok && !data.error) return { ok: false, error: "asleep" };
         return data;
       });
     }).catch(function () {
       return { ok: false, error: "asleep" };
-    }).then(emit);
+    });
+  }
+
+  function call(body) {
+    return post(body).then(emit);
+  }
+
+  function quiet(body) {
+    return post(body).then(function (res) {
+      if (!res || res.ok !== true) return { ok: false };
+      return res;
+    }, function () {
+      return { ok: false };
+    });
+  }
+
+  function wait(ms) {
+    return new Promise(function (resolve) { setTimeout(resolve, ms); });
   }
 
   function messageFor(res) {
-    if (!res) return "";
-    if (res.ok) return "";
+    if (!res || res.ok) return "";
     if (res.error === "locked") return "Ask a grown-up to unlock stars. Open the chat bubble and enter the family code.";
     if (res.error === "not_enough_stars") {
+      if (res.message) return String(res.message);
       var have = typeof res.balance === "number" ? res.balance : 0;
-      return "Not enough stars. You have " + have + ".";
+      return "Not enough stars. A hint costs " + HINT_COST + ". You have " + have + ".";
     }
-    if (res.error === "slow_down") return "Slow down a moment, then try again.";
+    if (res.error === "daily_cap") return CAP_TEXT;
+    if (res.error === "slow_down") return "";
     return "Stars are waking up...";
+  }
+
+  function earn(opts) {
+    opts = opts || {};
+    var subject = String(opts.subject || "");
+    if (!SUBJECTS[subject]) return Promise.resolve(emit({ ok: false, error: "asleep" }));
+    var body = {
+      action: "earn",
+      subject: subject,
+      level: clampLevel(opts.level),
+      qid: String(opts.qid || "")
+    };
+    return post(body).then(function (res) {
+      if (res.error !== "slow_down") return res;
+      return wait(2000).then(function () { return post(body); });
+    }).then(emit);
+  }
+
+  function spend(opts) {
+    opts = opts || {};
+    if (opts.reason && opts.reason !== "hint") return Promise.resolve({ ok: false, error: "hint_only" });
+    return call({ action: "spend", reason: "hint", item: String(opts.item || "") });
+  }
+
+  function labelFor(level) {
+    if (window.Staircase && Staircase.labelFor) return Staircase.labelFor(level);
+    return "Level " + level;
+  }
+
+  function syncLevels() {
+    if (!window.LevelStore) return Promise.resolve({ ok: false });
+    var data;
+    try { data = window.LevelStore.load(); } catch (err) { return Promise.resolve({ ok: false }); }
+    if (data.results && Object.keys(data.results).length) return Promise.resolve({ ok: true, source: "local" });
+    return quiet({ action: "get_levels" }).then(function (res) {
+      try {
+        if (!res.ok || !res.levels) return { ok: false };
+        var clean = cleanLevels(res.levels);
+        var names = Object.keys(clean);
+        if (!names.length) return { ok: false };
+        data = window.LevelStore.load();
+        if (data.results && Object.keys(data.results).length) return { ok: true, source: "local" };
+        var stamp = new Date().toISOString().slice(0, 10);
+        names.forEach(function (name) {
+          var level = clean[name];
+          data.results[name] = { level: level, label: labelFor(level), questions: 0, at: stamp };
+        });
+        window.LevelStore.save(data);
+        return { ok: true, source: "server", levels: clean };
+      } catch (err2) {
+        return { ok: false };
+      }
+    }, function () {
+      return { ok: false };
+    });
+  }
+
+  function setLevels(levels) {
+    var clean = cleanLevels(levels);
+    if (!Object.keys(clean).length) return Promise.resolve({ ok: false });
+    return quiet({ action: "set_levels", levels: clean });
   }
 
   window.KidsStars = {
     HINT_COST: HINT_COST,
     GAME_COST: GAME_COST,
+    CAP_TEXT: CAP_TEXT,
     mockOn: mockOn,
+    atCap: atCap,
+    capMessage: function () { return CAP_TEXT; },
     lastBalance: function () {
       return lastSeen != null ? lastSeen : readCache();
     },
     onChange: function (fn) { listeners.push(fn); },
     messageFor: messageFor,
     balance: function () { return call({ action: "balance" }); },
-    earn: function (opts) {
-      opts = opts || {};
-      return call({ action: "earn", subject: opts.subject || "", level: opts.level || 1, qid: opts.qid || "" });
-    },
-    spend: function (opts) {
-      opts = opts || {};
-      return call({ action: "spend", reason: opts.reason || "hint", item: opts.item || "" });
-    },
+    earn: earn,
+    spend: spend,
+    getLevels: function () { return quiet({ action: "get_levels" }); },
+    setLevels: setLevels,
+    syncLevels: syncLevels,
     paint: paint
   };
 

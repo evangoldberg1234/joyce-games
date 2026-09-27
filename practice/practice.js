@@ -104,8 +104,12 @@
       return;
     }
     window.KidsStars.earn({ subject: subject, level: askedLevel, qid: qid }).then(function (res) {
-      if (res.ok) starNote = "1 star earned";
-      else starNote = window.KidsStars.messageFor(res);
+      if (res && res.ok) {
+        starNote = "1 star earned";
+        if (window.KidsStars.atCap(res)) starNote = starNote + " " + window.KidsStars.capMessage();
+      } else {
+        starNote = window.KidsStars.messageFor(res);
+      }
       var note = document.querySelector("[data-note]");
       if (note && starNote) note.textContent = note.textContent + " " + starNote;
       showNext();
@@ -113,4 +117,12 @@
   }
 
   renderHome();
+  if (window.KidsStars && KidsStars.syncLevels) {
+    KidsStars.syncLevels().then(function (res) {
+      if (!res || res.source !== "server") return;
+      if (app.getAttribute("data-screen") !== "pick") return;
+      data = window.LevelStore.load();
+      renderHome();
+    }, function () { /* level sync stays quiet */ });
+  }
 })();

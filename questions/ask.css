@@ -212,6 +212,27 @@
   text-shadow: 0 2px 0 rgba(29, 78, 150, 0.35);
 }
 
+.star-cap {
+  margin: 10px 16px 0;
+  text-align: center;
+  color: var(--ink, #16356b);
+  background: #fff8d6;
+  border: 3px solid var(--line, #1d4e96);
+  border-radius: 16px;
+  padding: 10px 14px;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.star-cap[hidden] {
+  display: none;
+}
+
+.home .star-cap {
+  margin: 0 auto 8px;
+  max-width: 560px;
+}
+
 @media (min-width: 720px), (orientation: landscape) {
   .map-grid,
   .q-choices {
