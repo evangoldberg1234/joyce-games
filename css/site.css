@@ -254,7 +254,7 @@ h1 {
   text-align: center;
   color: #fff;
   font-size: 18px;
-  padding: 8px 12px 22px;
+  padding: 8px 12px 120px;
 }
 
 .foot p {
@@ -307,4 +307,17 @@ h1 {
   .game-card:active {
     transform: none;
   }
+}
+
+/* The chat widget is appended to the page. .wrap and .foot each
+   create a stacking context, and the panel fades in. Keep the whole
+   widget above decorations, clouds, and the footer, and keep the
+   panel painted solid so the page cannot show through it. */
+.kc-root {
+  position: relative;
+  z-index: 50;
+}
+
+.kc-panel {
+  opacity: 1 !important;
 }

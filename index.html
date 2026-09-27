@@ -44,10 +44,15 @@
     <p>Made for Joyce</p>
     <details class="parent-note">
       <summary>For parents</summary>
-      <p>Brain Breaks are short learning pauses instead of ads. About every minute and a half of play, and between levels, Joyce or Miriam answers a few questions: math, word problems, English, Russian, and Hebrew words, and the weekly Torah portion. Each child has her own level, saved on this iPad. They can switch players on the break screen.</p>
+      <p>Brain Breaks are short learning pauses instead of ads. At the end of every level, whether Joyce finishes it or starts it over, she or Miriam answers a few questions: math, word problems, English, Russian, and Hebrew words, and the weekly Torah portion. Questions get a little harder as the game level goes up. Each child has her own level, saved on this iPad. They can switch players on the break screen.</p>
+      <p>The 💬 bubble lets Joyce chat with Sofie, her Grok Bot. It asks for the family code once on this iPad, and only Sofie can answer.</p>
     </details>
   </footer>
   <script src="games.js"></script>
   <script src="js/home.js"></script>
+  <script>
+    window.KIDS_CHAT = { kid: "joyce", kidName: "Joyce", botName: "Sofie", botEmoji: "🦊", functionsUrl: "" };
+  </script>
+  <script src="chat/chat.js" defer></script>
 </body>
 </html>
