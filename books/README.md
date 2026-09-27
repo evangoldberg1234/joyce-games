@@ -10,20 +10,18 @@ All requests live in `client.js`.
 
 `POST ${functionsUrl}/kid-books` with `token` and `kid`.
 
-- `lookup` `{ title, author? }` → `{ ok, results: [{ work_id, title, author, cover_url, pages, pages_source }] }`. The page shows at most 5 cards, then "None of these". Pages may be null. A missing cover gets a placeholder.
-- `start` `{ work_id }` → `{ ok, status, pages, min_pages, message, book_id }`. The page prefers `message` when the server sends one.
-  - `check` — "Great reading! Now tell Sofie about your book in the chat 💬", and a button that opens the chat bubble. The server posts the finished-book line into the chat.
-  - `too_short` — a kind note, and no stars.
-  - `already_paid` — "You already got your stars for this book! 🌟".
-  - `pages_unknown` — the same check screen, plus a small note that a grown-up will OK the stars.
-  - `in_progress` — "You're already telling Sofie about this book, open the chat!" and the chat button.
-- `list` → `{ ok, books: [{ title, author, pages, status, date, score }] }`. Shelf labels: `earned` → "Earned 20 ⭐", `waiting` → "Waiting for a grown-up", `check` → "Telling Sofie", `too_short` → "Too short", `try_again` → "Try again". The bot name comes from `window.KIDS_CHAT`.
+- `lookup` `{ title, author? }` → up to 5 Open Library results `{ work_id, title, author, cover_url, pages, pages_source }`. The page shows those cards, then "None of these". A missing cover gets a placeholder. HTTP 502 `library_unavailable` shows the server `message`. HTTP 429 `slow_down` (more than 30 lookups in 10 minutes) shows that message and `retry_after` when the server sends it.
+- `start` `{ work_id }` only. The page never sends a page count. The server replies with `status` and a kid-friendly `message`. The page shows that message, reads it aloud, and puts an icon next to it.
+  - `check` and `pages_unknown` — the server message, then "Open the chat bubble 💬 to answer some questions about your book!" The chat bubble opens when `KidsChat` is on the page.
+  - `too_short`, `already_paid`, `in_progress`, and `tried_twice` — the server message and a matching icon. `tried_twice` means she already tried that book twice.
+- `list` → "My books", with each book's status and stars.
+- HTTP 400 `bad_work_id` and HTTP 404 `book_not_found` show the server message. HTTP 429 on start means more than 20 books in an hour. Token errors match the star ledger: 401 locked, 403 `no_passcode_yet` or `origin_not_allowed`, 503, and 500.
 
-Any HTTP 401 is locked: "Ask a grown-up to unlock" and a button that opens the chat bubble. HTTP 404 or a network failure shows "Book Club is waking up...".
+Any HTTP 401 is locked: "Ask a grown-up to unlock" and a button that opens the chat bubble. A missing server or a network failure shows "Book Club is waking up...".
 
 ## Mock
 
-`?starsmock=1` skips the server. Lookup returns five pretend books. Dear Zoo is too short, the Boxcar Children has no page count, Frog and Toad is already in progress, and Matilda is already paid.
+`?starsmock=1` skips the server. Lookup returns pretend books and the page shows five. Dear Zoo is too short, Frog and Toad is already in progress, Matilda is already paid, and Peter Rabbit was tried twice. The Boxcar Children has no page count (`start` with work id `box`).
 
 ```javascript
 KidBooks.lookup("Charlotte's Web", "E. B. White")

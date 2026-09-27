@@ -5,6 +5,15 @@
   var cfg = window.KIDS_CHAT || {};
   var botName = cfg.botName || "your guide";
   var busy = false;
+  var CHAT_LINE = "Open the chat bubble \uD83D\uDCAC to answer some questions about your book!";
+  var ICONS = {
+    check: "\uD83D\uDCAC",
+    pages_unknown: "\u2753",
+    too_short: "\uD83D\uDCD7",
+    already_paid: "\uD83C\uDF1F",
+    in_progress: "\uD83D\uDCAC",
+    tried_twice: "\u270B"
+  };
 
   function el(tag, className, text) {
     var node = document.createElement(tag);
@@ -23,6 +32,40 @@
   function openChat() {
     var fab = document.querySelector(".kc-fab");
     if (fab) fab.click();
+    else if (window.KidsChat && KidsChat.open) KidsChat.open();
+  }
+
+  function speak(text) {
+    try {
+      if (!window.speechSynthesis || !window.SpeechSynthesisUtterance || !text) return;
+      var voices = window.speechSynthesis.getVoices() || [];
+      var voice = null;
+      var i;
+      for (i = 0; i < voices.length; i += 1) {
+        if ((voices[i].lang || "").toLowerCase().indexOf("en") === 0) {
+          voice = voices[i];
+          break;
+        }
+      }
+      if (!voice && voices.length) voice = voices[0];
+      window.speechSynthesis.cancel();
+      var utter = new SpeechSynthesisUtterance(text);
+      utter.lang = voice ? voice.lang : "en-US";
+      if (voice) utter.voice = voice;
+      window.speechSynthesis.speak(utter);
+    } catch (err) {
+      /* The words stay on the screen. */
+    }
+  }
+
+  function nudgeChat() {
+    function go() {
+      var fab = document.querySelector(".kc-fab");
+      if (fab) fab.classList.add("book-pulse");
+      if (window.KidsChat && KidsChat.open) KidsChat.open();
+    }
+    go();
+    window.setTimeout(go, 500);
   }
 
   function pagesLine(pages) {
@@ -41,12 +84,21 @@
 
   function shelfLabel(status) {
     var key = String(status || "");
-    if (key === "earned" || key === "paid" || key === "already_paid") return "Earned 20 ⭐";
+    if (key === "earned" || key === "paid" || key === "already_paid") return "Earned";
     if (key === "waiting" || key === "pending" || key === "pending_review" || key === "review") return "Waiting for a grown-up";
-    if (key === "check" || key === "in_progress" || key === "telling") return "Telling " + botName;
+    if (key === "check" || key === "in_progress" || key === "telling" || key === "pages_unknown") return "Telling " + botName;
     if (key === "too_short") return "Too short";
+    if (key === "tried_twice") return "Tried twice";
     if (key === "try_again" || key === "failed") return "Try again";
     return "Still checking";
+  }
+
+  function starsLine(book) {
+    var n = book && book.stars;
+    if (typeof n !== "number") n = book && book.stars_earned;
+    if (typeof n !== "number" && book && (book.status === "earned" || book.status === "paid" || book.status === "already_paid")) n = 20;
+    if (typeof n !== "number") return "";
+    return n + " \u2B50";
   }
 
   function coverEl(url) {
@@ -75,13 +127,56 @@
     }
     if (status === "already_paid") return "You already got your stars for this book! 🌟";
     if (status === "in_progress") return "You're already telling " + botName + " about this book, open the chat!";
+    if (status === "tried_twice") return "You already tried this book twice. Pick a different one!";
     return "Try another book.";
+  }
+
+  function slowText(res) {
+    var base = res && res.message ? String(res.message) : "Wait a moment, then try again.";
+    var seconds = res && Number(res.retry_after);
+    if (!(seconds > 0)) return base;
+    if (base.indexOf(String(Math.round(seconds))) !== -1) return base;
+    return base.replace(/\s+$/, "") + " Try again in " + Math.round(seconds) + " seconds.";
+  }
+
+  function problemText(res) {
+    if (!res) return "Book Club is waking up...";
+    if (res.error === "slow_down") return slowText(res);
+    if (res.message) return String(res.message);
+    if (res.error === "locked") return "Ask a grown-up to unlock. Open the chat bubble and enter the family code.";
+    if (res.error === "no_passcode_yet") return "Ask a grown-up to set up Book Club.";
+    if (res.error === "library_unavailable") return "The library is busy. Try again in a little while.";
+    if (res.error === "bad_work_id") return "That book didn't work. Try another one.";
+    if (res.error === "book_not_found") return "I couldn't find that book. Try another one.";
+    if (res.error === "server_error" || res.error === "not_configured") return "Book Club is napping, try again soon";
+    return "Book Club is waking up...";
   }
 
   function showProblem(res) {
     busy = false;
-    if (res && res.error === "locked") showLocked();
-    else showAsleep();
+    var error = res && res.error;
+    if (error === "locked" || error === "bad_token" || error === "token_expired") {
+      showLocked();
+      return;
+    }
+    if (error === "library_unavailable" || error === "slow_down" || error === "bad_work_id" || error === "book_not_found" || error === "no_passcode_yet") {
+      showMessage(problemText(res), error || "message");
+      return;
+    }
+    if (res && res.message) {
+      showMessage(String(res.message), error || "message");
+      return;
+    }
+    showAsleep();
+  }
+
+  function showMessage(text, screen) {
+    app.innerHTML = "";
+    app.setAttribute("data-screen", screen || "message");
+    app.appendChild(el("h1", "book-title", "Book Club"));
+    app.appendChild(el("p", "book-note", text));
+    speak(text);
+    app.appendChild(button("Try again", "book-next", showSearch));
   }
 
   function showLocked() {
@@ -136,7 +231,7 @@
       lookup(titleInput.value, authorInput.value, note, find);
     });
     app.appendChild(form);
-    app.appendChild(button("My bookshelf", "book-side", showShelf));
+    app.appendChild(button("My books", "book-side", showShelf));
   }
 
   function lookup(title, author, note, find) {
@@ -211,18 +306,24 @@
     var status = res.status || "check";
     app.innerHTML = "";
     app.setAttribute("data-screen", status);
+    var icon = el("p", "book-icon", ICONS[status] || "\uD83D\uDCD6");
+    icon.setAttribute("aria-hidden", "true");
+    app.appendChild(icon);
     app.appendChild(el("h1", "book-title", book && book.title ? book.title : "Your book"));
     var message = res.message ? String(res.message) : fallbackMessage(res);
     app.appendChild(el("p", "book-note", message));
-    if (status === "pages_unknown") {
-      app.appendChild(el("p", "book-aside", "A grown-up will OK the stars."));
+    var spoken = message;
+    if (status === "check" || status === "pages_unknown") {
+      app.appendChild(el("p", "book-aside", CHAT_LINE));
+      spoken = message + " " + CHAT_LINE;
+      nudgeChat();
     }
+    speak(spoken);
     if (status === "check" || status === "pages_unknown" || status === "in_progress") {
-      var label = status === "in_progress" ? "Open the chat" : "Tell " + botName + " in the chat";
-      app.appendChild(button(label, "book-next", openChat));
+      app.appendChild(button("Open the chat", "book-next", openChat));
     }
     app.appendChild(button("Find another book", "book-side", showSearch));
-    app.appendChild(button("My bookshelf", "book-side", showShelf));
+    app.appendChild(button("My books", "book-side", showShelf));
   }
 
   function showShelf() {
@@ -230,7 +331,7 @@
     busy = true;
     app.innerHTML = "";
     app.setAttribute("data-screen", "shelf-wait");
-    app.appendChild(el("p", "book-lead", "Opening your bookshelf..."));
+    app.appendChild(el("p", "book-lead", "Opening your books..."));
     window.KidBooks.list().then(function (res) {
       busy = false;
       if (!res || res.ok === false) {
@@ -244,7 +345,7 @@
   function paintShelf(books) {
     app.innerHTML = "";
     app.setAttribute("data-screen", "shelf");
-    app.appendChild(el("h1", "book-title", "My bookshelf"));
+    app.appendChild(el("h1", "book-title", "My books"));
     if (!books.length) app.appendChild(el("p", "book-lead", "No books yet. Find one you have read."));
     var list = el("div", "book-list");
     books.forEach(function (book) {
@@ -256,6 +357,8 @@
       if (book.author) text.appendChild(el("span", "book-author", book.author));
       if (typeof book.pages === "number" && book.pages > 0) text.appendChild(el("span", "book-pages", pagesLine(book.pages)));
       text.appendChild(el("span", "book-status", shelfLabel(book.status)));
+      var stars = starsLine(book);
+      if (stars) text.appendChild(el("span", "book-stars", stars));
       var when = prettyDate(book.date);
       if (when) text.appendChild(el("span", "book-date", when));
       if (typeof book.score === "number") text.appendChild(el("span", "book-date", "Score: " + book.score));

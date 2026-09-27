@@ -30,6 +30,13 @@
   padding: 8px 16px 140px;
 }
 
+.book-icon {
+  margin: 0;
+  font-size: 72px;
+  line-height: 1;
+  text-align: center;
+}
+
 .book-title {
   margin: 8px 0 6px;
   color: #fff;
@@ -169,10 +176,19 @@
   font-size: 18px;
 }
 
-.book-status {
+.book-status,
+.book-stars {
   font-size: 20px;
   font-weight: 800;
   color: var(--sky-deep, #2b86f0);
+}
+
+.kc-fab.book-pulse {
+  animation: book-pulse 0.7s ease-in-out 3;
+}
+
+@keyframes book-pulse {
+  50% { transform: scale(1.12); }
 }
 
 .book-aside {

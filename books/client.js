@@ -46,8 +46,9 @@
       { work_id: "cw", title: "Charlotte's Web", author: "E. B. White", cover_url: cover("#2b86f0", "C"), pages: 184, pages_source: "mock" },
       { work_id: "frog", title: "Frog and Toad Are Friends", author: "Arnold Lobel", cover_url: "", pages: 64, pages_source: "mock" },
       { work_id: "zoo", title: "Dear Zoo", author: "Rod Campbell", cover_url: cover("#e07a3d", "Z"), pages: 18, pages_source: "mock" },
-      { work_id: "box", title: "The Boxcar Children", author: "Gertrude Chandler Warner", cover_url: cover("#1f8a4c", "B"), pages: null, pages_source: "" },
-      { work_id: "matilda", title: "Matilda", author: "Roald Dahl", cover_url: cover("#7a4eab", "M"), pages: 240, pages_source: "mock" }
+      { work_id: "matilda", title: "Matilda", author: "Roald Dahl", cover_url: cover("#7a4eab", "M"), pages: 240, pages_source: "mock" },
+      { work_id: "twice", title: "The Tale of Peter Rabbit", author: "Beatrix Potter", cover_url: cover("#c45c26", "P"), pages: 72, pages_source: "mock" },
+      { work_id: "box", title: "The Boxcar Children", author: "Gertrude Chandler Warner", cover_url: cover("#1f8a4c", "B"), pages: null, pages_source: "" }
     ];
   }
 
@@ -58,11 +59,11 @@
       return {
         ok: true,
         books: [
-          { title: "Charlotte's Web", author: "E. B. White", pages: 184, cover_url: cover("#2b86f0", "C"), status: "earned", date: "2026-09-20", score: 5 },
-          { title: "Frog and Toad Are Friends", author: "Arnold Lobel", pages: 64, cover_url: "", status: "waiting", date: "2026-09-26", score: null },
-          { title: "Matilda", author: "Roald Dahl", pages: 240, cover_url: cover("#7a4eab", "M"), status: "check", date: "2026-09-27", score: null },
-          { title: "Dear Zoo", author: "Rod Campbell", pages: 18, cover_url: cover("#e07a3d", "Z"), status: "too_short", date: "2026-09-18", score: null },
-          { title: "Stuart Little", author: "E. B. White", pages: 132, cover_url: cover("#d4a017", "S"), status: "try_again", date: "2026-09-22", score: 2 }
+          { title: "Charlotte's Web", author: "E. B. White", pages: 184, cover_url: cover("#2b86f0", "C"), status: "earned", date: "2026-09-20", stars: 20, score: 5 },
+          { title: "Frog and Toad Are Friends", author: "Arnold Lobel", pages: 64, cover_url: "", status: "waiting", date: "2026-09-26", stars: 0, score: null },
+          { title: "Matilda", author: "Roald Dahl", pages: 240, cover_url: cover("#7a4eab", "M"), status: "check", date: "2026-09-27", stars: 0, score: null },
+          { title: "Dear Zoo", author: "Rod Campbell", pages: 18, cover_url: cover("#e07a3d", "Z"), status: "too_short", date: "2026-09-18", stars: 0, score: null },
+          { title: "The Tale of Peter Rabbit", author: "Beatrix Potter", pages: 72, cover_url: cover("#c45c26", "P"), status: "tried_twice", date: "2026-09-25", stars: 0, score: null }
         ],
         mock: true
       };
@@ -113,6 +114,17 @@
           mock: true
         };
       }
+      if (id === "twice") {
+        return {
+          ok: true,
+          status: "tried_twice",
+          pages: 72,
+          min_pages: 50,
+          book_id: "twice",
+          message: "You already tried this book twice. Pick a different one!",
+          mock: true
+        };
+      }
       return {
         ok: true,
         status: "check",
@@ -126,14 +138,23 @@
     return { ok: false, error: "asleep", mock: true };
   }
 
+  function saveToken(value) {
+    var kid = config().kid;
+    if (!kid || !value) return;
+    try { localStorage.setItem("kidsChat." + kid + ".token", String(value)); } catch (err) { /* the page can still show the reply */ }
+  }
+
   function post(body) {
     if (mockOn()) return Promise.resolve(mockResult(body || {}));
     var cfg = config();
-    var auth = token();
-    if (!auth || !cfg.functionsUrl) return Promise.resolve({ ok: false, error: "locked" });
+    if (!cfg.functionsUrl) return Promise.resolve({ ok: false, error: "locked" });
     var payload = {};
-    Object.keys(body || {}).forEach(function (key) { payload[key] = body[key]; });
-    payload.token = auth;
+    Object.keys(body || {}).forEach(function (key) {
+      if (key === "pages" || key === "min_pages" || key === "page_count") return;
+      payload[key] = body[key];
+    });
+    var auth = token();
+    if (auth) payload.token = auth;
     payload.kid = cfg.kid;
     return fetch(cfg.functionsUrl + "/kid-books", {
       method: "POST",
@@ -142,9 +163,34 @@
     }).then(function (res) {
       return res.json().catch(function () { return {}; }).then(function (data) {
         data = data || {};
-        if (res.status === 401) return { ok: false, error: "locked" };
-        if (res.status === 404) return { ok: false, error: "asleep" };
+        if ((res.ok || data.ok === true) && data.token) saveToken(data.token);
+        if (res.status === 401 || data.error === "locked" || data.error === "bad_token" || data.error === "token_expired") {
+          return { ok: false, error: "locked", message: data.message };
+        }
+        if (res.status === 400) {
+          return { ok: false, error: data.error || "bad_work_id", message: data.message };
+        }
+        if (res.status === 404) {
+          if (data.error === "book_not_found") return { ok: false, error: "book_not_found", message: data.message };
+          return { ok: false, error: "asleep" };
+        }
+        if (res.status === 429) {
+          return {
+            ok: false,
+            error: data.error || "slow_down",
+            message: data.message,
+            retry_after: data.retry_after
+          };
+        }
+        if (res.status === 502) {
+          return { ok: false, error: data.error || "library_unavailable", message: data.message };
+        }
+        if (res.status === 403 && data.error === "no_passcode_yet") return { ok: false, error: "no_passcode_yet", message: data.message };
+        if (res.status === 403 && data.error === "origin_not_allowed") return { ok: false, error: "origin_not_allowed", message: data.message };
+        if (res.status === 503 || data.error === "not_configured") return { ok: false, error: "not_configured", message: data.message };
+        if (res.status === 500 || data.error === "server_error") return { ok: false, error: "server_error", message: data.message };
         if (!res.ok && !data.error) return { ok: false, error: "asleep" };
+        if (Array.isArray(data.results)) data.results = data.results.slice(0, 5);
         return data;
       });
     }).catch(function () {
