@@ -37,5 +37,12 @@ const JOYCE_GAMES = [
     about: "A crossword and a Sudoku, with animals, letters, and numbers.",
     href: "animal-puzzle/index.html",
     accent: "#ffe14a"
+  },
+  {
+    title: "Ice Cream Scoop",
+    emoji: "🍦",
+    about: "Ocean Sudoku and crossword clues. Then build your own ice cream.",
+    href: "ice-cream-scoop/index.html",
+    accent: "#ffd0ef"
   }
 ];
