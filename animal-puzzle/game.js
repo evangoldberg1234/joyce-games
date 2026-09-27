@@ -16,6 +16,25 @@
   var selected = null;
   var message = "Tap a box. Then tap a letter or a number.";
   var justSolved = false;
+  var needsBetweenBreak = false;
+  var brainBreaks = window.JoyceBrainBreaks
+    ? JoyceBrainBreaks.attach({
+        isPaused: function () {
+          return howtoOpen || justSolved || screen !== "play";
+        }
+      })
+    : null;
+
+  function beginAfterBreak(next) {
+    if (!needsBetweenBreak || !brainBreaks) {
+      needsBetweenBreak = false;
+      next();
+      return;
+    }
+    needsBetweenBreak = false;
+    justSolved = false;
+    brainBreaks.betweenLevels().then(next);
+  }
 
   try {
     if (!localStorage.getItem(HOWTO_KEY)) {
@@ -277,6 +296,12 @@
   }
 
   function startLevel(index) {
+    beginAfterBreak(function () {
+      launchLevel(index);
+    });
+  }
+
+  function launchLevel(index) {
     levelIndex = index;
     var current = puzzle();
     var saved = loadProgress(current.id);
@@ -347,6 +372,7 @@
   function afterMove(current) {
     if (isSolved(current, cells)) {
       justSolved = true;
+      needsBetweenBreak = true;
       message = "";
       markSolved(current.id);
       burst();
@@ -734,8 +760,8 @@
     var last = levelIndex === PUZZLES.length - 1;
     next.textContent = last ? "All animals" : "Next animal";
     next.addEventListener("click", function () {
-      justSolved = false;
       if (last) {
+        justSolved = false;
         screen = "pick";
         render();
       } else {
@@ -749,8 +775,9 @@
     again.style.color = "#16356b";
     again.textContent = "Play again";
     again.addEventListener("click", function () {
-      justSolved = false;
-      resetLevel();
+      beginAfterBreak(function () {
+        resetLevel();
+      });
     });
     sheet.appendChild(party);
     sheet.appendChild(title);

@@ -257,6 +257,34 @@ h1 {
   padding: 8px 12px 22px;
 }
 
+.foot p {
+  margin: 0;
+}
+
+.parent-note {
+  margin: 10px auto 0;
+  max-width: 640px;
+  text-align: left;
+}
+
+.parent-note summary {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  color: #fff;
+  font-weight: 700;
+}
+
+.parent-note p {
+  margin-top: 8px;
+  background: rgba(255, 255, 255, 0.96);
+  color: var(--ink);
+  border-radius: 16px;
+  padding: 14px 16px;
+  line-height: 1.4;
+}
+
 .empty-note {
   background: #fff;
   border-radius: 24px;
