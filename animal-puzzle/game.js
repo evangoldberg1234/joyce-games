@@ -410,7 +410,7 @@
   function showFlash(index, symbol) {
     clearFlash();
     hintFlash = { index: index, symbol: symbol };
-    var left = window.KidsStars ? KidsStars.lastBalance() : null;
+    var left = starsOn() && window.KidsStars ? KidsStars.lastBalance() : null;
     message = "Watch the glowing box!" + (left == null ? "" : " Stars left: " + left + ".");
     render();
     hintTimer = window.setTimeout(function () {
