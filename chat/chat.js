@@ -17,6 +17,14 @@
  *   quickReplies   array of short strings shown as big buttons (set [] to hide)
  *   passcodeKeypad true = big number keypad (default), false = text box (for word passcodes)
  *   pollMs         how often to check for replies while the chat is open (default 3000)
+ *   gameRequestButton  show the "🎮 New game" button once the server reports stars (default true; false hides it)
+ *   gameCost       price shown on that button (default 20; the server decides the real price)
+ *
+ * Stars: when the backend has the star ledger, kid-chat-poll returns `stars` and the header shows "⭐ N".
+ * A game request (the 🎮 button, or KidsChat.requestGame(text, {forFriend})) sends `game_request: true`; the server
+ * deducts the stars, or answers 402 with a kid-friendly `message` that is shown as is. The page can read and push
+ * the balance with KidsChat.stars() / KidsChat.setStars(n), and listen for window "kidschat:stars" events
+ * ({detail: {kid, stars}}). Older backends without stars simply show no star counter and no 🎮 button.
  *
  * Security notes: no secret lives in this file. The kid types the family passcode once; the server returns a
  * signed device token (kept in localStorage) that expires. All text is rendered with textContent.
@@ -40,7 +48,9 @@
     pollMs: 3000,
     closedPollMs: 30000,
     thinkingTimeoutMs: 5 * 60 * 1000,
-    maxChars: 300
+    maxChars: 300,
+    gameRequestButton: true,
+    gameCost: 20
   };
   var cfg = {};
   Object.keys(defaults).forEach(function (k) { cfg[k] = user[k] !== undefined ? user[k] : defaults[k]; });
@@ -134,8 +144,11 @@
   headText.appendChild(headName);
   headText.appendChild(headSub);
   var closeBtn = button("kc-close", "✕", "Close chat", function () { setOpen(false); });
+  var starsPill = el("span", "kc-stars", "");
+  starsPill.hidden = true;
   head.appendChild(avatar);
   head.appendChild(headText);
+  head.appendChild(starsPill);
   head.appendChild(closeBtn);
 
   var body = el("div", "kc-body");
@@ -191,6 +204,21 @@
   var pollTimer = null;
   var polling = false;
   var unread = 0;
+  var stars = null; // last balance the server reported (null = unknown / backend without stars)
+
+  function setStars(n) {
+    if (typeof n !== "number" || !isFinite(n) || n < 0) return;
+    n = Math.floor(n);
+    var changed = n !== stars;
+    stars = n;
+    starsPill.textContent = "⭐ " + n;
+    starsPill.setAttribute("aria-label", n + " stars");
+    starsPill.hidden = false;
+    if (gameBtn) gameBtn.hidden = !cfg.gameRequestButton;
+    if (changed) {
+      try { window.dispatchEvent(new CustomEvent("kidschat:stars", { detail: { kid: KID, stars: n } })); } catch (e) { /* old browser */ }
+    }
+  }
 
   function setOpen(open) {
     isOpen = open;
@@ -354,10 +382,11 @@
   }
 
   // Chat screen pieces (built once per render)
-  var list = null, thinking = null, textarea = null, counter = null, sendBtn = null;
+  var list = null, thinking = null, textarea = null, counter = null, sendBtn = null, gameBtn = null;
 
   function renderChat() {
     headSub.textContent = "Online";
+    keepStars();
     clearBody();
     list = el("div", "kc-list");
     list.setAttribute("aria-live", "polite");
@@ -393,7 +422,18 @@
     });
     sendBtn = button("kc-send", "🚀", "Send", function () { send(textarea.value); });
     sendBtn.appendChild(el("span", "kc-send-text", "Send"));
+    gameBtn = button("kc-game", "🎮", "Ask " + cfg.botName + " for a new game (" + cfg.gameCost + " stars)", function () {
+      if (!textarea.value.trim()) {
+        showToast("Type what game you'd like, then tap 🎮. A new game costs " + cfg.gameCost + " ⭐", 5000);
+        focusInput();
+        return;
+      }
+      send(textarea.value, { game: true });
+    });
+    gameBtn.appendChild(el("span", "kc-game-text", cfg.gameCost + "⭐"));
+    gameBtn.hidden = !(cfg.gameRequestButton && stars !== null);
     row.appendChild(textarea);
+    row.appendChild(gameBtn);
     row.appendChild(sendBtn);
     counter = el("div", "kc-counter", "");
     composer.appendChild(row);
@@ -413,6 +453,8 @@
     counter.textContent = n > cfg.maxChars - 60 ? n + " / " + cfg.maxChars : "";
     sendBtn.disabled = textarea.value.trim().length === 0;
   }
+  // Keep the star counter even when the chat screen is rebuilt.
+  function keepStars() { if (stars !== null) setStars(stars); }
 
   function focusInput() {
     // Don't pop the iPad keyboard over the conversation automatically; only on desktop-sized pointers.
@@ -440,7 +482,9 @@
       if (!mine) row.appendChild(el("span", "kc-msg-avatar", cfg.botEmoji));
       var bubble = el("div", "kc-bubble", m.text);
       row.appendChild(bubble);
-      var meta = el("div", "kc-meta", m.local ? "Sending…" : timeLabel(m.created_at));
+      var metaText = m.local ? "Sending…" : timeLabel(m.created_at);
+      if (m.game_request) metaText = "🎮 Game wish" + (m.for_friend ? " for a friend" : "") + (metaText ? " · " + metaText : "");
+      var meta = el("div", "kc-meta", metaText);
       if (mine && m.status === "failed") {
         meta.textContent = "";
         meta.appendChild(button("kc-retry", "⚠️ " + cfg.botName + " didn't get it. Tap to try again", null, function () { resend(m); }));
@@ -487,15 +531,22 @@
   // ---------------------------------------------------------------------------------------------
   // Actions
   // ---------------------------------------------------------------------------------------------
-  function send(raw) {
+  // opts.game: a paid request for a new game (opts.forFriend: for a friend; her name is in the text).
+  function send(raw, opts) {
+    opts = opts || {};
     var text = String(raw || "").trim();
     if (!text || mode !== "chat") return;
-    var local = { id: "local-" + Date.now(), direction: "kid", text: text, status: "queued", created_at: new Date().toISOString(), local: true };
+    var local = { id: "local-" + Date.now(), direction: "kid", text: text, status: "queued", created_at: new Date().toISOString(), local: true,
+      game_request: !!opts.game, for_friend: !!(opts.game && opts.forFriend) };
     messages.push(local);
     if (textarea && textarea.value.trim() === text) { textarea.value = ""; onType(); }
     drawMessages();
-    api("kid-chat-send", { token: token, text: text }).then(function (r) {
+    var payload = { token: token, text: text };
+    if (opts.game) { payload.game_request = true; if (opts.forFriend) payload.for_friend = true; }
+    api("kid-chat-send", payload).then(function (r) {
       messages = messages.filter(function (m) { return m !== local; });
+      if (typeof r.stars === "number") setStars(r.stars);
+      else if (typeof r.balance === "number") setStars(r.balance);
       if (r.ok && r.message) {
         merge([r.message]);
         drawMessages();
@@ -525,6 +576,9 @@
     if (r.status === 401) return showLocked("Please type the secret code again.");
     if (r.error === "not_configured") return showSleeping();
     if (r.error === "slow_down") return showToast("Whoa, slow down! 🐢 Wait a little bit, then try again.");
+    // Stars: the server's own kid-friendly text ("You need 20 stars to ask for a new game. You have N. …").
+    if (r.error === "not_enough_stars") return showToast(r.message || "You need more stars for that. Play Practice to earn more! ⭐", 7000);
+    if (r.error === "ring_failed" && r.message) return showToast(r.message, 6000);
     if (r.error === "too_long") return showToast("That's a lot of words! Try a shorter message.");
     if (r.error === "empty") return;
     if (r.status === 0) return showToast("Hmm, no internet. Try again in a moment. 📶");
@@ -539,6 +593,7 @@
     api("kid-chat-poll", payload).then(function (r) {
       polling = false;
       if (r.ok && r.messages) {
+        if (typeof r.stars === "number") setStars(r.stars);
         var added = merge(r.messages);
         if (isOpen) drawMessages();
         else if (added && !first) { unread += added; badge.textContent = String(unread); badge.hidden = false; }
@@ -586,5 +641,17 @@
   if (document.body) mount(); else document.addEventListener("DOMContentLoaded", mount);
 
   // Small hook for tests and for opening the chat from a page button.
-  window.KidsChat = { open: function () { setOpen(true); }, close: function () { setOpen(false); } };
+  window.KidsChat = {
+    open: function () { setOpen(true); },
+    close: function () { setOpen(false); },
+    /** Last star balance the server reported, or null. */
+    stars: function () { return stars; },
+    /** Let the page push a fresh balance (e.g. after kid-stars earn/spend) so the header stays in sync. */
+    setStars: function (n) { setStars(n); },
+    /** Paid request for a new game from page code: opens the chat and sends it with game_request: true. */
+    requestGame: function (text, o) {
+      setOpen(true);
+      if (mode === "chat") send(text, { game: true, forFriend: !!(o && o.forFriend) });
+    }
+  };
 })();

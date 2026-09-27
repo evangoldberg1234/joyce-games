@@ -212,6 +212,23 @@
   text-shadow: 0 2px 0 rgba(29, 78, 150, 0.35);
 }
 
+.star-game {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 56px;
+  margin: 10px 0 0;
+  padding: 10px 18px;
+  border: 3px solid #1d4e96;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--ink, #16356b);
+  font: inherit;
+  font-size: 20px;
+  font-weight: 800;
+  box-shadow: 0 4px 0 #1d4e96;
+}
+
 .star-cap {
   margin: 10px 16px 0;
   text-align: center;

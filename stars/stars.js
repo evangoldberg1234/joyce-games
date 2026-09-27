@@ -61,6 +61,18 @@
     try { sessionStorage.setItem(cacheKey(), String(n)); } catch (err) { /* display only */ }
   }
 
+  function saveToken(value) {
+    var kid = config().kid;
+    if (!kid || !value) return;
+    try { localStorage.setItem("kidsChat." + kid + ".token", String(value)); } catch (err) { /* display still works */ }
+  }
+
+  function pushChat(balance) {
+    if (typeof balance !== "number") return;
+    if (!window.KidsChat || !KidsChat.setStars) return;
+    try { KidsChat.setStars(balance); } catch (err) { /* the page counter still updates */ }
+  }
+
   function clampLevel(n) {
     n = Math.round(Number(n));
     if (!n || n < 1) return 1;
@@ -121,7 +133,10 @@
   }
 
   function emit(res) {
-    if (res && typeof res.balance === "number") writeCache(res.balance);
+    if (res && typeof res.balance === "number") {
+      writeCache(res.balance);
+      pushChat(res.balance);
+    }
     listeners.forEach(function (fn) {
       try { fn(res); } catch (err) { /* a listener must not break the ledger */ }
     });
@@ -147,6 +162,16 @@
     }
     if (res.error === "locked") {
       el.textContent = "Ask a grown-up to unlock stars";
+      showCap({ earned_today: 0, daily_cap: DAILY_CAP });
+      return;
+    }
+    if (res.error === "no_passcode_yet") {
+      el.textContent = "Ask a grown-up to set up stars";
+      showCap({ earned_today: 0, daily_cap: DAILY_CAP });
+      return;
+    }
+    if (res.error === "server_error") {
+      el.textContent = "Stars are napping, try again soon";
       showCap({ earned_today: 0, daily_cap: DAILY_CAP });
       return;
     }
@@ -212,7 +237,11 @@
       body: JSON.stringify(payload)
     }).then(function (res) {
       return res.json().catch(function () { return {}; }).then(function (data) {
-        if (res.status === 401) return { ok: false, error: "locked" };
+        data = data || {};
+        if ((res.ok || data.ok === true) && data.token) saveToken(data.token);
+        if (res.status === 401 || data.error === "locked" || data.error === "bad_token" || data.error === "token_expired") {
+          return { ok: false, error: "locked" };
+        }
         if (res.status === 404) return { ok: false, error: "asleep" };
         if (res.status === 402) {
           return {
@@ -231,9 +260,14 @@
             error: reason,
             balance: data.balance,
             earned_today: data.earned_today,
-            daily_cap: data.daily_cap
+            daily_cap: data.daily_cap,
+            retry_after: data.retry_after
           };
         }
+        if (res.status === 403 && data.error === "no_passcode_yet") return { ok: false, error: "no_passcode_yet" };
+        if (res.status === 403 && data.error === "origin_not_allowed") return { ok: false, error: "origin_not_allowed" };
+        if (res.status === 503 || data.error === "not_configured") return { ok: false, error: "not_configured" };
+        if (res.status === 500 || data.error === "server_error") return { ok: false, error: "server_error" };
         if (!res.ok && !data.error) return { ok: false, error: "asleep" };
         return data;
       });
@@ -262,6 +296,8 @@
   function messageFor(res) {
     if (!res || res.ok) return "";
     if (res.error === "locked") return "Ask a grown-up to unlock stars. Open the chat bubble and enter the family code.";
+    if (res.error === "no_passcode_yet") return "Ask a grown-up to set up stars";
+    if (res.error === "server_error") return "Stars are napping, try again soon";
     if (res.error === "not_enough_stars") {
       if (res.message) return String(res.message);
       var have = typeof res.balance === "number" ? res.balance : 0;
@@ -284,7 +320,9 @@
     };
     return post(body).then(function (res) {
       if (res.error !== "slow_down") return res;
-      return wait(2000).then(function () { return post(body); });
+      var seconds = Number(res.retry_after);
+      if (!(seconds >= 0)) seconds = 2;
+      return wait(seconds * 1000).then(function () { return post(body); });
     }).then(emit);
   }
 
@@ -353,6 +391,31 @@
     syncLevels: syncLevels,
     paint: paint
   };
+
+  document.addEventListener("DOMContentLoaded", function () {
+    if (typeof lastSeen === "number") pushChat(lastSeen);
+  });
+
+  window.addEventListener("kidschat:stars", function (event) {
+    var detail = (event && event.detail) || {};
+    var kid = config().kid;
+    if (detail.kid && kid && String(detail.kid) !== String(kid)) return;
+    if (typeof detail.stars !== "number") return;
+    writeCache(detail.stars);
+    paint({ ok: true, balance: detail.stars });
+  });
+
+  var newGame = document.getElementById("new-game");
+  if (newGame) {
+    newGame.addEventListener("click", function () {
+      if (window.KidsChat && KidsChat.requestGame) {
+        KidsChat.requestGame("I want a new game!");
+        return;
+      }
+      var fab = document.querySelector(".kc-fab");
+      if (fab) fab.click();
+    });
+  }
 
   if (document.getElementById("starbar")) {
     var cached = readCache();
