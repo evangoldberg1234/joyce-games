@@ -88,8 +88,19 @@ function checkGenerated(question) {
 
 for (var seed = 1; seed <= 40; seed++) {
   var rng = engine.mulberry32(seed);
-  for (var level = 1; level <= 12; level++) checkGenerated(engine.generateMath(level, rng));
-  for (level = 1; level <= 8; level++) checkGenerated(engine.generateWords(level, rng));
+  for (var level = 1; level <= 12; level++) {
+    var mathQ = engine.generateMath(level, rng);
+    checkGenerated(mathQ);
+    assert.ok(mathQ.explain.indexOf("more than ten") === -1, mathQ.explain);
+  }
+  for (level = 1; level <= 8; level++) {
+    var wordQ = engine.generateWords(level, rng);
+    checkGenerated(wordQ);
+    assert.ok(wordQ.prompt.indexOf("mice") === -1 && wordQ.prompt.indexOf("flies") === -1, wordQ.prompt);
+    assert.ok(wordQ.prompt.indexOf("shares") === -1, wordQ.prompt);
+    assert.ok(!/\b1 [a-z]+s\b/.test(wordQ.prompt), wordQ.prompt);
+    assert.ok(wordQ.prompt.indexOf("The ") !== -1, wordQ.prompt);
+  }
 }
 
 var heNikud = /[\u0591-\u05C7]/;
@@ -178,5 +189,59 @@ var doubled = engine.readingFromHebcalItems(
   "2030-09-06"
 );
 assert.deepStrictEqual(doubled.ids, ["nitzavim", "vayelech"]);
+
+function questionById(id) {
+  for (var i = 0; i < bank.length; i++) if (bank[i].id === id) return bank[i];
+  throw new Error("missing " + id);
+}
+
+var vayetzei3 = questionById("vayetzei-3");
+assert.ok(vayetzei3.choices.indexOf("Bilhah only") === -1);
+assert.ok(vayetzei3.choices.indexOf("Rivkah") !== -1);
+assert.strictEqual(vayetzei3.answer, "Leah");
+
+var chukat1 = questionById("chukat-1");
+assert.strictEqual(chukat1.answer, "Miriam");
+assert.ok(/Sages/.test(chukat1.q));
+assert.ok(chukat1.choices.indexOf("A dry pit") === -1);
+
+var numbers = {
+  one: "אַחַת",
+  two: "שְׁתַּיִם",
+  three: "שָׁלוֹשׁ",
+  four: "אַרְבַּע",
+  five: "חָמֵשׁ",
+  six: "שֵׁשׁ",
+  seven: "שֶׁבַע",
+  eight: "שְׁמוֹנֶה",
+  nine: "תֵּשַׁע",
+  ten: "עֶשֶׂר"
+};
+vocab.forEach(function (word) {
+  if (numbers[word.id]) assert.strictEqual(word.he, numbers[word.id], word.id);
+});
+assert.strictEqual(vocab.filter(function (word) { return word.id === "sheep"; })[0].he, "כִּבְשָׂה");
+assert.strictEqual(vocab.filter(function (word) { return word.id === "star"; })[0].ru, "Маген Давид");
+assert.strictEqual(vocab.filter(function (word) { return word.id === "torah"; })[0].ru, "Тора");
+assert.strictEqual(vocab.filter(function (word) { return word.id === "dreidel"; })[0].ru, "волчок (дрейдл)");
+
+["2026-10-03", "2027-10-23"].forEach(function (date) {
+  var row = schedule.filter(function (item) { return item.date === date; })[0];
+  assert.ok(row.ids.indexOf("shmini-atzeret") !== -1);
+  assert.ok(row.ids.indexOf("vzot-haberachah") !== -1);
+  assert.ok(/Simchat Torah/.test(row.title), row.title);
+  assert.ok(/V'Zot HaBerachah/.test(row.title), row.title);
+});
+
+for (seed = 1; seed <= 30; seed++) {
+  rng = engine.mulberry32(seed + 4000);
+  for (dir = 0; dir < engine.DIRS.length; dir++) {
+    var mixed = engine.generateTranslate(1, rng, dir).question;
+    var texts = mixed.choices.concat([mixed.word]);
+    var hasBird = texts.some(function (text) { return text === "bird" || text === "птица" || text === "צִפּוֹר"; });
+    var hasDove = texts.some(function (text) { return text === "dove" || text === "голубь" || text === "יוֹנָה"; });
+    assert.ok(!(hasBird && hasDove), texts.join(" | "));
+  }
+}
 
 console.log("Brain Break checks passed (" + bank.length + " questions, " + schedule.length + " Shabbats, " + vocab.length + " words).");

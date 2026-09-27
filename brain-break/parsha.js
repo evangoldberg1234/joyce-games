@@ -29,7 +29,7 @@
       [3, "How many days of creating come before the day of rest?", "Six", ["Seven", "Three", "Ten"], "There are six days of creating. The seventh day is Shabbat, the day of rest."]
     ],
     noach: [
-      [1, "What did Noach build so his family and the animals could be safe?", "An ark", ["A tall tower", "A stone house", "A boat with no roof"], "Hashem told Noach to build an ark. His family and the animals went inside."],
+      [1, "What did Noach build so his family and the animals could be safe?", "An ark", ["A tall tower", "A stone house", "A raft"], "Hashem told Noach to build an ark. His family and the animals went inside."],
       [2, "After the flood, what sign did Hashem put in the sky?", "A rainbow", ["A new moon", "A flock of birds", "A bright star only"], "Hashem set a rainbow in the clouds as a promise to care for the world."],
       [3, "What did the dove bring back to Noach?", "An olive leaf", ["A fish", "A bunch of grapes", "A stick from the ark"], "The dove came back with an olive leaf. That showed the water was going down."]
     ],
@@ -56,7 +56,7 @@
     vayetzei: [
       [1, "What did Yaakov see in his dream?", "A ladder with angels going up and down", ["A boat on the sea", "A rainbow only", "A burning bush"], "Yaakov dreamed of a ladder reaching to heaven, with angels on it."],
       [2, "Which sister did Yaakov want to marry?", "Rachel", ["Sarah", "Rivkah", "Miriam"], "Yaakov loved Rachel and wanted to marry her."],
-      [3, "Who else became Yaakov's wife in this parsha?", "Leah", ["Dinah", "Bilhah only", "Chava"], "Leah became Yaakov's wife too. Rachel became his wife as well."]
+      [3, "Who else became Yaakov's wife in this parsha?", "Leah", ["Dinah", "Rivkah", "Chava"], "Leah became Yaakov's wife in this parsha, and Rachel did too."]
     ],
     vayishlach: [
       [1, "What new name did Yaakov receive?", "Yisrael", ["Avraham", "Yosef", "Yehuda"], "Yaakov's new name was Yisrael."],
@@ -115,9 +115,9 @@
       [3, "If you find a lost animal, even one that belongs to someone you do not like, what should you do?", "Bring it back", ["Keep it", "Hide it", "Send it into the sea"], "The Torah says to return a lost animal, even an enemy's animal."]
     ],
     terumah: [
-      [1, "What special place did the people build for Hashem?", "The Mishkan", ["Noach's ark", "A palace for Pharaoh", "A tower"], "The Mishkan was the holy tent where Hashem's presence rested."],
+      [1, "What special place does Terumah tell the people to make?", "The Mishkan", ["Noach's ark", "A palace for Pharaoh", "A tower"], "Terumah gives the command and the plan for the Mishkan. The building itself is told later, in Vayakhel."],
       [2, "What was the Aron, the ark, for?", "It held the tablets", ["It held food for the camels", "It was a drum", "It was Pharaoh's chair"], "The Aron was a special box for the tablets."],
-      [3, "How did the people get the things to build the Mishkan?", "They brought gifts from their hearts", ["They found them in the sea", "A king sold them", "They grew them on trees"], "People who wanted to give brought gold, cloth, and other gifts."]
+      [3, "Terumah says the gifts for the Mishkan should come from whom?", "People whose hearts want to give", ["People who find them in the sea", "A king who sells them", "Trees in the camp"], "Hashem says to take a gift from every person whose heart moves them. The people actually bring those gifts in Vayakhel."]
     ],
     tetzaveh: [
       [1, "Who was the first kohen gadol, the high priest?", "Aharon", ["Pharaoh", "Bilam", "Esav"], "Aharon, Moshe's brother, was the first kohen gadol."],
@@ -136,7 +136,7 @@
     ],
     pekudei: [
       [1, "What covered the Mishkan to show Hashem's presence?", "A cloud", ["A rainbow only", "A flock of doves", "Snow"], "A cloud rested on the Mishkan. That showed Hashem was with them."],
-      [2, "What did Moshe count in Pekudei?", "The materials of the Mishkan", ["The fish in the sea", "The stars", "Pharaoh's horses"], "Moshe counted the gold and the other gifts so everything was accounted for."],
+      [2, "Who counted the materials of the Mishkan in Pekudei?", "The Levites, under Itamar", ["The fish in the sea", "The stars", "Pharaoh's horses"], "The count was at Moshe's command. The Levites did the counting, under Itamar, Aharon's son."],
       [3, "Who set up the Mishkan when the work was finished?", "Moshe", ["Pharaoh", "Yitro", "Korach"], "Moshe set up the Mishkan, just as Hashem had said."]
     ],
     vayikra: [
@@ -157,7 +157,7 @@
     ],
     tazria: [
       [1, "On which day does the Torah say a baby boy has a brit milah?", "The eighth day", ["The first day", "The thirtieth day", "The day he turns three"], "The Torah says the brit milah is on the eighth day."],
-      [2, "If someone had a mark on the skin, who looked at it calmly?", "A kohen", ["A king of Egypt", "A hunter", "A sailor"], "The kohen looked carefully and told the person what to do."],
+      [2, "If someone had a mark on the skin, who examined it?", "A kohen", ["A king of Egypt", "A hunter", "A sailor"], "The kohen examined the mark and told the person what to do."],
       [3, "The rules about a skin mark were there so the camp could do what?", "Stay cared for and know when someone was well", ["Forget the person", "Send every person away forever", "Close the Mishkan"], "The kohen checked the mark so people knew when it was time to return."]
     ],
     metzora: [
@@ -177,7 +177,7 @@
     ],
     emor: [
       [1, "Emor lists the special days of the year. A sukkah belongs to which holiday?", "Sukkot", ["Purim", "Chanukah", "Shavuot only"], "On Sukkot we sit in a sukkah. Emor lists that holiday."],
-      [2, "Which holiday in Emor remembers leaving Egypt?", "Pesach", ["Yom Kippur", "Rosh Hashanah", "Shabbat only"], "Pesach is one of the holidays Emor tells us to keep."],
+      [2, "Emor says the sukkah helps us remember what?", "Hashem brought the people out of Egypt", ["Yom Kippur", "A market day", "Shabbat only"], "Emor says the people should know that Hashem brought them out of Egypt and had them live in sukkot."],
       [3, "Emor teaches that the holidays are days to do what?", "Come close to Hashem together", ["Forget the calendar", "Work extra hours", "Stay silent all year"], "The holidays are meeting times with Hashem."]
     ],
     behar: [
@@ -212,11 +212,11 @@
     ],
     korach: [
       [1, "What did Korach do?", "He argued with Moshe about who should lead", ["He built the ark", "He blessed the people", "He lit the menorah"], "Korach argued with Moshe and Aharon about leadership."],
-      [2, "What happened to Aharon's staff?", "It sprouted flowers and almonds", ["It turned into a snake and stayed that way", "It broke", "It became a trumpet"], "Aharon's staff budded, flowered, and grew almonds. That showed Hashem had chosen him."],
+      [2, "What happened to Aharon's staff?", "It sprouted flowers and almonds", ["It sank in the sea", "It broke", "It became a trumpet"], "Aharon's staff budded, flowered, and grew almonds. That showed Hashem had chosen him."],
       [3, "The almonds on Aharon's staff showed what?", "Hashem chose Aharon to serve as kohen", ["Korach should be king", "The people should stop Shabbat", "The staff was only a walking stick"], "Hashem made Aharon's staff blossom so everyone could see his choice."]
     ],
     chukat: [
-      [1, "Which well is remembered with Miriam?", "The well that gave the people water", ["A well of oil", "The sea", "A dry pit"], "In Miriam's merit the people had a well of water in the desert."],
+      [1, "Our Sages teach that a special well traveled with the people. In whose merit?", "Miriam", ["Pharaoh", "Bilam", "Esav"], "Our Sages teach that a well of water went with the people in Miriam's merit. The Torah tells us that after Miriam died, the people had no water."],
       [2, "What did Hashem tell Moshe to do at the rock?", "Speak to the rock", ["Hit the sea", "Build a new ark", "Leave the people"], "Hashem told Moshe to speak to the rock so it would give water."],
       [3, "Water from the rock was there so the people could do what?", "Drink", ["Build a boat", "Fill the Aron", "Put out the menorah forever"], "The people and their animals needed water to drink."]
     ],
@@ -257,7 +257,7 @@
     ],
     reeh: [
       [1, "What does Re'eh mean?", "See", ["Hear", "Journey", "Count"], "Re'eh means see. Moshe says, see, I set before you a blessing and a curse."],
-      [2, "What does Moshe tell the people to choose?", "The blessing", ["The curse", "Neither", "A golden calf"], "Choose the blessing by following Hashem."],
+      [2, "What does Moshe set before the people at the start of Re'eh?", "A blessing and a curse", ["Only a curse", "A map of the sea", "A golden calf"], "Re'eh says, See, I set before you a blessing and a curse."],
       [3, "Which holiday of booths is named among the festivals?", "Sukkot", ["Purim", "Chanukah", "A new holiday with no name"], "Re'eh tells about Pesach, Shavuot, and Sukkot."]
     ],
     shoftim: [
@@ -267,7 +267,7 @@
     ],
     "ki-teitzei": [
       [1, "If you see something your neighbor lost, what should you do?", "Return it", ["Keep it", "Hide it", "Sell it"], "The Torah says to return a lost animal or a lost object."],
-      [2, "If you see an animal that has fallen under a heavy load, what should you do?", "Help it get up", ["Walk away", "Add more weight", "Send it to the sea"], "Do not ignore it. Help the animal."],
+      [2, "If you see your neighbor's animal fallen on the road, what should you do?", "Help it get up", ["Walk away", "Add more weight", "Send it to the sea"], "Ki Teitzei says not to hide from an animal that has fallen on the road. Help it up."],
       [3, "Ki Teitzei is full of mitzvot about what?", "Everyday kindness and fairness", ["Building the ark", "The ten plagues", "The dreams of Pharaoh"], "This parsha teaches many everyday ways to be fair and kind."]
     ],
     "ki-tavo": [
@@ -291,9 +291,9 @@
       [3, "Who did Moshe call to listen to the song?", "The heavens and the earth", ["Only Pharaoh", "Only the fish", "Only the spies"], "He said, listen, heavens, and let the earth hear."]
     ],
     "vzot-haberachah": [
-      [1, "When do we read V'Zot HaBerachah?", "On Simchat Torah", ["On Purim", "On Tisha B'Av", "On a regular Monday only"], "We finish the Torah with this parsha on Simchat Torah."],
-      [2, "What did Moshe do for the tribes in this parsha?", "He blessed them", ["He sent them back to Egypt", "He counted only the animals", "He closed the book forever"], "Moshe blessed the tribes, each with kind and strong words."],
-      [3, "What did Moshe see at the end?", "The land, from far away", ["The sea splitting again", "A new golden calf", "Egypt's palace"], "Hashem showed Moshe the land. We remember him with love and start the Torah again."]
+      [1, "When do we read V'Zot HaBerachah?", "On Simchat Torah", ["On Purim", "On Tisha B'Av", "On Shmini Atzeret Shabbat"], "In the diaspora, V'Zot HaBerachah is read on Simchat Torah, the day after Shmini Atzeret. The Shabbat reading is the holiday portion in Devarim."],
+      [2, "What did Moshe do for the tribes in this parsha?", "He blessed them", ["He sent them back to Egypt", "He counted only the animals", "He closed the book forever"], "Moshe blessed the tribes. We read this on Simchat Torah, the day after Shmini Atzeret."],
+      [3, "What did Moshe see at the end?", "The land, from far away", ["The sea splitting again", "A new golden calf", "Egypt's palace"], "Hashem showed Moshe the land. We read this on Simchat Torah, then start the Torah again."]
     ],
     "rosh-hashanah": [
       [1, "What do we blow on Rosh Hashanah?", "A shofar", ["A silver trumpet from the Mishkan only", "A drum", "A flute"], "On Rosh Hashanah we hear the shofar."],
@@ -308,12 +308,12 @@
     sukkot: [
       [1, "On Sukkot, where do we eat and sit?", "In a sukkah", ["In a cave only", "On a boat", "Inside the Aron"], "A sukkah is a hut. We sit there on Sukkot."],
       [2, "Which two plants do we hold with the myrtle and the willow?", "A lulav and an etrog", ["A shofar and a dreidel", "Matzah and maror", "A menorah and a candle only"], "We hold the lulav and the etrog, together with myrtle and willow."],
-      [3, "The sukkah reminds us of what?", "The clouds and the care Hashem gave in the desert", ["The palace of Pharaoh", "The ark of Noach only", "A market day"], "Hashem cared for the people on the journey. The sukkah helps us remember."]
+      [3, "Our Sages teach that the sukkah can remind us of what?", "Clouds of glory that sheltered the people", ["The palace of Pharaoh", "The ark of Noach only", "A market day"], "The Torah says the people lived in sukkot when they left Egypt. Our Sages teach that those sukkot were clouds of glory."]
     ],
     "shmini-atzeret": [
       [1, "Shmini Atzeret comes at the end of which holiday?", "Sukkot", ["Pesach", "Purim", "Chanukah"], "After the days of Sukkot comes Shmini Atzeret, a special extra day."],
       [2, "On Shmini Atzeret we begin to pray for what?", "Rain", ["Snow in the sukkah", "A new sea", "More frogs"], "We pray for rain in its time, so the land can drink."],
-      [3, "In the diaspora, the next day is Simchat Torah. What do we do then?", "Dance with the Torah and start it again", ["Blow the shofar all night", "Build Noach's ark", "Close the Torah for a year"], "On Simchat Torah we finish the Torah, dance, and roll it back to Bereshit."]
+      [3, "In the diaspora, the next day is Simchat Torah. What do we do then?", "Dance with the Torah and start it again", ["Blow the shofar all night", "Build Noach's ark", "Close the Torah for a year"], "On Shmini Atzeret Shabbat the reading is the holiday portion in Devarim. The next day, Simchat Torah, we read V'Zot HaBerachah, dance, and start the Torah again."]
     ],
     pesach: [
       [1, "What special bread do we eat on Pesach?", "Matzah", ["Challah with raisins only", "Cake", "Bread that rose all day"], "Matzah is flat bread. It reminds us that the people left Egypt quickly."],
@@ -323,7 +323,7 @@
     shavuot: [
       [1, "What do we remember on Shavuot?", "Hashem giving the Torah", ["Noach's rainbow only", "The golden calf", "A harvest of fish"], "Shavuot is the day of the giving of the Torah at Sinai."],
       [2, "Shavuot comes after we count seven weeks from when?", "Pesach", ["Chanukah", "Purim", "Yom Kippur"], "We count seven weeks from Pesach, and then it is Shavuot."],
-      [3, "On Shavuot, a happy custom is to hear what?", "The Ten Commandments", ["The story of the golden calf only", "A list of ships", "Pharaoh's dream only"], "We hear the Ten Commandments, the words from Sinai."]
+      [3, "On the first day of Shavuot, the Torah reading is what?", "The Ten Commandments", ["The story of the golden calf only", "A list of ships", "Pharaoh's dream only"], "The Torah reading for the first day of Shavuot is the giving of the Ten Commandments at Sinai."]
     ],
     general: [
       [1, "How many books are in the Torah?", "Five", ["One", "Twelve", "Twenty-four"], "The Torah has five books: Bereshit, Shemot, Vayikra, Bamidbar, and Devarim."],

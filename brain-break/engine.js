@@ -231,7 +231,7 @@
         a = randInt(rng, 1, 8) * 10 + ones;
         check = { op: "add", a: a, b: b };
         prompt = a + " + " + b;
-        explain = "The ones make more than ten, so carry. " + a + " plus " + b + " is " + (a + b) + ".";
+        explain = "The ones make ten or more, so carry. " + a + " plus " + b + " is " + (a + b) + ".";
       } else {
         ones = randInt(rng, 0, 8);
         b = randInt(rng, ones + 1, 9);
@@ -344,12 +344,21 @@
     ["cat", "fish"],
     ["dog", "bones"],
     ["fox", "berries"],
-    ["owl", "mice"],
+    ["owl", "berries"],
     ["bear", "apples"],
-    ["frog", "flies"],
+    ["frog", "crumbs"],
     ["bird", "seeds"],
     ["bunny", "carrots"]
   ];
+
+  function noun(n, word) {
+    if (n === 1) {
+      if (word === "fish") return "fish";
+      if (word.slice(-3) === "ies") return word.slice(0, -3) + "y";
+      if (word.slice(-1) === "s") return word.slice(0, -1);
+    }
+    return word;
+  }
 
   function animal(rng) {
     return ANIMALS[randInt(rng, 0, ANIMALS.length - 1)];
@@ -374,7 +383,6 @@
     var who = animal(rng);
     var name = who[0];
     var thing = who[1];
-    var cap = name.charAt(0).toUpperCase() + name.slice(1);
     var a;
     var b;
     var c;
@@ -386,8 +394,8 @@
       a = randInt(rng, 1, 3);
       b = randInt(rng, 1, 5 - a);
       check = { op: "add", a: a, b: b };
-      prompt = "The " + name + " has " + a + " " + thing + ". The " + name + " finds " + b + " more. How many " + thing + " now?";
-      explain = a + " plus " + b + " is " + (a + b) + ". The " + name + " has " + (a + b) + " " + thing + ".";
+      prompt = "The " + name + " has " + a + " " + noun(a, thing) + ". The " + name + " finds " + b + " more. How many " + noun(a + b, thing) + " now?";
+      explain = a + " plus " + b + " is " + (a + b) + ". The " + name + " has " + (a + b) + " " + noun(a + b, thing) + ".";
     } else if (level === 2) {
       a = randInt(rng, 2, 5);
       b = randInt(rng, 1, a);
@@ -398,20 +406,20 @@
       a = randInt(rng, 2, 7);
       b = randInt(rng, 1, 10 - a);
       check = { op: "add", a: a, b: b };
-      prompt = cap + " sees " + a + " " + thing + " and then " + b + " more. How many " + thing + " in all?";
+      prompt = "The " + name + " sees " + a + " " + noun(a, thing) + " and then " + b + " more. How many " + noun(a + b, thing) + " in all?";
       explain = a + " plus " + b + " is " + (a + b) + ".";
     } else if (level === 4) {
       a = randInt(rng, 5, 10);
       b = randInt(rng, 1, a - 1);
       check = { op: "sub", a: a, b: b };
-      prompt = "There are " + a + " " + thing + ". The " + name + " eats " + b + ". How many are left?";
+      prompt = "There are " + a + " " + noun(a, thing) + ". The " + name + " eats " + b + ". How many are left?";
       explain = a + " minus " + b + " is " + (a - b) + ".";
     } else if (level === 5) {
       a = randInt(rng, 6, 9);
       b = randInt(rng, 11 - a, 8);
       if (a + b < 11) b = 11 - a;
       check = { op: "add", a: a, b: b };
-      prompt = cap + " has " + a + " " + thing + ". A friend brings " + b + " more. How many now?";
+      prompt = "The " + name + " has " + a + " " + noun(a, thing) + ". A friend brings " + b + " more. How many now?";
       explain = a + " plus " + b + " crosses ten. The answer is " + (a + b) + ".";
     } else if (level === 6) {
       var tens = randInt(rng, 2, 6);
@@ -420,14 +428,14 @@
       if (ones + b > 9) b = 9 - ones;
       a = tens * 10 + ones;
       check = { op: "add", a: a, b: b };
-      prompt = "The " + name + " collects " + a + " " + thing + ", then finds " + b + " more. How many is that?";
+      prompt = "The " + name + " collects " + a + " " + noun(a, thing) + ", then finds " + b + " more. How many is that?";
       explain = a + " plus " + b + " is " + (a + b) + ".";
     } else if (level === 7) {
       ones = randInt(rng, 0, 4);
       b = randInt(rng, ones + 2, 9);
       a = randInt(rng, 3, 8) * 10 + ones;
       check = { op: "sub", a: a, b: b };
-      prompt = cap + " has " + a + " " + thing + " and shares " + b + ". How many are left?";
+      prompt = "The " + name + " has " + a + " " + noun(a, thing) + " and gives away " + b + ". How many are left?";
       explain = "Regroup a ten. " + a + " minus " + b + " is " + (a - b) + ".";
     } else {
       var groups = randInt(rng, 3, 6);
@@ -436,8 +444,8 @@
       check = { op: "mulsub", groups: groups, each: each, minus: minus };
       var total = groups * each;
       prompt =
-        "There are " + groups + " baskets. Each basket has " + each + " " + thing + ". The " + name +
-        " eats " + minus + ". How many " + thing + " are left?";
+        "There are " + groups + " baskets. Each basket has " + each + " " + noun(each, thing) + ". The " + name +
+        " eats " + minus + ". How many " + noun(total - minus, thing) + " are left?";
       explain = groups + " groups of " + each + " make " + total + ". Then " + total + " minus " + minus + " is " + (total - minus) + ".";
     }
 
@@ -462,6 +470,7 @@
     });
     if (pool.length < 3) pool = vocab.filter(function (word) { return word.level <= 1; });
     var choiceCount = hebrew ? 3 : 4;
+    var avoid = { bird: "dove", dove: "bird" };
     var correct = pool[randInt(rng, 0, pool.length - 1)];
     var used = {};
     used[correct[to]] = true;
@@ -470,6 +479,7 @@
     while (choices.length < choiceCount && guard < 80) {
       guard += 1;
       var other = pool[randInt(rng, 0, pool.length - 1)];
+      if (avoid[correct.id] === other.id) continue;
       if (!used[other[to]]) {
         used[other[to]] = true;
         choices.push(other[to]);

@@ -42,7 +42,7 @@
       "shmini-atzeret",
       "vzot-haberachah"
     ],
-    "title": "Shmini Atzeret"
+    "title": "Shmini Atzeret. V'Zot HaBerachah is read the next day, on Simchat Torah"
   },
   {
     "date": "2026-10-10",
@@ -486,7 +486,7 @@
       "shmini-atzeret",
       "vzot-haberachah"
     ],
-    "title": "Shmini Atzeret"
+    "title": "Shmini Atzeret. V'Zot HaBerachah is read the next day, on Simchat Torah"
   },
   {
     "date": "2027-10-30",
