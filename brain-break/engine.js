@@ -58,6 +58,54 @@
     return clampLevel((Number(storedLevel) || 1) + gameNudge(gameLevel), max);
   }
 
+  var TEST_SUBJECTS = {
+    math: "math",
+    verbal: "words",
+    english: "translate",
+    hebrew: "translate",
+    russian: "translate",
+    parsha: "parsha"
+  };
+
+  function mapTestLevel(testLevel, max) {
+    var t = Math.round(Number(testLevel) || 1);
+    if (t < 1) t = 1;
+    if (t > 10) t = 10;
+    return clampLevel(Math.round(1 + (t - 1) * (max - 1) / 9), max);
+  }
+
+  function seedPlan(testLevels) {
+    var groups = { math: [], words: [], translate: [], parsha: [] };
+    var source = testLevels || {};
+    Object.keys(TEST_SUBJECTS).forEach(function (name) {
+      if (source[name] == null || source[name] === "") return;
+      var n = Number(source[name]);
+      if (isNaN(n)) return;
+      groups[TEST_SUBJECTS[name]].push(n);
+    });
+    var plan = {};
+    Object.keys(groups).forEach(function (subject) {
+      var list = groups[subject];
+      if (!list.length) return;
+      var sum = 0;
+      list.forEach(function (n) { sum += n; });
+      plan[subject] = mapTestLevel(Math.round(sum / list.length), MAX[subject]);
+    });
+    return plan;
+  }
+
+  function applySeed(kidState, plan) {
+    Object.keys(plan || {}).forEach(function (subject) {
+      if (!kidState[subject]) return;
+      kidState[subject].level = clampLevel(plan[subject], MAX[subject]);
+      kidState[subject].placed = true;
+      kidState[subject].streak = 0;
+      kidState[subject].missStreak = 0;
+      if ((kidState[subject].correctCount || 0) < 3) kidState[subject].correctCount = 3;
+    });
+    return kidState;
+  }
+
   function freshSubject(level) {
     return { level: level, streak: 0, missStreak: 0, placed: false, correctCount: 0 };
   }
@@ -684,7 +732,10 @@
     readingFromHebcalItems: readingFromHebcalItems,
     clampLevel: clampLevel,
     gameNudge: gameNudge,
-    effectiveLevel: effectiveLevel
+    effectiveLevel: effectiveLevel,
+    mapTestLevel: mapTestLevel,
+    seedPlan: seedPlan,
+    applySeed: applySeed
   };
 
   if (typeof module !== "undefined" && module.exports) {

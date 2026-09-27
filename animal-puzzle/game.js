@@ -17,6 +17,9 @@
   var message = "Tap a box. Then tap a letter or a number.";
   var justSolved = false;
   var levelEnding = false;
+  var hintFlash = null;
+  var hintTimer = 0;
+  var hintBusy = false;
 
   function afterLevel(won, next) {
     if (levelEnding) return;
@@ -308,6 +311,7 @@
     }
     selected = null;
     justSolved = false;
+    clearFlash();
     message = isSolved(current, cells)
       ? "You already solved this one!"
       : "Tap a box. Then tap a letter or a number.";
@@ -376,49 +380,74 @@
     render();
   }
 
-  function hint() {
-    var current = puzzle();
-    if (isSolved(current, cells)) {
-      return;
-    }
+  function hintIndex(current) {
     var empties = [];
     var i;
     for (i = 0; i < cells.length; i++) {
-      if (!cells[i]) {
-        empties.push(i);
-      }
+      if (!cells[i]) empties.push(i);
     }
-    if (!empties.length) {
+    if (!empties.length) return null;
+    for (i = 0; i < empties.length; i++) {
+      if (optionsFor(current, cells, empties[i]).length === 1) return empties[i];
+    }
+    var onClue = {};
+    current.clues.forEach(function (clue) {
+      clueIndexes(current, clue).forEach(function (index) {
+        onClue[index] = true;
+      });
+    });
+    for (i = 0; i < empties.length; i++) {
+      if (onClue[empties[i]]) return empties[i];
+    }
+    return empties[0];
+  }
+
+  function clearFlash() {
+    window.clearTimeout(hintTimer);
+    hintFlash = null;
+  }
+
+  function showFlash(index, symbol) {
+    clearFlash();
+    hintFlash = { index: index, symbol: symbol };
+    var left = window.KidsStars ? KidsStars.lastBalance() : null;
+    message = "Watch the glowing box!" + (left == null ? "" : " Stars left: " + left + ".");
+    render();
+    hintTimer = window.setTimeout(function () {
+      if (!hintFlash || hintFlash.index !== index) return;
+      hintFlash = null;
+      message = "That box can be " + symbol + ".";
+      render();
+    }, 1300);
+  }
+
+  function hint() {
+    var current = puzzle();
+    if (hintBusy || justSolved || isSolved(current, cells)) return;
+    if (hintIndex(current) == null) return;
+    if (!window.KidsStars) {
+      message = "Stars are waking up...";
+      render();
       return;
     }
-    var choice = null;
-    for (i = 0; i < empties.length; i++) {
-      if (optionsFor(current, cells, empties[i]).length === 1) {
-        choice = empties[i];
-        break;
+    hintBusy = true;
+    message = "Checking stars...";
+    render();
+    window.KidsStars.spend({ reason: "hint", item: "animal-puzzle" }).then(function (res) {
+      hintBusy = false;
+      if (res.ok) {
+        var index = hintIndex(puzzle());
+        if (index == null) return;
+        showFlash(index, puzzle().solution[index]);
+        return;
       }
-    }
-    if (choice === null) {
-      var onClue = {};
-      current.clues.forEach(function (clue) {
-        clueIndexes(current, clue).forEach(function (index) {
-          onClue[index] = true;
-        });
-      });
-      for (i = 0; i < empties.length; i++) {
-        if (onClue[empties[i]]) {
-          choice = empties[i];
-          break;
-        }
+      if (res.error === "not_enough_stars") {
+        message = "Not enough stars. A hint costs 5. You have " + res.balance + ".";
+      } else {
+        message = window.KidsStars.messageFor(res);
       }
-    }
-    if (choice === null) {
-      choice = empties[0];
-    }
-    cells[choice] = current.solution[choice];
-    selected = choice;
-    message = "Here is a little help!";
-    afterMove(current);
+      render();
+    });
   }
 
   function resetLevel() {
@@ -426,6 +455,7 @@
     cells = current.givens.slice();
     selected = null;
     justSolved = false;
+    clearFlash();
     message = "All clear. You can try again!";
     saveProgress();
     render();
@@ -599,6 +629,12 @@
           if (current.word.indexOf(cells[index]) === -1) {
             button.classList.add("num");
           }
+        } else if (hintFlash && hintFlash.index === index) {
+          button.textContent = hintFlash.symbol;
+          button.classList.add("flash");
+          if (current.word.indexOf(hintFlash.symbol) === -1) {
+            button.classList.add("num");
+          }
         }
         if (isGiven(current, index)) {
           button.classList.add("given");
@@ -665,7 +701,7 @@
 
     var actions = document.createElement("div");
     actions.className = "actions";
-    actions.appendChild(makeAction("Hint", "hint", hint));
+    actions.appendChild(makeAction("Hint (5 stars)", "hint", hint));
     actions.appendChild(makeAction("Reset", "reset", function () {
       var current = puzzle();
       if (justSolved || isSolved(current, cells)) {

@@ -14,6 +14,7 @@
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="css/site.css">
+  <link rel="stylesheet" href="questions/ask.css">
 </head>
 <body class="home">
   <div class="sky" aria-hidden="true">
@@ -24,9 +25,11 @@
   </div>
   <main class="wrap">
     <header class="hero">
+      <p class="starbar" id="starbar">★</p>
       <p class="hello">Hello, Joyce!</p>
       <h1>Joyce's Web</h1>
       <p class="tag">Tap a game to play.</p>
+      <p class="star-ask">Ask Sofie in the chat for a new game: 20 stars</p>
     </header>
     <section id="game-list" class="game-list" aria-label="Games"></section>
     <ul class="parade" aria-hidden="true">
@@ -45,14 +48,14 @@
     <details class="parent-note">
       <summary>For parents</summary>
       <p>Brain Breaks are short learning pauses instead of ads. At the end of every level, whether Joyce finishes it or starts it over, she or Miriam answers a few questions: math, word problems, English, Russian, and Hebrew words, and the weekly Torah portion. Questions get a little harder as the game level goes up. Each child has her own level, saved on this iPad. They can switch players on the break screen.</p>
-      <p>The 💬 bubble lets Joyce chat with Sofie, her Grok Bot. It asks for the family code once on this iPad, and only Sofie can answer.</p>
+      <p>The 💬 bubble lets Joyce chat with Sofie, her Grok Bot. It asks for the family code once on this iPad, and only Sofie can answer. After that, stars can be earned in Practice and spent on hints. A new game from Sofie costs 20 stars.</p>
+      <p>Treasure Map finds a level for math, reading, English, Hebrew, Russian, and Parsha. Those levels are saved for Brain Breaks. She can quit and come back, or retake a subject anytime.</p>
     </details>
   </footer>
   <script src="games.js"></script>
   <script src="js/home.js"></script>
-  <script>
-    window.KIDS_CHAT = { kid: "joyce", kidName: "Joyce", botName: "Sofie", botEmoji: "🦊", functionsUrl: "https://btrvclzpgilavyzmlhnz.supabase.co/functions/v1" };
-  </script>
+  <script src="js/kid-config.js"></script>
+  <script src="stars/stars.js"></script>
   <script src="chat/chat.js" defer></script>
 </body>
 </html>

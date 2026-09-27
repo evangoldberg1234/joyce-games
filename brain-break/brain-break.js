@@ -441,8 +441,20 @@
       return "Torah portion";
     }
 
+    function seedFromLevelTest(opts) {
+      opts = opts || {};
+      var name = opts.kid;
+      if (name !== "joyce" && name !== "miriam") return { kid: name || "", plan: {}, skipped: true };
+      var plan = window.BBEngine.seedPlan(opts.levels || {});
+      window.BBEngine.applySeed(kid(name), plan);
+      if (!state.player) state.player = name;
+      save();
+      return { kid: name, plan: plan };
+    }
+
     return {
-      levelEnd: levelEnd
+      levelEnd: levelEnd,
+      seedFromLevelTest: seedFromLevelTest
     };
   }
 
@@ -499,6 +511,17 @@
             return;
           }
           session.levelEnd(opts).then(resolve, resolve);
+        });
+      });
+    },
+    seedFromLevelTest: function (opts) {
+      return new Promise(function (resolve) {
+        whenReady(function () {
+          if (!session) {
+            resolve({ plan: {}, skipped: true });
+            return;
+          }
+          resolve(session.seedFromLevelTest(opts));
         });
       });
     }
