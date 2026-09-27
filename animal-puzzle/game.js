@@ -17,6 +17,9 @@
   var message = "Tap a box. Then tap a letter or a number.";
   var justSolved = false;
   var levelEnding = false;
+  var hintFlash = null;
+  var hintTimer = 0;
+  var hintBusy = false;
 
   function afterLevel(won, next) {
     if (levelEnding) return;
@@ -308,6 +311,7 @@
     }
     selected = null;
     justSolved = false;
+    clearFlash();
     message = isSolved(current, cells)
       ? "You already solved this one!"
       : "Tap a box. Then tap a letter or a number.";
@@ -376,49 +380,99 @@
     render();
   }
 
-  function hint() {
-    var current = puzzle();
-    if (isSolved(current, cells)) {
-      return;
-    }
+  function hintIndex(current) {
     var empties = [];
     var i;
     for (i = 0; i < cells.length; i++) {
-      if (!cells[i]) {
-        empties.push(i);
-      }
+      if (!cells[i]) empties.push(i);
     }
-    if (!empties.length) {
+    if (!empties.length) return null;
+    for (i = 0; i < empties.length; i++) {
+      if (optionsFor(current, cells, empties[i]).length === 1) return empties[i];
+    }
+    var onClue = {};
+    current.clues.forEach(function (clue) {
+      clueIndexes(current, clue).forEach(function (index) {
+        onClue[index] = true;
+      });
+    });
+    for (i = 0; i < empties.length; i++) {
+      if (onClue[empties[i]]) return empties[i];
+    }
+    return empties[0];
+  }
+
+  function clearFlash() {
+    window.clearTimeout(hintTimer);
+    hintFlash = null;
+  }
+
+  function showFlash(index, symbol) {
+    clearFlash();
+    hintFlash = { index: index, symbol: symbol };
+    var left = starsOn() && window.KidsStars ? KidsStars.lastBalance() : null;
+    message = "Watch the glowing box!" + (left == null ? "" : " Stars left: " + left + ".");
+    render();
+    hintTimer = window.setTimeout(function () {
+      if (!hintFlash || hintFlash.index !== index) return;
+      hintFlash = null;
+      message = "That box can be " + symbol + ".";
+      render();
+    }, 1300);
+  }
+
+  function starsOn() {
+    var feats = window.KIDS_SETTINGS && window.KIDS_SETTINGS.features;
+    if (feats) return !!feats.stars;
+    var cfg = window.KIDS_CHAT || {};
+    return !!String(cfg.functionsUrl || "") && cfg.stars !== false;
+  }
+
+  function hintCost() {
+    var prices = window.KIDS_SETTINGS && window.KIDS_SETTINGS.starPrices;
+    if (prices && typeof prices.animalPuzzleHint === "number") return prices.animalPuzzleHint;
+    if (window.KidsStars && typeof KidsStars.HINT_COST === "number") return KidsStars.HINT_COST;
+    return 5;
+  }
+
+  function hintLabel() {
+    if (!starsOn()) return "Hint";
+    return "Hint (" + hintCost() + " stars)";
+  }
+
+  function childName() {
+    return (window.KIDS_CHAT && window.KIDS_CHAT.kidName) || "friend";
+  }
+
+  function hint() {
+    var current = puzzle();
+    if (hintBusy || justSolved || isSolved(current, cells)) return;
+    if (hintIndex(current) == null) return;
+    if (!starsOn()) {
+      var freeIndex = hintIndex(current);
+      if (freeIndex == null) return;
+      showFlash(freeIndex, current.solution[freeIndex]);
       return;
     }
-    var choice = null;
-    for (i = 0; i < empties.length; i++) {
-      if (optionsFor(current, cells, empties[i]).length === 1) {
-        choice = empties[i];
-        break;
+    if (!window.KidsStars) {
+      message = "Stars are waking up...";
+      render();
+      return;
+    }
+    hintBusy = true;
+    message = "Checking stars...";
+    render();
+    window.KidsStars.spend({ reason: "hint", item: "animal-puzzle" }).then(function (res) {
+      hintBusy = false;
+      if (res.ok) {
+        var index = hintIndex(puzzle());
+        if (index == null) return;
+        showFlash(index, puzzle().solution[index]);
+        return;
       }
-    }
-    if (choice === null) {
-      var onClue = {};
-      current.clues.forEach(function (clue) {
-        clueIndexes(current, clue).forEach(function (index) {
-          onClue[index] = true;
-        });
-      });
-      for (i = 0; i < empties.length; i++) {
-        if (onClue[empties[i]]) {
-          choice = empties[i];
-          break;
-        }
-      }
-    }
-    if (choice === null) {
-      choice = empties[0];
-    }
-    cells[choice] = current.solution[choice];
-    selected = choice;
-    message = "Here is a little help!";
-    afterMove(current);
+      message = window.KidsStars.messageFor(res);
+      render();
+    });
   }
 
   function resetLevel() {
@@ -426,6 +480,7 @@
     cells = current.givens.slice();
     selected = null;
     justSolved = false;
+    clearFlash();
     message = "All clear. You can try again!";
     saveProgress();
     render();
@@ -460,7 +515,7 @@
     var solved = loadSolved();
     var intro = document.createElement("p");
     intro.className = "picker-intro";
-    intro.textContent = "Hi Joyce! Pick an animal.";
+    intro.textContent = "Hi " + childName() + "! Pick an animal.";
     app.appendChild(intro);
 
     var grid = document.createElement("div");
@@ -599,6 +654,12 @@
           if (current.word.indexOf(cells[index]) === -1) {
             button.classList.add("num");
           }
+        } else if (hintFlash && hintFlash.index === index) {
+          button.textContent = hintFlash.symbol;
+          button.classList.add("flash");
+          if (current.word.indexOf(hintFlash.symbol) === -1) {
+            button.classList.add("num");
+          }
         }
         if (isGiven(current, index)) {
           button.classList.add("given");
@@ -665,7 +726,7 @@
 
     var actions = document.createElement("div");
     actions.className = "actions";
-    actions.appendChild(makeAction("Hint", "hint", hint));
+    actions.appendChild(makeAction(hintLabel(), "hint", hint));
     actions.appendChild(makeAction("Reset", "reset", function () {
       var current = puzzle();
       if (justSolved || isSolved(current, cells)) {
@@ -713,7 +774,7 @@
     sheet.className = "sheet";
     sheet.innerHTML =
       "<h2>How to play</h2>" +
-      "<p>Hi Joyce! This is a crossword and a Sudoku.</p>" +
+      "<p>Hi " + childName().replace(/[&<>]/g, "") + "! This is a crossword and a Sudoku.</p>" +
       "<ol>" +
       "<li>Tap an empty box.</li>" +
       "<li>Tap a letter or a number.</li>" +

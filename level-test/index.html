@@ -6,33 +6,38 @@
   <meta name="format-detection" content="telephone=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Joyce's Web">
   <meta name="theme-color" content="#2b86f0">
-  <title>Animal Puzzle · Joyce's Web</title>
+  <title>Treasure Map</title>
   <link rel="icon" href="../apple-touch-icon.png">
   <link rel="apple-touch-icon" href="../apple-touch-icon.png">
-  <link rel="manifest" href="../manifest.webmanifest">
   <link rel="stylesheet" href="../css/site.css">
-  <link rel="stylesheet" href="game.css">
-  <link rel="stylesheet" href="../brain-break/brain-break.css">
+  <link rel="stylesheet" href="../questions/ask.css">
 </head>
-<body class="game" data-page="Animal Puzzle">
+<body class="game quest-page">
   <div class="sky" aria-hidden="true">
     <div class="sun"></div>
     <div class="cloud cloud-a"></div>
     <div class="cloud cloud-b"></div>
   </div>
-  <header class="topbar">
-    <a class="home-link" href="../index.html" data-site-link>← Joyce's Web</a>
-    <p class="game-name">Animal Puzzle</p>
-    <button type="button" id="howto-btn" class="how-btn">How to play</button>
+  <header class="quest-top">
+    <a class="home-link" href="../index.html">← Home</a>
+    <p class="game-name">Treasure Map</p>
+    <p class="starbar" id="starbar" data-needs="stars">★</p>
   </header>
-  <main id="app" class="app"></main>
+  <main id="app" class="quest-app"></main>
   <script src="../settings.js"></script>
-  <script src="puzzles.js"></script>
+  <script src="../questions/math.js"></script>
+  <script src="../questions/verbal.js"></script>
+  <script src="../questions/english.js"></script>
+  <script src="../questions/hebrew.js"></script>
+  <script src="../questions/russian.js"></script>
+  <script src="../questions/parsha.js"></script>
+  <script src="../questions/bank.js"></script>
+  <script src="../questions/ask.js"></script>
+  <script src="staircase.js"></script>
+  <script src="store.js"></script>
   <script src="../brain-break/brain-break.js"></script>
   <script src="../stars/stars.js"></script>
-  <script src="game.js"></script>
+  <script src="level-test.js"></script>
 </body>
 </html>

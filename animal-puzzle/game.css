@@ -354,6 +354,10 @@
   background: #d9f5d0;
 }
 
+.cell.flash {
+  background: #fff3a0;
+}
+
 .action.reset {
   background: #ffe7c2;
 }

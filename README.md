@@ -19,6 +19,10 @@ python3 animal-puzzle/puzzle_tool.py verify
 1. Make a new folder with its own `index.html`.
 2. Add one object to the list in `games.js`.
 
+## Treasure Map and stars
+
+Treasure Map (`level-test/`) finds a level in math, verbal, English, Hebrew, Russian, and Parsha, then seeds Brain Breaks and saves those levels on the star server. Practice (`practice/`) asks more questions at that level. A right answer can earn one star, up to 100 a day. Animal Puzzle hints cost 5 stars. Asking Sofie for a new game costs 20 stars, and that charge happens in the chat. The shared pieces are `questions/`, `level-test/`, `practice/`, and `stars/`. Book Club (`books/`) lets her log a finished book. The quiz happens in the chat. A long book can earn 20 stars. Homework (`homework/`) checks a photo of one worksheet. The check can take about a minute. A sheet can earn up to 10 stars, and homework stars stop at 20 for the day.
+
 ## Brain Breaks
 
 Brain Breaks are a short set of questions at the end of every level, instead of an ad. There is no timer. The module lives in `brain-break/` and is meant to be copied into another site unchanged. See `brain-break/README.md` for the full game-author notes.
@@ -47,3 +51,20 @@ Joyce and Miriam each have saved levels for math, word problems, word match (Eng
 ```bash
 node brain-break/test.js
 ```
+
+## Safety rules
+
+Stars and prices are enforced on the server only. The site can show a balance the server sent. It cannot grant stars. Editing `settings.js` or the data saved on the iPad cannot create stars. The chat cannot change settings. Only a parent can change settings, by editing `settings.js`.
+
+## Set this up for your own kids
+
+You can make a copy of this site for your own child.
+
+1. On GitHub, open this project and click **Fork**. That makes your own copy.
+2. Delete the `CNAME` file, or replace what is inside it with your own web address. That file points at Joyce's website. A fork should remove it, or use its own domain.
+3. Open `settings.js`. Change the name, age, grade, subjects, and languages. That is the only file that is different for each child. Leave the game folders as they are.
+4. Turn on GitHub Pages. Go to **Settings**, then **Pages**, then **Deploy from a branch**. Choose branch `main` and the `/` (root) folder.
+
+Your site will show up at `https://<username>.github.io/<repo>/`.
+
+Chat and stars are optional. The games work fine without them. A backend can be self-hosted later if you want chat and stars. See [BACKEND.md](BACKEND.md). This project does not include any passwords or secret keys.
