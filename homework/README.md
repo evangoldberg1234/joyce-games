@@ -20,7 +20,7 @@ Returns `{ ok, sheet_id, status: "checking" }`. HTTP 409 `duplicate` is the same
 
 `{ token, kid, action: "status", sheet_id }`
 
-Returns `{ status: "checking"|"checked"|"retake"|"not_homework", problems: [{ n, correct, hint }], message, stars_earned, balance }`. The page polls every 5 seconds while it is open. A check usually takes about a minute. The checking screen rotates encouraging lines, including "Looking at problem 1…" and "Sharpening my pencil…", and says "You can also chat with me about it 💬".
+Returns `{ status: "checking"|"checked"|"retake"|"not_homework", problems: [{ n, correct, hint }], message, stars_earned, balance, sheet_stars_total, sheet_cap, daily_remaining, reason }`. A finished check includes `sheet_stars_total`, `sheet_cap` (10), and `daily_remaining`. A retake includes `reason`. The page polls every 5 seconds while it is open. A check usually takes about a minute. The checking screen rotates encouraging lines, including "Looking at problem 1…" and "Sharpening my pencil…", and says "You can also chat with me about it 💬".
 
 The pending `sheet_id` is stored at `kidsHomework.<kid>.pending`. Coming back to Homework resumes polling. After about 5 minutes the page says "Still checking — I'll tell you in the chat bubble too!" and offers a way home. Polling continues if she stays.
 
@@ -28,7 +28,7 @@ The pending `sheet_id` is stored at `kidsHomework.<kid>.pending`. Coming back to
 
 Returns `{ ok, sheets: [{ date, status, score, stars }] }`. The Homework screen shows "My homework" with the date, score, stars, and a status icon.
 
-When `message` is present, that is the sentence on the screen, and it is read aloud. The page does not add up stars itself. After the result it calls `KidsChat.setStars(balance)` when that hook exists. One star per correct problem, at most 10 across resubmits of a sheet, and 20 homework stars a day, are the server's rules.
+When `message` is present, that sentence is shown and read aloud. When `sheet_stars_total` is at least `sheet_cap`, the page adds "That's the most stars for one sheet (10) — amazing work!" When `daily_remaining` is 0, it adds "You've earned all 20 homework stars today! Your answers are still checked." A retake shows `reason`, or the default retake sentence when `reason` is absent. Upload still sends `image_base64` and `resubmit_of`. The page does not add up stars itself. After the result it calls `KidsChat.setStars(balance)` when that hook exists.
 
 Other errors match the star ledger: HTTP 401 `locked`, `bad_token`, and `token_expired` mean locked. HTTP 403 `no_passcode_yet` or `origin_not_allowed`. HTTP 429 `slow_down` (one retry after `retry_after`) or `daily_cap`. HTTP 503 `not_configured`. HTTP 500 `server_error`. Anything else, including a photo the server rejects as too large, uses the generic waking-up line.
 

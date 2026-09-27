@@ -7,7 +7,6 @@
 (function () {
   var ORDER = ["checked", "retake", "duplicate", "not_homework", "cap", "slow"];
   var MOCK_READY = 6000;
-  var RETAKE = "I couldn't read that clearly. Try again with good light, the whole page in the picture, and hold still.";
   var NOT_HOMEWORK = "Hmm, that doesn't look like a worksheet.";
   var DAILY = "You've earned all 20 homework stars today! Your answers are still checked.";
   var mockReadyAt = 0;
@@ -77,7 +76,7 @@
 
   function mockResult(kind, id) {
     if (kind === "retake") {
-      return { ok: true, status: "retake", sheet_id: id, message: RETAKE, stars_earned: 0, balance: 20, mock: true };
+      return { ok: true, status: "retake", sheet_id: id, stars_earned: 0, balance: 20, mock: true };
     }
     if (kind === "not_homework") {
       return { ok: true, status: "not_homework", sheet_id: id, message: NOT_HOMEWORK, stars_earned: 0, balance: 20, mock: true };
@@ -95,6 +94,9 @@
         ],
         stars_earned: 0,
         balance: 40,
+        sheet_stars_total: 8,
+        sheet_cap: 10,
+        daily_remaining: 0,
         mock: true
       };
     }
@@ -107,6 +109,9 @@
         problems: problems(10),
         stars_earned: 2,
         balance: 29,
+        sheet_stars_total: 10,
+        sheet_cap: 10,
+        daily_remaining: 11,
         mock: true
       };
     }
@@ -118,6 +123,9 @@
       problems: problems(8),
       stars_earned: 7,
       balance: 27,
+      sheet_stars_total: 7,
+      sheet_cap: 10,
+      daily_remaining: 13,
       mock: true
     };
   }

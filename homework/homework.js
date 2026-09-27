@@ -135,6 +135,31 @@
     return "Stars are waking up...";
   }
 
+  function sheetCapLine(cap) {
+    return "That's the most stars for one sheet (" + cap + ") — amazing work!";
+  }
+
+  function resultLines(res) {
+    var lines = [];
+    function add(text) {
+      if (!text || lines.indexOf(text) !== -1) return;
+      lines.push(text);
+    }
+    if (res.message) add(String(res.message));
+    if (typeof res.daily_remaining === "number" && res.daily_remaining === 0) add(DAILY);
+    else if (!res.message && res.error === "daily_cap") add(DAILY);
+    if (typeof res.sheet_cap === "number" && typeof res.sheet_stars_total === "number" && res.sheet_stars_total >= res.sheet_cap) {
+      add(sheetCapLine(res.sheet_cap));
+    }
+    if (!lines.length) add("I checked your worksheet.");
+    return lines;
+  }
+
+  function retakeText(res) {
+    if (res && res.reason) return String(res.reason);
+    return RETAKE;
+  }
+
   function anyWrong(problems) {
     var wrong = false;
     (problems || []).forEach(function (problem) {
@@ -411,19 +436,24 @@
     clearPending();
     if (res.sheet_id) sheetId = String(res.sheet_id);
     var earned = typeof res.stars_earned === "number" ? res.stars_earned : 0;
-    var line = res.message ? String(res.message) : (res.error === "daily_cap" ? DAILY : "I checked your worksheet.");
+    var lines = resultLines(res);
     var problems = res.problems || [];
     clearApp();
     app.setAttribute("data-screen", "results");
-    if (line === DAILY || res.error === "daily_cap") app.setAttribute("data-cap", "daily");
+    if (lines.indexOf(DAILY) !== -1) app.setAttribute("data-cap", "daily");
     else app.removeAttribute("data-cap");
+    if (typeof res.sheet_cap === "number" && typeof res.sheet_stars_total === "number" && res.sheet_stars_total >= res.sheet_cap) {
+      app.setAttribute("data-sheet-cap", "1");
+    } else app.removeAttribute("data-sheet-cap");
     app.setAttribute("data-earned", String(earned));
 
-    var title = el("h1", "hw-title", line);
-    title.setAttribute("role", "status");
-    app.appendChild(title);
-    var hear = hearButton(line, "Hear it");
-    if (hear) app.appendChild(hear);
+    lines.forEach(function (line, index) {
+      var node = el(index === 0 ? "h1" : "p", index === 0 ? "hw-title" : "hw-lead", line);
+      if (index === 0) node.setAttribute("role", "status");
+      app.appendChild(node);
+      var hear = hearButton(line, "Hear it");
+      if (hear) app.appendChild(hear);
+    });
 
     if (problems.length) {
       var list = document.createElement("ol");
@@ -454,7 +484,7 @@
       app.appendChild(shootLabel("Take a photo of your worksheet", false));
     }
 
-    speak(line);
+    speak(lines.join(" "));
     if (earned > 0) flyStars(Math.min(earned, 12), res.balance);
     else if (window.KidsStars && KidsStars.applyStars) KidsStars.applyStars(res.balance);
   }
@@ -477,7 +507,7 @@
       return;
     }
     if (res && res.status === "retake") {
-      showStatus("retake", res.message ? String(res.message) : RETAKE);
+      showStatus("retake", retakeText(res));
       return;
     }
     if (res && (res.status === "duplicate" || res.error === "duplicate" || res.error === "near_duplicate")) {
