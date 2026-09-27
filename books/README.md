@@ -1,38 +1,40 @@
 # Book Club
 
-A child types a book she has read. A long book can earn 20 stars after she talks about it in the chat. This page does not give a quiz. Copy this folder onto another site and set `window.KIDS_CHAT` before the scripts. Load `chat/chat.js` on the same page so the bubble is there. Do not edit `chat.js`.
+A child finds a book she finished, retells it in two or three sentences, and answers a short quiz on this page. A long enough book can earn 20 stars. Copy this folder onto another site and set `window.KIDS_CHAT` before the scripts. All requests live in `client.js`.
 
-The "Tell … in the chat" button clicks `.kc-fab`, the chat bubble.
+There is no chat step in the quiz. A 401 still means the device is locked: the page says to ask a grown-up to open the chat bubble and enter the family code.
 
 ## Calls
 
-All requests live in `client.js`.
-
 `POST ${functionsUrl}/kid-books` with `token` and `kid`.
 
-- `{ token, kid, action: "lookup", title, author }` → `{ ok, results: [{ work_id, title, author, cover_url, pages, pages_source }] }`. The page shows at most 5 cards. A missing cover gets a placeholder. Pages may be null.
-- `{ token, kid, action: "start", work_id }` → `{ ok, status, pages, min_pages, message, book_id }`.
-- `{ token, kid, action: "list" }` → `{ ok, books: [{ title, author, pages, status, date, score }] }`. `cover_url` is optional.
+- `lookup` `{ title, author? }` → `{ candidates: [{ work_id, title, author, pages, cover_url, year, eligible }] }`. At most 5 cards. `eligible: false` is below her page minimum (50 unless the server says otherwise). That card is grey, with "This one is a bit short for stars, but reading is always great!", and it cannot be sent.
+- `submit` `{ work_id, retelling }` → `{ read_id, status: "awaiting_quiz" }`. The retelling must be 60–1000 characters. HTTP 409 `already_read` shows "You already did this book! 🌟" unless the server sent `message`.
+- `status` `{ read_id }` is polled every 5 seconds.
+  - `awaiting_quiz` — keep waiting. After about 3 minutes, she can come back from My Bookshelf.
+  - `quiz_ready` — `questions: [{ q, choices }]` with 4 choices each. The page asks one at a time. A Hear it button shows when the device has an English voice.
+  - `pending_review` — a grown-up needs to check it. Stars come after they say OK.
+  - `passed` or `failed` — show that result.
+- `answer` `{ read_id, answers: [5 choice indexes] }` → `{ score, passed, balance }`. A pass celebrates +20 stars. A fail is kind and offers one more try (2 attempts total). After the first fail, the page polls `status` again in case a new quiz was made.
+- `list` → her books with `status`, `score`, and `date`. `work_id`, `read_id`, and `cover_url` are used when the server sends them. Tapping `awaiting_quiz` or `quiz_ready` resumes that book. `read_id` is also stored in `localStorage` under `books.reads.<kid>`.
 
-`status` from start:
-
-- `check` — show the server `message` when it has one, and a button that opens the chat bubble.
-- `too_short` — show the server `message`.
-- `already_paid` — "You already got your stars for this book! 🌟" unless the server sent a message.
-- `pages_unknown` or `in_progress` — show the server `message`.
-
-The page always prefers `message` when the server sends one.
-
-Shelf labels: `earned` / `paid` → "Earned 20 ⭐", `waiting` → "Waiting for a grown-up", `check` / `in_progress` → "Still checking", `too_short` → "Too short".
-
-Any HTTP 401 means locked: "Ask a grown-up to unlock" and a button that opens the chat bubble. HTTP 404 or a network failure shows "Book Club is waking up...".
+Any HTTP 401 is locked. HTTP 404 or a network failure shows "Book Club is waking up...".
 
 ## Mock
 
-`?starsmock=1` skips the server. Lookup returns five pretend books, including Dear Zoo (too short) and one book with no cover. Starting Charlotte's Web is the check state.
+`?starsmock=1` skips the server.
+
+- Dear Zoo is too short.
+- Charlotte's Web can pass (each correct choice is the first one).
+- The Boxcar Children fails the first quiz, then can pass on the second.
+- Frog and Toad becomes `pending_review`.
+- Matilda is `already_read`.
+- My Bookshelf includes a passed book, a review, a ready quiz, and one still waiting.
 
 ```javascript
-KidBooks.lookup("Charlotte's Web", "E. B. White")
-KidBooks.start("cw")
+KidBooks.lookup("Charlotte's Web", "")
+KidBooks.submit("cw", "Wilbur is a pig. Charlotte is a spider who saves him with words in her web.")
+KidBooks.status(readId)
+KidBooks.answer(readId, [0, 0, 0, 0, 0])
 KidBooks.list()
 ```
