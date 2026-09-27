@@ -1,0 +1,282 @@
+:root {
+  --ink: #16356b;
+  --ink-soft: #3d6494;
+  --sky-top: #c5ecff;
+  --sky-mid: #5eb6ff;
+  --sky-deep: #2b86f0;
+  --line: #1d4e96;
+  --sun: #ffe14a;
+  --white: #ffffff;
+  --shadow: 0 8px 0 #1d4e96;
+  --font: "Chalkboard SE", "Comic Sans MS", "Marker Felt", "Trebuchet MS", "Segoe Print", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  touch-action: manipulation;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 22px;
+  line-height: 1.35;
+  background: linear-gradient(180deg, var(--sky-top) 0%, var(--sky-mid) 46%, var(--sky-deep) 100%);
+  padding:
+    env(safe-area-inset-top)
+    env(safe-area-inset-right)
+    env(safe-area-inset-bottom)
+    env(safe-area-inset-left);
+}
+
+body.home,
+body.game {
+  position: relative;
+  overflow-x: hidden;
+}
+
+button,
+a {
+  font-family: inherit;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  user-select: none;
+}
+
+button {
+  cursor: pointer;
+  border: 0;
+  color: inherit;
+}
+
+.sky {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.sun {
+  position: absolute;
+  top: 18px;
+  right: 22px;
+  width: 92px;
+  height: 92px;
+  border-radius: 50%;
+  background: var(--sun);
+  box-shadow: 0 0 0 12px rgba(255, 225, 74, 0.45);
+}
+
+.cloud {
+  position: absolute;
+  height: 46px;
+  background: #fff;
+  border-radius: 40px;
+  opacity: 0.92;
+}
+
+.cloud:before,
+.cloud:after {
+  content: "";
+  position: absolute;
+  background: #fff;
+  border-radius: 50%;
+}
+
+.cloud-a {
+  width: 130px;
+  top: 46px;
+  left: 6%;
+}
+
+.cloud-a:before {
+  width: 54px;
+  height: 54px;
+  top: -28px;
+  left: 22px;
+}
+
+.cloud-a:after {
+  width: 40px;
+  height: 40px;
+  top: -18px;
+  left: 62px;
+}
+
+.cloud-b {
+  width: 100px;
+  top: 120px;
+  right: 18%;
+}
+
+.cloud-b:before {
+  width: 42px;
+  height: 42px;
+  top: -22px;
+  left: 18px;
+}
+
+.cloud-c {
+  width: 150px;
+  bottom: 80px;
+  left: -20px;
+  opacity: 0.55;
+}
+
+.wrap {
+  position: relative;
+  z-index: 1;
+  width: min(980px, 100%);
+  margin: 0 auto;
+  padding: 28px 22px 16px;
+}
+
+.hero {
+  text-align: center;
+  margin-bottom: 18px;
+}
+
+.hello {
+  margin: 0 0 4px;
+  font-size: 26px;
+  color: #fff;
+  text-shadow: 0 2px 0 rgba(29, 78, 150, 0.35);
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(52px, 9vw, 88px);
+  line-height: 0.95;
+  color: #fff;
+  text-shadow: 0 5px 0 #1d4e96;
+  letter-spacing: 0.01em;
+}
+
+.tag {
+  margin: 10px 0 0;
+  font-size: 26px;
+  color: #fff;
+}
+
+.game-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 18px;
+  margin-top: 12px;
+}
+
+.game-card {
+  flex: 1 1 340px;
+  max-width: 560px;
+  min-height: 196px;
+  display: grid;
+  grid-template-columns: 116px 1fr;
+  grid-template-areas:
+    "emoji title"
+    "emoji about"
+    "emoji play";
+  gap: 6px 16px;
+  align-items: center;
+  padding: 18px 20px 18px 16px;
+  background: var(--white);
+  color: var(--ink);
+  text-decoration: none;
+  border: 4px solid var(--line);
+  border-radius: 32px;
+  box-shadow: var(--shadow);
+}
+
+.game-card:active {
+  transform: translateY(4px);
+  box-shadow: 0 4px 0 #1d4e96;
+}
+
+.game-emoji {
+  grid-area: emoji;
+  width: 108px;
+  height: 108px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--accent, var(--sun));
+  border: 4px solid var(--line);
+  font-size: 62px;
+  line-height: 1;
+}
+
+.game-title {
+  grid-area: title;
+  font-size: clamp(32px, 4vw, 42px);
+  font-weight: 800;
+  line-height: 1.05;
+}
+
+.game-about {
+  grid-area: about;
+  font-size: 20px;
+  color: var(--ink-soft);
+}
+
+.play-pill {
+  grid-area: play;
+  justify-self: start;
+  background: #2b86f0;
+  color: #fff;
+  border-radius: 999px;
+  padding: 8px 22px;
+  font-size: 22px;
+  box-shadow: 0 4px 0 #1d4e96;
+}
+
+.parade {
+  list-style: none;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  margin: 28px 0 8px;
+  padding: 0;
+  font-size: 42px;
+}
+
+.foot {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  color: #fff;
+  font-size: 18px;
+  padding: 8px 12px 22px;
+}
+
+.empty-note {
+  background: #fff;
+  border-radius: 24px;
+  padding: 24px;
+  color: var(--ink);
+}
+
+@media (orientation: landscape) and (max-height: 500px) {
+  .sun {
+    width: 64px;
+    height: 64px;
+  }
+
+  h1 {
+    font-size: 48px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .game-card:active {
+    transform: none;
+  }
+}
