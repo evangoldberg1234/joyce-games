@@ -6,6 +6,12 @@
 (function () {
   var HINT_COST = 5;
   var GAME_COST = 20;
+  (function readPrices() {
+    var prices = window.KIDS_SETTINGS && window.KIDS_SETTINGS.starPrices;
+    if (!prices) return;
+    if (typeof prices.animalPuzzleHint === "number") HINT_COST = prices.animalPuzzleHint;
+    if (typeof prices.newGame === "number") GAME_COST = prices.newGame;
+  })();
   var DAILY_CAP = 100;
   var CAP_TEXT = "You've earned all your stars for today!";
   var SUBJECTS = { math: 1, verbal: 1, english: 1, hebrew: 1, russian: 1, parsha: 1 };
@@ -21,8 +27,14 @@
       kid: cfg.kid || "",
       kidName: cfg.kidName || "Friend",
       botName: cfg.botName || "your guide",
-      functionsUrl: String(cfg.functionsUrl || "").replace(/\/+$/, "")
+      functionsUrl: String(cfg.functionsUrl || "").replace(/\/+$/, ""),
+      stars: cfg.stars !== false
     };
+  }
+
+  function starsEnabled() {
+    var cfg = config();
+    return !!(cfg.functionsUrl && cfg.stars);
   }
 
   function mockOn() {
@@ -146,6 +158,11 @@
 
   function paint(res) {
     var el = document.getElementById("starbar");
+    if (el && !starsEnabled()) {
+      el.hidden = true;
+      el.style.display = "none";
+    }
+    if (!starsEnabled()) return;
     if (!el) {
       showCap(res);
       return;
@@ -287,6 +304,7 @@
   }
 
   function call(body) {
+    if (!starsEnabled() && !mockOn()) return Promise.resolve({ ok: false, error: "locked" });
     return post(body).then(emit);
   }
 
@@ -348,6 +366,7 @@
   }
 
   function syncLevels() {
+    if (!starsEnabled()) return Promise.resolve({ ok: true, source: "local" });
     if (!window.LevelStore) return Promise.resolve({ ok: false });
     var data;
     try { data = window.LevelStore.load(); } catch (err) { return Promise.resolve({ ok: false }); }
@@ -378,6 +397,7 @@
   function setLevels(levels) {
     var clean = cleanLevels(levels);
     if (!Object.keys(clean).length) return Promise.resolve({ ok: false });
+    if (!starsEnabled()) return Promise.resolve({ ok: true, source: "local", levels: clean });
     return quiet({ action: "set_levels", levels: clean });
   }
 
@@ -434,7 +454,7 @@
     });
   }
 
-  if (document.getElementById("starbar")) {
+  if (starsEnabled() && document.getElementById("starbar")) {
     var cached = readCache();
     if (cached != null && (mockOn() || token())) {
       document.getElementById("starbar").textContent = "★ " + cached;

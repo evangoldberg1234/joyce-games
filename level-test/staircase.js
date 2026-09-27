@@ -16,9 +16,18 @@
     10: "Treasure"
   };
 
-  function createRun() {
+  function defaultStart() {
+    var settings = root.KIDS_SETTINGS;
+    var n = settings && settings.levelTest && Number(settings.levelTest.startLevel);
+    if (n >= 1 && n <= 10) return Math.round(n);
+    return 5;
+  }
+
+  function createRun(start) {
+    var level = Math.round(Number(start));
+    if (!(level >= 1 && level <= 10)) level = defaultStart();
     return {
-      level: 5,
+      level: level,
       asked: 0,
       lastDir: 0,
       reversals: [],

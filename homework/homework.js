@@ -5,7 +5,11 @@
   var DUPLICATE = "I already checked this one! Fix a problem, then take a new photo.";
   var NOT_HOMEWORK = "Hmm, that doesn't look like a worksheet.";
   var NEWLY = "Only newly-fixed problems earn stars.";
-  var DAILY = "You've earned all 20 homework stars today! Your answers are still checked.";
+  var dailyCap = 20;
+  if (window.KIDS_SETTINGS && window.KIDS_SETTINGS.homework && typeof window.KIDS_SETTINGS.homework.perDay === "number") {
+    dailyCap = window.KIDS_SETTINGS.homework.perDay;
+  }
+  var DAILY = "You've earned all " + dailyCap + " homework stars today! Your answers are still checked.";
   var CHAT_LINE = "You can also chat with me about it 💬";
   var LONG_WAIT = "Still checking — I'll tell you in the chat bubble too!";
   var LINES = [
@@ -587,7 +591,27 @@
     });
   }
 
-  var pending = readPending();
-  if (pending) beginPolling(String(pending.sheetId), Number(pending.since) || Date.now());
-  else showPick();
+  function homeworkOn() {
+    var feats = window.KIDS_SETTINGS && window.KIDS_SETTINGS.features;
+    if (feats) return !!feats.homework;
+    var cfg = window.KIDS_CHAT || {};
+    return !!String(cfg.functionsUrl || "");
+  }
+
+  function showOff() {
+    clearApp();
+    app.setAttribute("data-screen", "off");
+    app.appendChild(el("h1", "hw-title", "Homework"));
+    app.appendChild(el("p", "hw-lead", "Homework photos need the star server. The games still work without it."));
+    var home = el("a", "home-link", "← Home");
+    home.href = "../index.html";
+    app.appendChild(home);
+  }
+
+  if (!homeworkOn()) showOff();
+  else {
+    var pending = readPending();
+    if (pending) beginPolling(String(pending.sheetId), Number(pending.since) || Date.now());
+    else showPick();
+  }
 })();

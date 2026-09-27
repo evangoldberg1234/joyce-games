@@ -51,3 +51,16 @@ Joyce and Miriam each have saved levels for math, word problems, word match (Eng
 ```bash
 node brain-break/test.js
 ```
+
+## Set this up for your own kids
+
+You can make a copy of this site for your own child.
+
+1. On GitHub, open this project and click **Fork**. That makes your own copy.
+2. Delete the `CNAME` file, or replace what is inside it with your own web address. That file points at Joyce's website. A fork should remove it, or use its own domain.
+3. Open `settings.js`. Change the name, age, grade, subjects, and languages. That is the only file that is different for each child. Leave the game folders as they are.
+4. Turn on GitHub Pages. Go to **Settings**, then **Pages**, then **Deploy from a branch**. Choose branch `main` and the `/` (root) folder.
+
+Your site will show up at `https://<username>.github.io/<repo>/`.
+
+Chat and stars are optional. The games work fine without them. A backend can be self-hosted later if you want chat and stars. See [BACKEND.md](BACKEND.md). This project does not include any passwords or secret keys.

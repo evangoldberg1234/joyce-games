@@ -42,8 +42,22 @@
     return pool[Math.floor(rng() * pool.length)];
   }
 
+  function subjects() {
+    var settings = window.KIDS_SETTINGS;
+    if (!settings || !settings.subjects) return SUBJECTS.slice();
+    var on = settings.subjects;
+    var langs = settings.languages || [];
+    return SUBJECTS.filter(function (item) {
+      if (on[item.id] === false) return false;
+      if (langs.length && item.id === "hebrew" && langs.indexOf("he") === -1) return false;
+      if (langs.length && item.id === "russian" && langs.indexOf("ru") === -1) return false;
+      if (langs.length && item.id === "english" && langs.indexOf("en") === -1) return false;
+      return true;
+    });
+  }
+
   window.QuestionBank = {
-    subjects: SUBJECTS,
+    get subjects() { return subjects(); },
     lists: lists,
     pick: pick
   };

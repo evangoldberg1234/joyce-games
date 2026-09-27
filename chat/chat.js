@@ -634,6 +634,8 @@
   }
 
   function mount() {
+    /* No address, or chat turned off in settings: do not show the bubble. */
+    if (user.chat === false || !cfg.functionsUrl || !KID) return;
     document.body.appendChild(root);
     // Returning kid with a saved token: check quietly for replies so the bubble can show a badge.
     if (token && cfg.functionsUrl && KID) { mode = "chat"; poll(true); }

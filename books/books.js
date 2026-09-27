@@ -266,5 +266,22 @@
     app.appendChild(button("Find a book", "book-next", showSearch));
   }
 
-  showSearch();
+  function bookClubOn() {
+    var feats = window.KIDS_SETTINGS && window.KIDS_SETTINGS.features;
+    if (feats) return !!feats.bookClub;
+    return !!String(cfg.functionsUrl || "");
+  }
+
+  function showOff() {
+    app.innerHTML = "";
+    app.setAttribute("data-screen", "off");
+    app.appendChild(el("h1", "book-title", "Book Club"));
+    app.appendChild(el("p", "book-lead", "Book Club needs the chat server. The games still work without it."));
+    var home = el("a", "home-link", "← Home");
+    home.href = "../index.html";
+    app.appendChild(home);
+  }
+
+  if (!bookClubOn()) showOff();
+  else showSearch();
 })();

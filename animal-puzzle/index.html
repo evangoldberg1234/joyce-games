@@ -17,20 +17,20 @@
   <link rel="stylesheet" href="game.css">
   <link rel="stylesheet" href="../brain-break/brain-break.css">
 </head>
-<body class="game">
+<body class="game" data-page="Animal Puzzle">
   <div class="sky" aria-hidden="true">
     <div class="sun"></div>
     <div class="cloud cloud-a"></div>
     <div class="cloud cloud-b"></div>
   </div>
   <header class="topbar">
-    <a class="home-link" href="../index.html">← Joyce's Web</a>
+    <a class="home-link" href="../index.html" data-site-link>← Joyce's Web</a>
     <p class="game-name">Animal Puzzle</p>
     <button type="button" id="howto-btn" class="how-btn">How to play</button>
   </header>
   <main id="app" class="app"></main>
+  <script src="../settings.js"></script>
   <script src="puzzles.js"></script>
-  <script src="../js/kid-config.js"></script>
   <script src="../brain-break/brain-break.js"></script>
   <script src="../stars/stars.js"></script>
   <script src="game.js"></script>

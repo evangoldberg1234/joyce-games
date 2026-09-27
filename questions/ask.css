@@ -188,6 +188,12 @@
   font-size: 18px;
 }
 
+.starbar[hidden],
+.star-ask[hidden],
+.star-game[hidden] {
+  display: none !important;
+}
+
 .starbar {
   display: inline-flex;
   align-items: center;

@@ -233,7 +233,7 @@
       });
       note.textContent = "Saved for Brain Breaks on " + today() + ": " + bits.join(", ") + ".";
     } else if (seeded && seeded.skipped) {
-      note.textContent = "These levels are saved on this iPad. Brain Breaks use them for Joyce and Miriam.";
+      note.textContent = "These levels are saved on this iPad. Brain Breaks use them here.";
     } else {
       note.textContent = "Finish a subject and these levels are saved for Brain Breaks.";
     }

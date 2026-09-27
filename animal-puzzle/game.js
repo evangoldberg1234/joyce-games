@@ -421,10 +421,39 @@
     }, 1300);
   }
 
+  function starsOn() {
+    var feats = window.KIDS_SETTINGS && window.KIDS_SETTINGS.features;
+    if (feats) return !!feats.stars;
+    var cfg = window.KIDS_CHAT || {};
+    return !!String(cfg.functionsUrl || "") && cfg.stars !== false;
+  }
+
+  function hintCost() {
+    var prices = window.KIDS_SETTINGS && window.KIDS_SETTINGS.starPrices;
+    if (prices && typeof prices.animalPuzzleHint === "number") return prices.animalPuzzleHint;
+    if (window.KidsStars && typeof KidsStars.HINT_COST === "number") return KidsStars.HINT_COST;
+    return 5;
+  }
+
+  function hintLabel() {
+    if (!starsOn()) return "Hint";
+    return "Hint (" + hintCost() + " stars)";
+  }
+
+  function childName() {
+    return (window.KIDS_CHAT && window.KIDS_CHAT.kidName) || "friend";
+  }
+
   function hint() {
     var current = puzzle();
     if (hintBusy || justSolved || isSolved(current, cells)) return;
     if (hintIndex(current) == null) return;
+    if (!starsOn()) {
+      var freeIndex = hintIndex(current);
+      if (freeIndex == null) return;
+      showFlash(freeIndex, current.solution[freeIndex]);
+      return;
+    }
     if (!window.KidsStars) {
       message = "Stars are waking up...";
       render();
@@ -486,7 +515,7 @@
     var solved = loadSolved();
     var intro = document.createElement("p");
     intro.className = "picker-intro";
-    intro.textContent = "Hi Joyce! Pick an animal.";
+    intro.textContent = "Hi " + childName() + "! Pick an animal.";
     app.appendChild(intro);
 
     var grid = document.createElement("div");
@@ -697,7 +726,7 @@
 
     var actions = document.createElement("div");
     actions.className = "actions";
-    actions.appendChild(makeAction("Hint (5 stars)", "hint", hint));
+    actions.appendChild(makeAction(hintLabel(), "hint", hint));
     actions.appendChild(makeAction("Reset", "reset", function () {
       var current = puzzle();
       if (justSolved || isSolved(current, cells)) {
@@ -745,7 +774,7 @@
     sheet.className = "sheet";
     sheet.innerHTML =
       "<h2>How to play</h2>" +
-      "<p>Hi Joyce! This is a crossword and a Sudoku.</p>" +
+      "<p>Hi " + childName().replace(/[&<>]/g, "") + "! This is a crossword and a Sudoku.</p>" +
       "<ol>" +
       "<li>Tap an empty box.</li>" +
       "<li>Tap a letter or a number.</li>" +

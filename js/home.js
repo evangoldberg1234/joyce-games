@@ -11,7 +11,16 @@
     return;
   }
 
+  function allowed(game) {
+    var feats = window.KIDS_SETTINGS && window.KIDS_SETTINGS.features;
+    if (!feats) return true;
+    if (String(game.href || "").indexOf("books/") === 0 && !feats.bookClub) return false;
+    if (String(game.href || "").indexOf("homework/") === 0 && !feats.homework) return false;
+    return true;
+  }
+
   games.forEach(function (game) {
+    if (!allowed(game)) return;
     const card = document.createElement("a");
     card.className = "game-card";
     card.href = game.href;
@@ -26,9 +35,15 @@
     title.className = "game-title";
     title.textContent = game.title;
 
+    var aboutText = game.about || "Tap to play.";
+    var feats = window.KIDS_SETTINGS && window.KIDS_SETTINGS.features;
+    if (feats && !feats.stars && String(game.href || "").indexOf("practice/") === 0) {
+      aboutText = "Extra questions at your level.";
+    }
+
     const about = document.createElement("span");
     about.className = "game-about";
-    about.textContent = game.about || "Tap to play.";
+    about.textContent = aboutText;
 
     const play = document.createElement("span");
     play.className = "play-pill";

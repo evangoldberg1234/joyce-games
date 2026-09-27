@@ -292,7 +292,11 @@
         var switcher = document.createElement("button");
         switcher.type = "button";
         switcher.className = "bb-switch";
-        var whoName = state.player === "miriam" ? "Miriam" : state.player === "joyce" ? "Joyce" : "Player";
+        var chatCfg = window.KIDS_CHAT || {};
+        var whoName = state.player === "miriam" ? "Miriam"
+          : (chatCfg.kid && state.player === chatCfg.kid) ? (chatCfg.kidName || "Player")
+          : state.player === "joyce" ? "Joyce"
+          : "Player";
         switcher.textContent = state.player ? whoName + " · switch" : "Switch player";
         switcher.addEventListener("click", function () {
           if (phase !== "players") returnPhase = phase;
@@ -312,8 +316,10 @@
         sub.textContent = "Tap your name.";
         var players = document.createElement("div");
         players.className = "bb-players";
-        players.appendChild(playerButton("Joyce", "joyce"));
-        players.appendChild(playerButton("Miriam", "miriam"));
+        var primaryId = (window.KIDS_CHAT && window.KIDS_CHAT.kid) || "joyce";
+        var primaryName = (window.KIDS_CHAT && window.KIDS_CHAT.kidName) || "Joyce";
+        players.appendChild(playerButton(primaryName, primaryId));
+        if (primaryId !== "miriam") players.appendChild(playerButton("Miriam", "miriam"));
         card.appendChild(title);
         card.appendChild(sub);
         card.appendChild(players);

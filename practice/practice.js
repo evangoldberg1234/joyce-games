@@ -9,6 +9,25 @@
   var botEmoji = cfg.botEmoji || "⭐";
   var subject = null;
   var level = 5;
+
+  function starsOn() {
+    var feats = window.KIDS_SETTINGS && window.KIDS_SETTINGS.features;
+    if (feats) return !!feats.stars;
+    return !!(cfg.functionsUrl);
+  }
+
+  function fallbackLevel() {
+    var settings = window.KIDS_SETTINGS;
+    var n = settings && settings.levelTest && Number(settings.levelTest.startLevel);
+    if (n >= 1 && n <= 10) return Math.round(n);
+    return 5;
+  }
+
+  function practicePrice() {
+    var prices = window.KIDS_SETTINGS && window.KIDS_SETTINGS.starPrices;
+    if (prices && typeof prices.practice === "number") return prices.practice;
+    return 1;
+  }
   var current = null;
   var busy = false;
   var starNote = "";
@@ -21,7 +40,7 @@
   function startLevel(id) {
     var saved = data.practice[id];
     if (saved == null && data.results[id]) saved = data.results[id].level;
-    level = saved || 5;
+    level = saved || fallbackLevel();
     subject = id;
     starNote = "";
     nextQuestion();
@@ -39,8 +58,13 @@
     app.setAttribute("data-screen", "pick");
     var box = document.createElement("div");
     box.className = "mascot";
-    box.innerHTML = "<div class='mascot-face'>" + botEmoji + "</div><p>" + botName +
-      " has extra questions. A right answer can earn 1 star.</p>";
+    var lead = starsOn()
+      ? botName + " has extra questions. A right answer can earn " + practicePrice() + " star."
+      : botName + " has extra questions. Play as many as you like.";
+    if (starsOn() && practicePrice() !== 1) {
+      lead = botName + " has extra questions. A right answer can earn " + practicePrice() + " stars.";
+    }
+    box.innerHTML = "<div class='mascot-face'>" + botEmoji + "</div><p>" + lead + "</p>";
     app.appendChild(box);
     var grid = document.createElement("div");
     grid.className = "map-grid";
@@ -48,7 +72,7 @@
       var button = document.createElement("button");
       button.type = "button";
       button.className = "island";
-      var at = data.practice[item.id] || (data.results[item.id] && data.results[item.id].level) || 5;
+      var at = data.practice[item.id] || (data.results[item.id] && data.results[item.id].level) || fallbackLevel();
       button.innerHTML = "<span>" + item.emoji + "</span><span>" + item.title + "</span><span class='badge'>Level " + at + "</span>";
       button.addEventListener("click", function () { startLevel(item.id); });
       grid.appendChild(button);
@@ -98,7 +122,7 @@
     function showNext() {
       app.appendChild(go);
     }
-    if (!correct || !window.KidsStars) {
+    if (!correct || !window.KidsStars || !starsOn()) {
       starNote = correct ? "" : starNote;
       showNext();
       return;

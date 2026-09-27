@@ -517,8 +517,9 @@
 
   function generateTranslate(level, rng, dirIndex) {
     level = clampLevel(level, MAX.translate);
-    var index = ((dirIndex % DIRS.length) + DIRS.length) % DIRS.length;
-    var pair = DIRS[index];
+    var dirs = activeDirs();
+    var index = ((dirIndex % dirs.length) + dirs.length) % dirs.length;
+    var pair = dirs[index];
     var from = pair[0];
     var to = pair[1];
     var hebrew = from === "he" || to === "he";
@@ -559,7 +560,7 @@
         display: "word",
         hebrew: hebrew || hasHebrew(correct[from]) || hasHebrew(correct[to])
       },
-      nextDirIndex: (index + 1) % DIRS.length
+      nextDirIndex: (index + 1) % dirs.length
     };
   }
 
@@ -638,11 +639,41 @@
     };
   }
 
+  function settingsOn() {
+    return root.KIDS_SETTINGS && root.KIDS_SETTINGS.subjects;
+  }
+
+  function activeSubjects() {
+    if (!settingsOn()) return SUBJECTS.slice();
+    var on = root.KIDS_SETTINGS.subjects;
+    var langs = root.KIDS_SETTINGS.languages || [];
+    var list = [];
+    if (on.math !== false) list.push("math");
+    if (on.verbal !== false) list.push("words");
+    if (langs.length >= 2 && (on.english !== false || on.hebrew !== false || on.russian !== false)) list.push("translate");
+    if (on.parsha !== false) list.push("parsha");
+    if (!list.length) return SUBJECTS.slice();
+    return list;
+  }
+
+  function activeDirs() {
+    if (!settingsOn()) return DIRS.slice();
+    var langs = root.KIDS_SETTINGS.languages || [];
+    if (!langs.length) return DIRS.slice();
+    var list = DIRS.filter(function (pair) {
+      return langs.indexOf(pair[0]) !== -1 && langs.indexOf(pair[1]) !== -1;
+    });
+    if (!list.length) return DIRS.slice();
+    return list;
+  }
+
   function subjectsForBreak(rotIndex) {
-    var start = ((rotIndex % SUBJECTS.length) + SUBJECTS.length) % SUBJECTS.length;
+    var pool = activeSubjects();
+    var start = ((rotIndex % pool.length) + pool.length) % pool.length;
     var subjects = [];
-    for (var i = 0; i < 3; i++) subjects.push(SUBJECTS[(start + i) % SUBJECTS.length]);
-    return { subjects: subjects, nextRot: (start + 3) % SUBJECTS.length };
+    var count = Math.min(3, pool.length);
+    for (var i = 0; i < count; i++) subjects.push(pool[(start + i) % pool.length]);
+    return { subjects: subjects, nextRot: (start + count) % pool.length };
   }
 
   function normalizeTitle(title) {

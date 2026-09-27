@@ -25,12 +25,12 @@
   </div>
   <main class="wrap">
     <header class="hero">
-      <p class="starbar" id="starbar">★</p>
-      <p class="hello">Hello, Joyce!</p>
-      <h1>Joyce's Web</h1>
+      <p class="starbar" id="starbar" data-needs="stars">★</p>
+      <p class="hello">Hello, <span data-child-name>Joyce</span>!</p>
+      <h1 data-site-title>Joyce's Web</h1>
       <p class="tag">Tap a game to play.</p>
-      <p class="star-ask">A new game costs 20 stars.</p>
-      <button type="button" class="star-game" id="new-game">Ask Sofie for a new game</button>
+      <p class="star-ask" data-needs="stars">A new game costs <span data-price="newGame">20</span> stars.</p>
+      <button type="button" class="star-game" id="new-game" data-needs="chat stars">Ask <span data-bot-name>Sofie</span> for a new game</button>
     </header>
     <section id="game-list" class="game-list" aria-label="Games"></section>
     <ul class="parade" aria-hidden="true">
@@ -45,19 +45,19 @@
     </ul>
   </main>
   <footer class="foot">
-    <p>Made for Joyce</p>
+    <p>Made for <span data-child-name>Joyce</span></p>
     <details class="parent-note">
       <summary>For parents</summary>
-      <p>Brain Breaks are short learning pauses instead of ads. At the end of every level, whether Joyce finishes it or starts it over, she or Miriam answers a few questions: math, word problems, English, Russian, and Hebrew words, and the weekly Torah portion. Questions get a little harder as the game level goes up. Each child has her own level, saved on this iPad. They can switch players on the break screen.</p>
-      <p>The 💬 bubble lets Joyce chat with Sofie, her Grok Bot. It asks for the family code once on this iPad, and only Sofie can answer. After that, stars can be earned in Practice and spent on hints. A new game from Sofie costs 20 stars.</p>
-      <p>Treasure Map finds a level for math, reading, English, Hebrew, Russian, and Parsha. Those levels are saved for Brain Breaks. She can quit and come back, or retake a subject anytime.</p>
-      <p>Book Club is for a book she finished. She picks the book, then tells Sofie about it in the chat. A long book can earn 20 stars. A short book does not.</p>
-      <p>Homework is a photo of one worksheet. The check can take about a minute. It can award stars, up to 10 for a sheet and 20 homework stars a day. Hints never include the answer.</p>
+      <p>Brain Breaks are short learning pauses instead of ads. At the end of every level, whether <span data-child-name>Joyce</span> finishes it or starts it over, she answers a few questions. Questions get a little harder as the game level goes up. Levels are saved on this iPad. Players can switch on the break screen.</p>
+      <p data-needs="chat">The 💬 bubble lets <span data-child-name>Joyce</span> chat with <span data-bot-name>Sofie</span>. It asks for the family code once on this iPad. Stars can be earned in Practice and spent on hints. A new game costs <span data-price="newGame">20</span> stars.</p>
+      <p>Treasure Map finds a level for the subjects that are turned on. Those levels are saved for Brain Breaks. She can quit and come back, or retake a subject anytime.</p>
+      <p data-needs="bookClub">Book Club is for a book she finished. She picks the book, then tells <span data-bot-name>Sofie</span> about it in the chat. A long book can earn 20 stars. A short book does not.</p>
+      <p data-needs="homework">Homework is a photo of one worksheet. The check can take about a minute. It can award stars, up to <span data-price="sheet">10</span> for a sheet and <span data-price="day">20</span> homework stars a day. Hints never include the answer.</p>
     </details>
   </footer>
+  <script src="settings.js"></script>
   <script src="games.js"></script>
   <script src="js/home.js"></script>
-  <script src="js/kid-config.js"></script>
   <script src="stars/stars.js"></script>
   <script src="chat/chat.js" defer></script>
 </body>
