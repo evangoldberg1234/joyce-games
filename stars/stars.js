@@ -253,7 +253,9 @@
             message: data.message
           };
         }
-        if (res.status === 413 || data.error === "too_large") return { ok: false, error: "too_large" };
+        if (res.status === 409) {
+          return { ok: false, error: data.error || "duplicate", message: data.message };
+        }
         if (res.status === 429) {
           var reason = data.error === "daily_cap" ? "daily_cap" : "slow_down";
           return {
@@ -306,7 +308,6 @@
     if (res.error === "locked") return "Ask a grown-up to unlock stars. Open the chat bubble and enter the family code.";
     if (res.error === "no_passcode_yet") return "Ask a grown-up to set up stars";
     if (res.error === "server_error") return "Stars are napping, try again soon";
-    if (res.error === "too_large") return "That photo is too big. Try one page at a time.";
     if (res.error === "not_enough_stars") {
       if (res.message) return String(res.message);
       var have = typeof res.balance === "number" ? res.balance : 0;

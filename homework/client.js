@@ -1,10 +1,17 @@
 /* Homework photo check. Posts through KidsStars.postJson so the device
    token, renewed token, and error mapping match the star ledger.
-   ?starsmock=1 simulates a reply. ?hwmock=checked|retake|duplicate|not_homework|cap
-   picks one. With no hwmock, mock replies cycle through those screens. */
+   ?starsmock=1 simulates the contract. ?hwmock=checked|retake|duplicate|
+   not_homework|cap|slow picks one. Status stays "checking" until about 6
+   seconds have passed, then returns the result. slow stays on checking.
+   With no hwmock, each upload cycles through those screens. */
 (function () {
-  var ORDER = ["checked", "retake", "duplicate", "not_homework", "cap"];
-  var MOCK_WAIT = 900;
+  var ORDER = ["checked", "retake", "duplicate", "not_homework", "cap", "slow"];
+  var MOCK_READY = 6000;
+  var RETAKE = "I couldn't read that clearly. Try again with good light, the whole page in the picture, and hold still.";
+  var NOT_HOMEWORK = "Hmm, that doesn't look like a worksheet.";
+  var DAILY = "You've earned all 20 homework stars today! Your answers are still checked.";
+  var mockReadyAt = 0;
+  var mockResubmit = false;
 
   function mockOn() {
     if (window.KidsStars && KidsStars.mockOn) return KidsStars.mockOn();
@@ -28,6 +35,10 @@
     return new Promise(function (resolve) { setTimeout(resolve, ms); });
   }
 
+  function storedKind() {
+    try { return sessionStorage.getItem("kidsHomework.mockKind") || ""; } catch (err) { return ""; }
+  }
+
   function nextKind() {
     var forced = hwMock();
     if (ORDER.indexOf(forced) !== -1) return forced;
@@ -37,6 +48,12 @@
     var kind = ORDER[step % ORDER.length];
     try { sessionStorage.setItem("kidsHomework.mockStep", String(step + 1)); } catch (err2) { /* keep going */ }
     return kind;
+  }
+
+  function kindNow() {
+    var forced = hwMock();
+    if (ORDER.indexOf(forced) !== -1) return forced;
+    return storedKind() || "checked";
   }
 
   function problems(wrongFrom) {
@@ -58,40 +75,37 @@
     return list;
   }
 
-  function mockBody(body) {
-    var kind = nextKind();
-    if (kind === "retake") return { ok: true, status: "retake", reason: "blurry", mock: true };
-    if (kind === "duplicate") return { ok: true, status: "duplicate", mock: true };
-    if (kind === "not_homework") return { ok: true, status: "not_homework", mock: true };
+  function mockResult(kind, id) {
+    if (kind === "retake") {
+      return { ok: true, status: "retake", sheet_id: id, message: RETAKE, stars_earned: 0, balance: 20, mock: true };
+    }
+    if (kind === "not_homework") {
+      return { ok: true, status: "not_homework", sheet_id: id, message: NOT_HOMEWORK, stars_earned: 0, balance: 20, mock: true };
+    }
     if (kind === "cap") {
       return {
-        ok: false,
-        error: "daily_cap",
+        ok: true,
         status: "checked",
-        sheet_id: "sheet-cap",
+        sheet_id: id,
+        message: DAILY,
         problems: [
           { n: 1, correct: true },
           { n: 2, correct: true },
           { n: 3, correct: false, hint: "Read the question one more time." }
         ],
         stars_earned: 0,
-        sheet_stars_total: 10,
-        sheet_cap: 10,
-        daily_remaining: 0,
         balance: 40,
         mock: true
       };
     }
-    if (body && body.sheet_id) {
+    if (mockResubmit) {
       return {
         ok: true,
         status: "checked",
-        sheet_id: body.sheet_id,
+        sheet_id: id,
+        message: "You got 9 right! +2 ⭐",
         problems: problems(10),
         stars_earned: 2,
-        sheet_stars_total: 9,
-        sheet_cap: 10,
-        daily_remaining: 11,
         balance: 29,
         mock: true
       };
@@ -99,13 +113,42 @@
     return {
       ok: true,
       status: "checked",
-      sheet_id: "sheet-mock-1",
+      sheet_id: id,
+      message: "You got 7 right! +7 ⭐",
       problems: problems(8),
       stars_earned: 7,
-      sheet_stars_total: 7,
-      sheet_cap: 10,
-      daily_remaining: 13,
       balance: 27,
+      mock: true
+    };
+  }
+
+  function mockUpload(body) {
+    var kind = nextKind();
+    try { sessionStorage.setItem("kidsHomework.mockKind", kind); } catch (err) { /* keep going */ }
+    if (kind === "duplicate") return { ok: false, error: "duplicate", mock: true };
+    mockResubmit = !!(body && body.resubmit_of);
+    mockReadyAt = Date.now() + MOCK_READY;
+    return { ok: true, sheet_id: "sheet-" + kind, status: "checking", mock: true };
+  }
+
+  function mockStatus(body) {
+    var kind = kindNow();
+    var id = (body && body.sheet_id) || "sheet-mock";
+    if (kind === "slow" || kind === "duplicate") return { ok: true, status: "checking", sheet_id: id, mock: true };
+    if (!mockReadyAt) mockReadyAt = Date.now() + MOCK_READY;
+    if (Date.now() < mockReadyAt) return { ok: true, status: "checking", sheet_id: id, mock: true };
+    return mockResult(kind, id);
+  }
+
+  function mockList() {
+    return {
+      ok: true,
+      sheets: [
+        { date: "2026-09-26", status: "checked", score: "7/10", stars: 7 },
+        { date: "2026-09-25", status: "retake", score: "—", stars: 0 },
+        { date: "2026-09-24", status: "checking", score: "—", stars: 0 },
+        { date: "2026-09-23", status: "not_homework", score: "—", stars: 0 }
+      ],
       mock: true
     };
   }
@@ -126,12 +169,22 @@
 
   window.HomeworkCheck = {
     mockOn: mockOn,
-    check: function (opts) {
+    slowMock: function () { return kindNow() === "slow"; },
+    upload: function (opts) {
       opts = opts || {};
-      var body = { image: String(opts.image || "") };
-      if (opts.sheetId) body.sheet_id = String(opts.sheetId);
-      if (mockOn()) return wait(MOCK_WAIT).then(function () { return mockBody(body); });
+      var body = { action: "upload", image_base64: String(opts.imageBase64 || "") };
+      if (opts.resubmitOf) body.resubmit_of = String(opts.resubmitOf);
+      if (mockOn()) return Promise.resolve(mockUpload(body));
       return send(body);
+    },
+    status: function (sheetId) {
+      var body = { action: "status", sheet_id: String(sheetId || "") };
+      if (mockOn()) return Promise.resolve(mockStatus(body));
+      return send(body);
+    },
+    list: function () {
+      if (mockOn()) return Promise.resolve(mockList());
+      return send({ action: "list" });
     }
   };
 })();

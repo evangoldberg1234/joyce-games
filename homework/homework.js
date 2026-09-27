@@ -1,11 +1,24 @@
-/* Homework photo check. One camera button, a checking pause, then a
-   list of problems. Hints are read aloud. Stars fly into the counter. */
+/* Homework photo check. Upload a worksheet, then poll until a person-like
+   helper finishes. Hints are read aloud. Stars fly into the counter. */
 (function () {
   var RETAKE = "I couldn't read that clearly. Try again with good light, the whole page in the picture, and hold still.";
-  var DUPLICATE = "I already checked this photo! Fix a problem, then take a new one.";
+  var DUPLICATE = "I already checked this one! Fix a problem, then take a new photo.";
   var NOT_HOMEWORK = "Hmm, that doesn't look like a worksheet.";
   var NEWLY = "Only newly-fixed problems earn stars.";
   var DAILY = "You've earned all 20 homework stars today! Your answers are still checked.";
+  var CHAT_LINE = "You can also chat with me about it 💬";
+  var LONG_WAIT = "Still checking — I'll tell you in the chat bubble too!";
+  var LINES = [
+    "Looking at problem 1…",
+    "Sharpening my pencil…",
+    "Looking at problem 2…",
+    "Reading your numbers…",
+    "Checking each line…",
+    "Taking a careful look…"
+  ];
+  var POLL_MS = 5000;
+  var LONG_MS = 5 * 60 * 1000;
+  var SLOW_LONG_MS = 2500;
 
   var app = document.getElementById("app");
   var input = document.createElement("input");
@@ -13,6 +26,12 @@
   var resubmit = false;
   var busy = false;
   var audioCtx = null;
+  var pollTimer = null;
+  var waitTimer = null;
+  var lineTimer = null;
+  var lineStep = 0;
+  var pollId = "";
+  var pollSince = 0;
 
   input.type = "file";
   input.accept = "image/*";
@@ -25,6 +44,35 @@
     if (className) node.className = className;
     if (text != null) node.textContent = text;
     return node;
+  }
+
+  function kidId() {
+    var cfg = window.KIDS_CHAT || {};
+    return cfg.kid || "kid";
+  }
+
+  function pendingKey() {
+    return "kidsHomework." + kidId() + ".pending";
+  }
+
+  function remember(id, since) {
+    try {
+      localStorage.setItem(pendingKey(), JSON.stringify({ sheetId: id, since: since }));
+    } catch (err) { /* the check can still finish while this page is open */ }
+  }
+
+  function readPending() {
+    try {
+      var data = JSON.parse(localStorage.getItem(pendingKey()) || "null");
+      if (!data || !data.sheetId) return null;
+      return data;
+    } catch (err) {
+      return null;
+    }
+  }
+
+  function clearPending() {
+    try { localStorage.removeItem(pendingKey()); } catch (err) { /* ignore */ }
   }
 
   function unlockAudio() {
@@ -77,36 +125,14 @@
   }
 
   function messageFor(res) {
+    if (res && res.message) return String(res.message);
     if (window.KidsStars && KidsStars.messageFor) {
       var text = KidsStars.messageFor(res);
       if (text) return text;
     }
     if (res && res.error === "slow_down") return "Wait a moment, then try the photo again.";
+    if (res && res.error === "daily_cap") return DAILY;
     return "Stars are waking up...";
-  }
-
-  function correctCount(problems) {
-    var n = 0;
-    (problems || []).forEach(function (problem) {
-      if (problem && problem.correct) n += 1;
-    });
-    return n;
-  }
-
-  function headlines(res) {
-    var problems = res.problems || [];
-    var earned = typeof res.stars_earned === "number" ? res.stars_earned : 0;
-    var cap = typeof res.sheet_cap === "number" ? res.sheet_cap : 10;
-    var atSheet = typeof res.sheet_stars_total === "number" && res.sheet_stars_total >= cap;
-    var daily = res.error === "daily_cap" || res.daily_remaining === 0;
-    var lines = [];
-    if (!(daily && earned === 0) && problems.length) {
-      lines.push("You got " + correctCount(problems) + " right! +" + earned + " ⭐");
-    }
-    if (daily) lines.push(DAILY);
-    else if (atSheet) lines.push("That's the most stars for one sheet (" + cap + ") — amazing work!");
-    if (!lines.length) lines.push("I checked your worksheet.");
-    return lines;
   }
 
   function anyWrong(problems) {
@@ -117,39 +143,177 @@
     return wrong;
   }
 
+  function stopLines() {
+    if (lineTimer) clearInterval(lineTimer);
+    lineTimer = null;
+  }
+
+  function haltTimers() {
+    if (pollTimer) clearInterval(pollTimer);
+    pollTimer = null;
+    if (waitTimer) clearTimeout(waitTimer);
+    waitTimer = null;
+  }
+
+  function stopPolling() {
+    haltTimers();
+    pollId = "";
+    stopLines();
+  }
+
   function clearApp() {
+    stopLines();
     app.innerHTML = "";
   }
 
+  function iconFor(status) {
+    if (status === "checked") return "✅";
+    if (status === "checking") return "🔎";
+    if (status === "retake") return "📷";
+    if (status === "not_homework") return "🤔";
+    if (status === "duplicate" || status === "near_duplicate") return "🔁";
+    return "📝";
+  }
+
+  function prettyDate(value) {
+    var text = value == null ? "" : String(value);
+    if (!text) return "";
+    var parsed = Date.parse(text.length === 10 ? text + "T12:00:00" : text);
+    if (isNaN(parsed)) return text;
+    try {
+      return new Date(parsed).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    } catch (err) {
+      return text;
+    }
+  }
+
+  function showHistory(sheets) {
+    var old = document.querySelector(".hw-history");
+    if (old && old.parentNode) old.parentNode.removeChild(old);
+    var wrap = el("section", "hw-history");
+    wrap.setAttribute("data-history", "ready");
+    wrap.appendChild(el("h2", "hw-history-title", "My homework"));
+    if (!sheets || !sheets.length) {
+      wrap.appendChild(el("p", "hw-note", "No worksheets yet."));
+      app.appendChild(wrap);
+      return;
+    }
+    var list = document.createElement("ul");
+    list.className = "hw-history-list";
+    sheets.forEach(function (sheet) {
+      var item = document.createElement("li");
+      item.className = "hw-history-item";
+      var icon = el("span", "hw-history-icon", iconFor(sheet && sheet.status));
+      icon.setAttribute("aria-hidden", "true");
+      item.appendChild(icon);
+      item.appendChild(el("span", "hw-history-date", prettyDate(sheet && sheet.date)));
+      var score = sheet && sheet.score != null && String(sheet.score) !== "" ? String(sheet.score) : "—";
+      item.appendChild(el("span", "hw-history-score", score));
+      var stars = sheet && (typeof sheet.stars === "number" ? sheet.stars : sheet.stars_earned);
+      item.appendChild(el("span", "hw-history-stars", (typeof stars === "number" ? stars : 0) + " ⭐"));
+      list.appendChild(item);
+    });
+    wrap.appendChild(list);
+    app.appendChild(wrap);
+  }
+
   function showPick() {
+    stopPolling();
     clearApp();
     app.setAttribute("data-screen", "pick");
+    app.removeAttribute("data-wait");
     app.appendChild(el("h1", "hw-title", "Homework"));
-    var lead = el("p", "hw-lead", "Take a picture of one worksheet.");
-    app.appendChild(lead);
+    app.appendChild(el("p", "hw-lead", "Take a picture of one worksheet."));
     var hear = hearButton("Take a picture of one worksheet.", "Hear it");
     if (hear) app.appendChild(hear);
     app.appendChild(shootLabel("Take a photo of your worksheet", false));
     speak("Take a picture of one worksheet.");
+    window.HomeworkCheck.list().then(function (res) {
+      if (app.getAttribute("data-screen") !== "pick") return;
+      var sheets = (res && (res.sheets || res.homework || res.items)) || [];
+      showHistory(sheets);
+    }, function () { /* the camera still works without the list */ });
+  }
+
+  function startLines() {
+    stopLines();
+    lineStep = 0;
+    lineTimer = setInterval(function () {
+      var node = document.getElementById("hw-line");
+      if (!node) return;
+      lineStep += 1;
+      node.textContent = LINES[lineStep % LINES.length];
+    }, 4000);
   }
 
   function showChecking() {
     clearApp();
     app.setAttribute("data-screen", "checking");
+    app.removeAttribute("data-wait");
     var face = el("p", "hw-check-face", "🔎");
     face.setAttribute("aria-hidden", "true");
     app.appendChild(face);
-    var word = el("h1", "hw-title", "Checking…");
-    app.appendChild(word);
-    app.appendChild(el("p", "hw-lead", "Looking at your page."));
-    var hear = hearButton("Checking your worksheet.", "Hear it");
+    app.appendChild(el("h1", "hw-title", "Checking…"));
+    var line = el("p", "hw-line", LINES[0]);
+    line.id = "hw-line";
+    line.setAttribute("role", "status");
+    app.appendChild(line);
+    if (window.speechSynthesis) {
+      var lineHear = document.createElement("button");
+      lineHear.type = "button";
+      lineHear.className = "hw-hear";
+      lineHear.textContent = "Hear it";
+      lineHear.addEventListener("click", function () {
+        var current = document.getElementById("hw-line");
+        speak(current ? current.textContent : LINES[0]);
+      });
+      app.appendChild(lineHear);
+    }
+    app.appendChild(el("p", "hw-lead", CHAT_LINE));
+    var chatHear = hearButton(CHAT_LINE, "Hear it");
+    if (chatHear) app.appendChild(chatHear);
+    speak(LINES[0] + ". " + CHAT_LINE);
+    startLines();
+  }
+
+  function longWaitLimit() {
+    if (window.HomeworkCheck && HomeworkCheck.slowMock && HomeworkCheck.slowMock()) return SLOW_LONG_MS;
+    return LONG_MS;
+  }
+
+  function showLongWait() {
+    if (document.getElementById("hw-long")) return;
+    if (app.getAttribute("data-screen") !== "checking") return;
+    app.setAttribute("data-wait", "long");
+    var note = el("p", "hw-lead", LONG_WAIT);
+    note.id = "hw-long";
+    note.setAttribute("role", "status");
+    app.appendChild(note);
+    var hear = hearButton(LONG_WAIT, "Hear it");
     if (hear) app.appendChild(hear);
-    speak("Checking your worksheet.");
+    var home = document.createElement("a");
+    home.className = "hw-shoot hw-home";
+    home.href = "../index.html";
+    home.textContent = "Go home";
+    app.appendChild(home);
+    speak(LONG_WAIT);
+  }
+
+  function armLongWait() {
+    if (waitTimer) clearTimeout(waitTimer);
+    var delay = longWaitLimit() - (Date.now() - pollSince);
+    if (delay <= 0) {
+      showLongWait();
+      return;
+    }
+    waitTimer = setTimeout(showLongWait, delay);
   }
 
   function showStatus(screen, text) {
+    stopPolling();
     clearApp();
     app.setAttribute("data-screen", screen);
+    app.removeAttribute("data-wait");
     app.appendChild(el("h1", "hw-title", "Homework"));
     var note = el("p", "hw-lead", text);
     note.setAttribute("role", "status");
@@ -243,23 +407,23 @@
   }
 
   function showResults(res) {
+    stopPolling();
+    clearPending();
     if (res.sheet_id) sheetId = String(res.sheet_id);
-    var lines = headlines(res);
-    var problems = res.problems || [];
     var earned = typeof res.stars_earned === "number" ? res.stars_earned : 0;
+    var line = res.message ? String(res.message) : (res.error === "daily_cap" ? DAILY : "I checked your worksheet.");
+    var problems = res.problems || [];
     clearApp();
     app.setAttribute("data-screen", "results");
-    if (res.error === "daily_cap" || res.daily_remaining === 0) app.setAttribute("data-cap", "daily");
+    if (line === DAILY || res.error === "daily_cap") app.setAttribute("data-cap", "daily");
     else app.removeAttribute("data-cap");
     app.setAttribute("data-earned", String(earned));
 
-    lines.forEach(function (line, index) {
-      var node = el(index === 0 ? "h1" : "p", index === 0 ? "hw-title" : "hw-lead", line);
-      if (index === 0) node.setAttribute("role", "status");
-      app.appendChild(node);
-      var hear = hearButton(line, "Hear it");
-      if (hear) app.appendChild(hear);
-    });
+    var title = el("h1", "hw-title", line);
+    title.setAttribute("role", "status");
+    app.appendChild(title);
+    var hear = hearButton(line, "Hear it");
+    if (hear) app.appendChild(hear);
 
     if (problems.length) {
       var list = document.createElement("ol");
@@ -283,39 +447,81 @@
 
     if (anyWrong(problems)) {
       app.appendChild(shootLabel("Fix it and take a new photo", true));
-      var note = el("p", "hw-note", NEWLY);
-      app.appendChild(note);
+      app.appendChild(el("p", "hw-note", NEWLY));
       var noteHear = hearButton(NEWLY, "Hear it");
       if (noteHear) app.appendChild(noteHear);
-    } else if (problems.length) {
-      app.appendChild(shootLabel("Take a photo of your worksheet", false));
     } else {
       app.appendChild(shootLabel("Take a photo of your worksheet", false));
     }
 
-    speak(lines.join(" "));
+    speak(line);
     if (earned > 0) flyStars(Math.min(earned, 12), res.balance);
     else if (window.KidsStars && KidsStars.applyStars) KidsStars.applyStars(res.balance);
   }
 
   function showResponse(res) {
-    if (res && (res.status === "checked" || res.error === "daily_cap")) {
+    if (res && res.status === "checking") return;
+    if (res && res.sheet_id) sheetId = String(res.sheet_id);
+    var done = res && (
+      res.status === "checked" || res.status === "retake" || res.status === "not_homework" ||
+      res.status === "duplicate" || res.error === "duplicate" || res.error === "near_duplicate" ||
+      res.error === "daily_cap"
+    );
+    if (done) clearPending();
+    if (res && (res.status === "checked" || (res.error === "daily_cap" && res.problems))) {
       showResults(res);
       return;
     }
-    if (res && res.status === "retake") {
-      showStatus("retake", RETAKE);
+    if (res && res.error === "daily_cap") {
+      showStatus("message", res.message ? String(res.message) : DAILY);
       return;
     }
-    if (res && res.status === "duplicate") {
-      showStatus("duplicate", DUPLICATE);
+    if (res && res.status === "retake") {
+      showStatus("retake", res.message ? String(res.message) : RETAKE);
+      return;
+    }
+    if (res && (res.status === "duplicate" || res.error === "duplicate" || res.error === "near_duplicate")) {
+      showStatus("duplicate", res.message ? String(res.message) : DUPLICATE);
       return;
     }
     if (res && res.status === "not_homework") {
-      showStatus("not_homework", NOT_HOMEWORK);
+      showStatus("not_homework", res.message ? String(res.message) : NOT_HOMEWORK);
       return;
     }
     showStatus("message", messageFor(res));
+  }
+
+  function askStatus() {
+    var id = pollId;
+    if (!id) return;
+    window.HomeworkCheck.status(id).then(function (res) {
+      if (pollId !== id) return;
+      if (!res || res.error === "slow_down" || res.error === "asleep" || res.error === "server_error" || res.error === "not_configured" || res.error === "origin_not_allowed") {
+        return;
+      }
+      if (res.error === "locked" || res.error === "no_passcode_yet") {
+        showStatus("message", messageFor(res));
+        return;
+      }
+      var status = res.status || "";
+      if (!status || status === "checking") {
+        if (Date.now() - pollSince >= longWaitLimit()) showLongWait();
+        return;
+      }
+      if (!res.sheet_id) res.sheet_id = id;
+      showResponse(res);
+    }, function () { /* the next poll tries again */ });
+  }
+
+  function beginPolling(id, since) {
+    haltTimers();
+    pollId = id;
+    pollSince = since || Date.now();
+    sheetId = id;
+    showChecking();
+    armLongWait();
+    askStatus();
+    pollTimer = setInterval(askStatus, POLL_MS);
   }
 
   function onFile() {
@@ -324,19 +530,34 @@
     input.value = "";
     if (!file) return;
     busy = true;
-    var keep = resubmit ? sheetId : "";
+    var earlier = resubmit ? sheetId : "";
     resubmit = false;
+    haltTimers();
+    pollId = "";
     showChecking();
     window.HomeworkPhoto.prepare(file).then(function (photo) {
-      return window.HomeworkCheck.check({ image: photo.base64, sheetId: keep });
+      return window.HomeworkCheck.upload({ imageBase64: photo.base64, resubmitOf: earlier });
     }).then(function (res) {
       busy = false;
-      showResponse(res);
+      if (res && (res.error === "duplicate" || res.error === "near_duplicate")) {
+        clearPending();
+        showStatus("duplicate", res.message ? String(res.message) : DUPLICATE);
+        return;
+      }
+      if (res && res.sheet_id && res.ok !== false && res.error !== "locked" && res.error !== "no_passcode_yet") {
+        var since = Date.now();
+        remember(String(res.sheet_id), since);
+        beginPolling(String(res.sheet_id), since);
+        return;
+      }
+      showStatus("message", messageFor(res));
     }, function () {
       busy = false;
       showStatus("message", "I couldn't use that photo. Try again.");
     });
   }
 
-  showPick();
+  var pending = readPending();
+  if (pending) beginPolling(String(pending.sheetId), Number(pending.since) || Date.now());
+  else showPick();
 })();

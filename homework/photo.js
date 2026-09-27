@@ -1,9 +1,9 @@
 /* Resize a worksheet photo before upload. Draws through createImageBitmap
    (or an Image) so EXIF rotation is applied, then exports a JPEG whose
-   long side is at most 1600px and whose size stays under about 1.5MB. */
+   long side is at most 1600px and whose size stays under 2MB. */
 (function () {
   var MAX_EDGE = 1600;
-  var MAX_BYTES = Math.floor(1.5 * 1024 * 1024);
+  var MAX_BYTES = 2 * 1024 * 1024;
 
   function fit(width, height, edge) {
     var longSide = Math.max(width, height);
