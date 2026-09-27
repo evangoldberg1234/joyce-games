@@ -222,8 +222,8 @@
     return { ok: false, error: "asleep", mock: true };
   }
 
-  function post(body) {
-    if (mockOn()) return Promise.resolve(mockResult(body));
+  function post(body, path) {
+    if (mockOn() && path !== "/kid-homework") return Promise.resolve(mockResult(body));
     var cfg = config();
     var auth = token();
     if (!auth || !cfg.functionsUrl) return Promise.resolve({ ok: false, error: "locked" });
@@ -231,7 +231,7 @@
     Object.keys(body || {}).forEach(function (key) { payload[key] = body[key]; });
     payload.token = auth;
     payload.kid = cfg.kid;
-    return fetch(cfg.functionsUrl + "/kid-stars", {
+    return fetch(cfg.functionsUrl + (path || "/kid-stars"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
@@ -253,6 +253,7 @@
             message: data.message
           };
         }
+        if (res.status === 413 || data.error === "too_large") return { ok: false, error: "too_large" };
         if (res.status === 429) {
           var reason = data.error === "daily_cap" ? "daily_cap" : "slow_down";
           return {
@@ -261,7 +262,14 @@
             balance: data.balance,
             earned_today: data.earned_today,
             daily_cap: data.daily_cap,
-            retry_after: data.retry_after
+            retry_after: data.retry_after,
+            status: data.status,
+            sheet_id: data.sheet_id,
+            problems: data.problems,
+            stars_earned: data.stars_earned,
+            sheet_stars_total: data.sheet_stars_total,
+            sheet_cap: data.sheet_cap,
+            daily_remaining: data.daily_remaining
           };
         }
         if (res.status === 403 && data.error === "no_passcode_yet") return { ok: false, error: "no_passcode_yet" };
@@ -298,6 +306,7 @@
     if (res.error === "locked") return "Ask a grown-up to unlock stars. Open the chat bubble and enter the family code.";
     if (res.error === "no_passcode_yet") return "Ask a grown-up to set up stars";
     if (res.error === "server_error") return "Stars are napping, try again soon";
+    if (res.error === "too_large") return "That photo is too big. Try one page at a time.";
     if (res.error === "not_enough_stars") {
       if (res.message) return String(res.message);
       var have = typeof res.balance === "number" ? res.balance : 0;
@@ -384,6 +393,13 @@
     onChange: function (fn) { listeners.push(fn); },
     messageFor: messageFor,
     balance: function () { return call({ action: "balance" }); },
+    postJson: function (path, body) { return post(body, path); },
+    applyStars: function (balance) {
+      if (typeof balance !== "number") return;
+      writeCache(balance);
+      paint({ ok: true, balance: balance });
+      pushChat(balance);
+    },
     earn: earn,
     spend: spend,
     getLevels: function () { return quiet({ action: "get_levels" }); },

@@ -25,6 +25,13 @@ const JOYCE_GAMES = [
     accent: "#d7f5d0"
   },
   {
+    title: "Homework",
+    emoji: "📝",
+    about: "Take a photo of your worksheet. Right answers can earn stars.",
+    href: "homework/index.html",
+    accent: "#c5ecff"
+  },
+  {
     title: "Animal Puzzle",
     emoji: "🦊",
     about: "A crossword and a Sudoku, with animals, letters, and numbers.",

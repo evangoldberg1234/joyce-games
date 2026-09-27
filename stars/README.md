@@ -18,6 +18,9 @@ After a balance, earn, or spend response that includes `balance`, this file call
 - This client never sends `reason: "game"`. A new game costs 20 stars. The home page can call `KidsChat.requestGame`, and the server charges it in the chat.
 - HTTP 401 `locked`, `bad_token`, and `token_expired` all mean locked.
 - HTTP 403 `no_passcode_yet` says "Ask a grown-up to set up stars". HTTP 500 `server_error` says "Stars are napping, try again soon". HTTP 403 `origin_not_allowed` and HTTP 503 `not_configured` use the waking-up line.
+- HTTP 413 `too_large` says "That photo is too big. Try one page at a time."
+
+`KidsStars.postJson(path, body)` posts somewhere other than `/kid-stars`, including `/kid-homework`. It adds `token` and `kid`, saves a renewed token, and uses this same error map. It does not paint the star bar. The caller passes `balance` to `KidsStars.applyStars` when it is time to move the counter and call `KidsChat.setStars`.
 
 `{ token, kid, action: "get_levels" }` → `{ ok, levels: { subject: level } }`.
 
