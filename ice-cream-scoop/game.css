@@ -40,11 +40,11 @@ body.scoop input {
 .bubbles span:nth-child(4) { right: 16%; left: auto; width: 12px; height: 12px; animation-duration: 20s; animation-delay: 5s; }
 
 .sea-floor {
-  position: fixed;
+  position: absolute;
   left: 0;
   right: 0;
   bottom: 0;
-  height: 110px;
+  height: 72px;
   pointer-events: none;
   z-index: 0;
   overflow: hidden;
@@ -473,6 +473,17 @@ input:focus-visible {
   --gutter-top: 78px;
 }
 
+.board.wide {
+  --cell: clamp(46px, min(9vw, 7.5vh), 64px);
+  --gutter: 112px;
+  --gutter-top: 78px;
+}
+
+.board.wide .clue-spell {
+  font-size: 15px;
+  letter-spacing: 0;
+}
+
 .gutter {
   display: flex;
   align-items: center;
@@ -518,10 +529,10 @@ input:focus-visible {
 }
 
 .cell.shade { background: #e5f4ff; }
-.cell.on-clue { background: #e5fff6; }
+.cell.on-clue { background: #b6f3d0; }
 .cell.given { background: #d4ebff; }
 .cell.given.shade { background: #c5e2fb; }
-.cell.given.on-clue { background: #c9f6ea; }
+.cell.given.on-clue { background: #8ee0b4; }
 .cell.num { color: #d26a00; }
 .cell.edge-l { border-left: 4px solid var(--line); }
 .cell.edge-r { border-right: 4px solid var(--line); }
@@ -743,9 +754,9 @@ input:focus-visible {
 }
 
 .treat {
-  --ball: 124px;
-  --ball-h: 86px;
-  --base-w: 168px;
+  --ball: 136px;
+  --ball-h: 94px;
+  --base-w: 176px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1136,6 +1147,12 @@ input:focus-visible {
 
   .board.cozy {
     --cell: clamp(58px, 11vh, 84px);
+    --gutter: 100px;
+    --gutter-top: 64px;
+  }
+
+  .board.wide {
+    --cell: clamp(40px, 7vh, 58px);
     --gutter: 100px;
     --gutter-top: 64px;
   }

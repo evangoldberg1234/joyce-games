@@ -543,7 +543,7 @@
       return;
     }
     scorePill.hidden = false;
-    scorePill.textContent = profile.avatar + " " + profile.points;
+    scorePill.textContent = profile.points + " scoops";
     scorePill.setAttribute("aria-label", profile.name + " has " + profile.points + " scoops");
   }
 
@@ -807,6 +807,7 @@
     board.setAttribute("role", "grid");
     board.setAttribute("aria-label", current.title + " puzzle");
     if (current.size <= 4) board.classList.add("cozy");
+    else board.classList.add("wide");
 
     function addGutter(clue, className) {
       var gutter = el("div", "gutter " + className);
