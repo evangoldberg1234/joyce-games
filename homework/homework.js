@@ -201,17 +201,23 @@
     if (start != null && start < 0) start = 0;
     if (start != null && bar) bar.textContent = "★ " + start;
     var origin = document.querySelector(".hw-title") || app;
-    var from = origin.getBoundingClientRect();
+    var box = origin.getBoundingClientRect();
+    var from = {
+      left: box.left,
+      top: Math.min(box.bottom + 70, window.innerHeight * 0.55),
+      width: box.width,
+      height: 36
+    };
     var n;
     for (n = 0; n < count; n += 1) {
       (function (step) {
-        setTimeout(function () { launch(from, step, start); }, step * 420);
+        setTimeout(function () { launch(from, step, start); }, step * 520);
       })(n);
     }
     setTimeout(function () {
       if (window.KidsStars && KidsStars.applyStars) KidsStars.applyStars(balance);
       else if (bar && typeof balance === "number") bar.textContent = "★ " + balance;
-    }, count * 420 + 520);
+    }, count * 520 + 760);
   }
 
   function launch(from, step, start) {
@@ -225,8 +231,7 @@
     var dy = (to.top + to.height / 2) - (from.top + 24);
     requestAnimationFrame(function () {
       requestAnimationFrame(function () {
-        star.style.transform = "translate(" + dx + "px, " + dy + "px) scale(0.55)";
-        star.style.opacity = "0.15";
+        star.style.transform = "translate(" + dx + "px, " + dy + "px) scale(0.72)";
       });
     });
     setTimeout(function () {
@@ -234,7 +239,7 @@
       chime(step);
       if (bar && start != null) bar.textContent = "★ " + (start + step + 1);
       if (star.parentNode) star.parentNode.removeChild(star);
-    }, 480);
+    }, 720);
   }
 
   function showResults(res) {
@@ -265,11 +270,7 @@
         item.className = problem && problem.correct ? "hw-problem hw-yes" : "hw-problem hw-soft";
         item.appendChild(el("span", "hw-n", String(number)));
         item.appendChild(el("span", "hw-mark", problem && problem.correct ? "✅" : "🤔"));
-        if (problem && problem.correct) {
-          item.appendChild(el("p", "hw-hint", "Correct"));
-          var yesHear = hearButton("Problem " + number + " is correct.", "Hear it");
-          if (yesHear) item.appendChild(yesHear);
-        } else {
+        if (!(problem && problem.correct)) {
           var hint = problem && problem.hint ? String(problem.hint) : "Try this one again.";
           item.appendChild(el("p", "hw-hint", hint));
           var noHear = hearButton("Problem " + number + ". " + hint, "Hear the hint");

@@ -153,10 +153,11 @@
 .hw-fly {
   position: fixed;
   z-index: 30;
-  font-size: 36px;
+  font-size: 52px;
   line-height: 1;
   pointer-events: none;
-  transition: transform 0.46s ease-in, opacity 0.46s ease-in;
+  filter: drop-shadow(0 0 8px #fff) drop-shadow(0 3px 0 #1d4e96);
+  transition: transform 0.7s ease-in;
 }
 
 .hw-spark {
