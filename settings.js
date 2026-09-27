@@ -74,7 +74,7 @@
        perSheet and perDay are the caps shown to the child.
        The server still decides the real caps when it is connected. */
     homework: {
-      on: true,
+      on: false, // turn on once the homework backend is live
       perSheet: 10,
       perDay: 20
     },
