@@ -125,10 +125,23 @@ button {
 }
 
 .cloud-c {
-  width: 150px;
-  bottom: 80px;
-  left: -20px;
-  opacity: 0.55;
+  width: 112px;
+  top: 188px;
+  left: 22px;
+}
+
+.cloud-c:before {
+  width: 46px;
+  height: 46px;
+  top: -22px;
+  left: 14px;
+}
+
+.cloud-c:after {
+  width: 34px;
+  height: 34px;
+  top: -14px;
+  left: 50px;
 }
 
 .wrap {
