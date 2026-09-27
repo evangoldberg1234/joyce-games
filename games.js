@@ -18,6 +18,13 @@ const JOYCE_GAMES = [
     accent: "#ffe7a0"
   },
   {
+    title: "Book Club",
+    emoji: "📚",
+    about: "Tell us a book you read. A long book can earn 20 stars.",
+    href: "books/index.html",
+    accent: "#d7f5d0"
+  },
+  {
     title: "Animal Puzzle",
     emoji: "🦊",
     about: "A crossword and a Sudoku, with animals, letters, and numbers.",
