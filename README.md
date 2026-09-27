@@ -21,7 +21,7 @@ python3 animal-puzzle/puzzle_tool.py verify
 
 ## Brain Breaks
 
-Brain Breaks are the shared pause between play: a few questions instead of an ad. The module lives in `brain-break/` (script, styles, and question data). Animal Puzzle already uses it. Another game can add the same two lines.
+Brain Breaks are a short set of questions at the end of every level, instead of an ad. There is no timer. The module lives in `brain-break/` and is meant to be copied into another site unchanged. See `brain-break/README.md` for the full game-author notes.
 
 From a game folder one level down from the site root:
 
@@ -30,21 +30,19 @@ From a game folder one level down from the site root:
 <script src="../brain-break/brain-break.js"></script>
 ```
 
-Then start it when the game starts. `isPaused` should be true on menus, how-to screens, and win screens, so the timer only counts active play. Call `betweenLevels()` after a level is solved and before the next one starts. If a break just finished, that call will not stack a second one.
+When a level ends, win or loss, wait for the break, then continue:
 
 ```javascript
-var breaks = JoyceBrainBreaks.attach({
-  isPaused: function () {
-    return howtoOpen || justSolved || screen !== "play";
-  }
+JoyceBrainBreaks.levelEnd({ won: true, level: levelNumber }).then(function () {
+  startNextLevel();
 });
-
-breaks.betweenLevels().then(startNextLevel);
 ```
 
-Joyce and Miriam each have saved levels for math, word problems, word match (English, Russian, and Hebrew), and the weekly Torah portion. A break is about three questions. The game stays paused until the break is finished.
+`level` is the 1-based game level she just finished. A higher level nudges the questions harder. That nudge is not saved. `won` is `true` when she beat the level and `false` when she missed it, ran out of chances, gave up, or restarted. The promise resolves when she taps Keep playing. If a break is already open, that same promise is returned.
 
-For testing, add `?bbtest=10` to the game URL. That uses a 10 second timer instead of a minute and a half. Nothing about it is shown on screen.
+Animal Puzzle calls this when she leaves the “You did it!” screen (next animal, all animals, or play again) and when she taps Reset on a puzzle she has not finished. Reset is the give-up path, because the puzzle has no lives. Hint, Erase, and the Animals menu do not end the level. Opening a puzzle from the menu does not show a break.
+
+Joyce and Miriam each have saved levels for math, word problems, word match (English, Russian, and Hebrew), and the weekly Torah portion. Correct answers step a level up. Misses step it down gently. A break is about three questions.
 
 ```bash
 node brain-break/test.js

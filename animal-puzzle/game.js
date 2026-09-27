@@ -16,24 +16,22 @@
   var selected = null;
   var message = "Tap a box. Then tap a letter or a number.";
   var justSolved = false;
-  var needsBetweenBreak = false;
-  var brainBreaks = window.JoyceBrainBreaks
-    ? JoyceBrainBreaks.attach({
-        isPaused: function () {
-          return howtoOpen || justSolved || screen !== "play";
-        }
-      })
-    : null;
+  var levelEnding = false;
 
-  function beginAfterBreak(next) {
-    if (!needsBetweenBreak || !brainBreaks) {
-      needsBetweenBreak = false;
+  function afterLevel(won, next) {
+    if (levelEnding) return;
+    levelEnding = true;
+    justSolved = false;
+    var level = levelIndex + 1;
+    function go() {
+      levelEnding = false;
       next();
+    }
+    if (!window.JoyceBrainBreaks || !JoyceBrainBreaks.levelEnd) {
+      go();
       return;
     }
-    needsBetweenBreak = false;
-    justSolved = false;
-    brainBreaks.betweenLevels().then(next);
+    JoyceBrainBreaks.levelEnd({ won: !!won, level: level }).then(go, go);
   }
 
   try {
@@ -296,9 +294,7 @@
   }
 
   function startLevel(index) {
-    beginAfterBreak(function () {
-      launchLevel(index);
-    });
+    launchLevel(index);
   }
 
   function launchLevel(index) {
@@ -372,7 +368,6 @@
   function afterMove(current) {
     if (isSolved(current, cells)) {
       justSolved = true;
-      needsBetweenBreak = true;
       message = "";
       markSolved(current.id);
       burst();
@@ -671,7 +666,16 @@
     var actions = document.createElement("div");
     actions.className = "actions";
     actions.appendChild(makeAction("Hint", "hint", hint));
-    actions.appendChild(makeAction("Reset", "reset", resetLevel));
+    actions.appendChild(makeAction("Reset", "reset", function () {
+      var current = puzzle();
+      if (justSolved || isSolved(current, cells)) {
+        resetLevel();
+        return;
+      }
+      afterLevel(false, function () {
+        resetLevel();
+      });
+    }));
     actions.appendChild(makeAction("Animals", "animals", function () {
       screen = "pick";
       justSolved = false;
@@ -760,13 +764,14 @@
     var last = levelIndex === PUZZLES.length - 1;
     next.textContent = last ? "All animals" : "Next animal";
     next.addEventListener("click", function () {
-      if (last) {
-        justSolved = false;
-        screen = "pick";
-        render();
-      } else {
-        startLevel(levelIndex + 1);
-      }
+      afterLevel(true, function () {
+        if (last) {
+          screen = "pick";
+          render();
+        } else {
+          launchLevel(levelIndex + 1);
+        }
+      });
     });
     var again = document.createElement("button");
     again.type = "button";
@@ -775,7 +780,7 @@
     again.style.color = "#16356b";
     again.textContent = "Play again";
     again.addEventListener("click", function () {
-      beginAfterBreak(function () {
+      afterLevel(true, function () {
         resetLevel();
       });
     });
