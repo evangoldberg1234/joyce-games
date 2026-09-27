@@ -1033,7 +1033,7 @@
     var scoopTitle = el("h2", "block-title", "Scoops");
     scoopTitle.style.marginTop = "12px";
     controls.appendChild(scoopTitle);
-    controls.appendChild(el("p", "profile-meta", draft.scoops.length + " of " + MAX_SCOOPS + ". The first scoop sits on the cone."));
+    controls.appendChild(el("p", "profile-meta", draft.scoops.length + " of " + MAX_SCOOPS + ". The first scoop sits on the bottom."));
     var flavors = el("div", "choices flavors");
     FLAVORS.forEach(function (flavor) {
       var button = document.createElement("button");
@@ -1050,7 +1050,7 @@
           return;
         }
         draft.scoops.push(flavor.id);
-        makerNote = flavor.name + " is on the cone.";
+        makerNote = flavor.name + " scoop added.";
         saveStore();
         render();
       });
