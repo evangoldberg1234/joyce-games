@@ -56,4 +56,18 @@ var game = fs.readFileSync(path.join(__dirname, "game.js"), "utf8");
 assert.ok(!/KidsStars\s*\.\s*earn\b/.test(game), "style points must not call KidsStars.earn");
 assert.ok(/style points/.test(game), "the page should name them style points");
 
+var howtoStart = game.indexOf('makeButton("Let\'s play", "big-btn sun howto-go"');
+var howtoSteps = game.indexOf('el("div", "howto-steps")');
+assert.ok(howtoStart > 0, "How to Play needs a Let's play button");
+assert.ok(howtoSteps > howtoStart, "the start button is above the scrolling steps");
+assert.ok(game.indexOf("joyce-spa-howto") > 0, "first visit still uses joyce-spa-howto");
+assert.ok(game.indexOf('howtoBtn.addEventListener') > 0, "the header How to play button stays");
+assert.ok(game.indexOf("document.body.appendChild(overlay)") > 0, "How to Play sits above the header");
+
+var css = fs.readFileSync(path.join(__dirname, "game.css"), "utf8");
+assert.ok(/\.sheet\.howto-sheet\s*\{[\s\S]*?overflow:\s*hidden/.test(css), "the how-to card does not scroll the start button away");
+assert.ok(/\.howto-steps\s*\{[\s\S]*?overflow:\s*auto/.test(css), "only the steps scroll");
+assert.ok(/\.howto-foot/.test(css), "a pinned footer keeps Let's play in view");
+assert.ok(/\.sheet \.howto-go\s*\{[\s\S]*?position:\s*static/.test(css), "the sky .sun rule must not pull Let's play out of the card");
+
 console.log("Spa Salon score checks passed.");
