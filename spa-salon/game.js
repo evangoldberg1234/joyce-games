@@ -797,11 +797,29 @@
     document.body.appendChild(dock);
   }
 
+  function closeHowto() {
+    howtoOpen = false;
+    try {
+      localStorage.setItem(HOWTO_KEY, "1");
+    } catch (err) {
+      /* The help can open again from the button. */
+    }
+    render();
+  }
+
   function renderHowto() {
     var overlay = el("div", "overlay");
-    var sheet = el("div", "sheet");
-    sheet.appendChild(el("h2", null, "How to play"));
-    sheet.appendChild(el("p", null, "Welcome to Spa Salon. Each guest wants one look."));
+    var sheet = el("div", "sheet howto-sheet");
+    sheet.setAttribute("role", "dialog");
+    sheet.setAttribute("aria-modal", "true");
+    sheet.setAttribute("aria-labelledby", "howto-title");
+    var title = el("h2", null, "How to play");
+    title.id = "howto-title";
+    sheet.appendChild(title);
+    sheet.appendChild(el("p", "howto-lead", "Welcome to Spa Salon. Each guest wants one look."));
+    /* Above the steps so the start control is on screen before any scrolling. */
+    sheet.appendChild(makeButton("Let's play", "big-btn sun howto-go", closeHowto));
+    var steps = el("div", "howto-steps");
     var list = document.createElement("ol");
     [
       "Read the look list. It tells you the hair, makeup, skincare, and nails.",
@@ -815,6 +833,7 @@
     ].forEach(function (line) {
       list.appendChild(el("li", null, line));
     });
+
     sheet.appendChild(list);
     var go = makeButton("Let's style", "big-btn warm sticky-go", function () {
       howtoOpen = false;

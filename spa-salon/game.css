@@ -502,6 +502,60 @@ h1 {
   width: 100%;
 }
 
+/* How to Play: the start button stays on screen. Only the steps scroll. */
+.sheet.howto-sheet {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  max-height: min(80vh, 680px);
+  max-height: min(85svh, 680px);
+  padding: 14px 16px 0;
+}
+
+.howto-lead {
+  margin: 0 0 10px;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.sheet .howto-go {
+  /* .sun is the sky decoration (absolute, 92px). Keep this button in the card. */
+  position: static;
+  top: auto;
+  right: auto;
+  width: 100%;
+  height: auto;
+  flex: none;
+  min-height: 72px;
+  margin: 0 0 10px;
+  font-size: 28px;
+}
+
+.howto-steps {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+.howto-steps ol {
+  margin: 4px 0 8px;
+}
+
+.howto-foot {
+  flex: none;
+  margin: 0 -16px;
+  padding: 10px 16px calc(12px + env(safe-area-inset-bottom));
+  background: #fff;
+  border-top: 3px solid #f3c4e4;
+}
+
+.howto-foot .howto-go {
+  margin: 0;
+}
+
 /* Dolls */
 
 .doll {
