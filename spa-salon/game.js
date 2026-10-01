@@ -517,7 +517,7 @@
     var done = makeButton("All done", "big-btn sun" + (missingParts(guest).length ? "" : " ready"), finishLook);
     done.id = "all-done";
     dock.appendChild(done);
-    app.appendChild(dock);
+    document.body.appendChild(dock);
   }
 
   function renderScore() {
@@ -553,6 +553,7 @@
     panel.appendChild(list);
     if (report.improved) panel.appendChild(el("p", "best-note", "New best for " + guest.name + "."));
     panel.appendChild(el("p", "ledger-note", "Style points stay in Spa Salon. Your star bar does not change."));
+    app.appendChild(panel);
     var nextLabel = "Try again";
     if (report.won) nextLabel = nextGuestAfter(guest.id) ? "Next guest" : "See the salon";
     var go = makeButton(nextLabel, "big-btn sun", function () {
@@ -560,8 +561,9 @@
       afterScore();
     });
     go.id = "continue-btn";
-    panel.appendChild(go);
-    app.appendChild(panel);
+    var dock = el("div", "dock");
+    dock.appendChild(go);
+    document.body.appendChild(dock);
   }
 
   function scoreBlurb(guest) {
@@ -596,11 +598,13 @@
       row.appendChild(cell);
     });
     panel.appendChild(row);
-    panel.appendChild(makeButton("Style someone again", "big-btn sun", function () {
+    app.appendChild(panel);
+    var dock = el("div", "dock");
+    dock.appendChild(makeButton("Style someone again", "big-btn sun", function () {
       screen = "lobby";
       render();
     }));
-    app.appendChild(panel);
+    document.body.appendChild(dock);
   }
 
   function renderHowto() {
@@ -634,7 +638,13 @@
     app.appendChild(overlay);
   }
 
+  function clearDock() {
+    var old = document.querySelector(".dock");
+    if (old && old.parentNode) old.parentNode.removeChild(old);
+  }
+
   function render() {
+    clearDock();
     app.innerHTML = "";
     paintStyle();
     if (!LOOKS) {

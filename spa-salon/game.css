@@ -5,6 +5,10 @@ body.spa {
   --ink-soft: #8d5598;
   --line: #b85ca8;
   --spa-deep: #a14d9a;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   background: linear-gradient(180deg, #ffe8f6 0%, #f6d9ff 46%, #e4d4ff 100%);
   user-select: none;
   -webkit-user-select: none;
@@ -35,8 +39,8 @@ body.spa .sun {
 .petals span:nth-child(4) { top: 12%; right: 22%; font-size: 26px; }
 
 .topbar {
-  position: sticky;
-  top: 0;
+  position: relative;
+  flex: none;
   z-index: 6;
   display: flex;
   align-items: center;
@@ -108,9 +112,12 @@ body.spa .sun {
 .app {
   position: relative;
   z-index: 1;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
   width: min(1100px, 100%);
   margin: 0 auto;
-  padding: 8px 16px 28px;
+  padding: 8px 16px 24px;
 }
 
 .kicker {
@@ -354,11 +361,13 @@ h1 {
 }
 
 .dock {
-  position: sticky;
-  bottom: 0;
+  position: relative;
   z-index: 5;
-  padding: 10px 0 6px;
-  background: linear-gradient(180deg, rgba(228, 212, 255, 0), #e4d4ff 28%);
+  flex: none;
+  width: min(1100px, 100%);
+  margin: 0 auto;
+  padding: 8px 16px calc(8px + env(safe-area-inset-bottom));
+  background: #e4d4ff;
 }
 
 .big-btn {
@@ -880,13 +889,12 @@ h1 {
   }
 
   .wish { grid-area: wish; }
-  .stage { grid-area: stage; min-height: 420px; align-items: center; }
+  .stage { grid-area: stage; align-items: center; }
   .tools { grid-area: tools; }
 }
 
 @media (orientation: landscape) and (max-height: 820px) {
   h1 { font-size: 40px; }
-  .doll { transform: scale(0.86); transform-origin: top center; }
   .spot { padding-bottom: 0; }
 }
 
