@@ -833,21 +833,17 @@
     ].forEach(function (line) {
       list.appendChild(el("li", null, line));
     });
-
-    sheet.appendChild(list);
-    var go = makeButton("Let's style", "big-btn warm sticky-go", function () {
-      howtoOpen = false;
-      try {
-        localStorage.setItem(HOWTO_KEY, "1");
-      } catch (err) {
-        /* The help can open again from the button. */
-      }
-      render();
-    });
+    steps.appendChild(list);
+    sheet.appendChild(steps);
+    var foot = el("div", "howto-foot");
+    var go = makeButton("Let's style", "big-btn warm howto-go", closeHowto);
     go.id = "lets-style";
-    sheet.appendChild(go);
+    foot.appendChild(go);
+    sheet.appendChild(foot);
     overlay.appendChild(sheet);
+    /* Above the dock, then onto the body so the header cannot paint over the card. */
     document.documentElement.appendChild(overlay);
+    document.body.appendChild(overlay);
   }
 
   function clearDock() {
