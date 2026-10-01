@@ -5,7 +5,9 @@ body.spa {
   --ink-soft: #8d5598;
   --line: #b85ca8;
   --spa-deep: #a14d9a;
+  height: 100vh;
   height: 100dvh;
+  height: var(--app-h, 100dvh);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -14,7 +16,7 @@ body.spa {
   -webkit-user-select: none;
 }
 
-body.spa .sun {
+body.spa .sky > .sun {
   background: #ffe29a;
   box-shadow: 0 0 0 12px rgba(255, 214, 232, 0.7);
 }
