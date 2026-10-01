@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="format-detection" content="telephone=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Joyce's Web">
+  <meta name="theme-color" content="#e56bb0">
+  <title>Spa Salon · Joyce's Web</title>
+  <link rel="icon" href="../apple-touch-icon.png">
+  <link rel="apple-touch-icon" href="../apple-touch-icon.png">
+  <link rel="manifest" href="../manifest.webmanifest">
+  <link rel="stylesheet" href="../css/site.css">
+  <link rel="stylesheet" href="game.css">
+  <link rel="stylesheet" href="../brain-break/brain-break.css">
+</head>
+<body class="game spa" data-page="Spa Salon">
+  <div class="sky" aria-hidden="true">
+    <div class="sun"></div>
+    <div class="cloud cloud-a"></div>
+    <div class="cloud cloud-b"></div>
+  </div>
+  <div class="petals" aria-hidden="true">
+    <span>🌸</span>
+    <span>🫧</span>
+    <span>💖</span>
+    <span>🪞</span>
+  </div>
+  <header class="topbar">
+    <a class="home-link" href="../index.html" data-site-link>← Joyce's Web</a>
+    <p class="game-name">Spa Salon</p>
+    <p id="style-pill" class="style-pill">0 style points</p>
+    <p class="starbar" id="starbar" data-needs="stars" aria-label="Star balance">★</p>
+    <button type="button" id="howto-btn" class="how-btn">How to play</button>
+  </header>
+  <main id="app" class="app"></main>
+  <script src="../settings.js"></script>
+  <script src="looks.js"></script>
+  <script src="../brain-break/brain-break.js"></script>
+  <script src="../stars/stars.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>

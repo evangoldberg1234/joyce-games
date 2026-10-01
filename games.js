@@ -44,5 +44,12 @@ const JOYCE_GAMES = [
     about: "Ocean Sudoku and crossword clues. Then build your own ice cream.",
     href: "ice-cream-scoop/index.html",
     accent: "#ffd0ef"
+  },
+  {
+    title: "Spa Salon",
+    emoji: "💇",
+    about: "Try hair on a mannequin, then makeup, skin, and nails.",
+    href: "spa-salon/index.html",
+    accent: "#f8c6e4"
   }
 ];

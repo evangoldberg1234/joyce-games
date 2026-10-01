@@ -1,0 +1,901 @@
+/* Spa Salon — pastel salon on Joyce's Web. */
+
+body.spa {
+  --ink: #6a2d78;
+  --ink-soft: #8d5598;
+  --line: #b85ca8;
+  --spa-deep: #a14d9a;
+  background: linear-gradient(180deg, #ffe8f6 0%, #f6d9ff 46%, #e4d4ff 100%);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+body.spa .sun {
+  background: #ffe29a;
+  box-shadow: 0 0 0 12px rgba(255, 214, 232, 0.7);
+}
+
+.petals {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.petals span {
+  position: absolute;
+  font-size: 34px;
+  opacity: 0.55;
+}
+
+.petals span:nth-child(1) { top: 18%; left: 4%; }
+.petals span:nth-child(2) { top: 28%; right: 6%; }
+.petals span:nth-child(3) { bottom: 14%; left: 8%; font-size: 28px; }
+.petals span:nth-child(4) { top: 12%; right: 22%; font-size: 26px; }
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 12px 16px 8px;
+  background: linear-gradient(180deg, rgba(255, 232, 246, 0.96) 70%, rgba(255, 232, 246, 0));
+}
+
+.home-link,
+.how-btn,
+.style-pill,
+.starbar,
+.tab,
+.big-btn,
+.guest-card,
+.choice {
+  border-radius: 18px;
+  border: 3px solid var(--line);
+  background: #fff;
+  box-shadow: 0 5px 0 var(--spa-deep);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.home-link,
+.how-btn,
+.style-pill,
+.starbar,
+.tab {
+  min-height: 56px;
+}
+
+.big-btn,
+.choice {
+  min-height: 64px;
+}
+
+.guest-card {
+  min-height: 280px;
+}
+
+.home-link,
+.how-btn,
+.style-pill,
+.starbar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 8px 14px;
+  text-decoration: none;
+}
+
+.game-name {
+  margin: 0;
+  color: #fff;
+  font-size: 22px;
+  font-weight: 800;
+  text-shadow: 0 3px 0 var(--spa-deep);
+}
+
+.style-pill {
+  background: #fff4fb;
+}
+
+.app {
+  position: relative;
+  z-index: 1;
+  width: min(1100px, 100%);
+  margin: 0 auto;
+  padding: 8px 16px 28px;
+}
+
+.kicker {
+  margin: 0;
+  text-align: center;
+  color: var(--spa-deep);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+h1 {
+  margin: 4px 0 8px;
+  text-align: center;
+  font-size: clamp(40px, 6vw, 64px);
+  color: #fff;
+  text-shadow: 0 4px 0 var(--spa-deep);
+}
+
+.subline,
+.progress,
+.wish-line,
+.note,
+.score-note,
+.ledger-note,
+.best-note,
+.retry-note {
+  margin: 0;
+  text-align: center;
+  color: var(--ink);
+}
+
+.subline,
+.progress {
+  color: #fff;
+  text-shadow: 0 2px 0 rgba(161, 77, 154, 0.45);
+}
+
+.guest-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 14px;
+  margin: 16px 0;
+}
+
+.guest-card {
+  flex: 1 1 220px;
+  max-width: 250px;
+  min-height: 280px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 10px 14px;
+  text-align: center;
+}
+
+.guest-card:active,
+.choice:active,
+.tab:active,
+.big-btn:active,
+.how-btn:active,
+.home-link:active {
+  transform: translateY(3px);
+  box-shadow: 0 2px 0 var(--spa-deep);
+}
+
+.guest-name {
+  font-size: 26px;
+  line-height: 1.1;
+}
+
+.guest-wish,
+.guest-best {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+
+.ready-pill {
+  background: #ffe29a;
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 14px;
+}
+
+.preview {
+  width: 120px;
+  height: 150px;
+  overflow: hidden;
+}
+
+.preview .doll {
+  transform: scale(0.62);
+  transform-origin: top center;
+}
+
+.salon {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.wish,
+.spot,
+.tools,
+.score-card,
+.sheet {
+  background: rgba(255, 255, 255, 0.92);
+  border: 3px solid var(--line);
+  border-radius: 28px;
+  box-shadow: 0 6px 0 rgba(161, 77, 154, 0.25);
+}
+
+.wish,
+.tools,
+.score-card {
+  padding: 12px 14px 14px;
+}
+
+.wish h2,
+.sheet h2 {
+  margin: 2px 0 6px;
+  text-align: center;
+  font-size: 32px;
+  color: var(--ink);
+  text-shadow: none;
+}
+
+.wish-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.wish-list li {
+  background: #fff4fb;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.retry-note {
+  margin-top: 8px;
+  font-weight: 800;
+}
+
+.stage {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 12px;
+  padding: 8px 4px 0;
+  background:
+    radial-gradient(circle at 50% 0, rgba(255, 255, 255, 0.7), transparent 58%),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.28) 0 22px, rgba(255, 210, 232, 0.35) 22px 44px);
+  border-radius: 28px;
+}
+
+.spot {
+  margin: 0;
+  flex: 1 1 180px;
+  max-width: 240px;
+  padding: 8px 8px 10px;
+  text-align: center;
+}
+
+.spot figcaption {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 16px;
+}
+
+.spot figcaption strong {
+  font-size: 20px;
+}
+
+.tabs,
+.choices,
+.dock,
+.party-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tabs {
+  margin-bottom: 10px;
+}
+
+.tab,
+.choice {
+  flex: 1 1 140px;
+}
+
+.tab {
+  min-height: 64px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 10px;
+}
+
+.tab.is-on,
+.choice.is-on {
+  background: #ffd0ef;
+}
+
+.choice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  text-align: left;
+}
+
+.swatch {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid rgba(90, 40, 80, 0.25);
+  flex: 0 0 auto;
+}
+
+.choice-name {
+  font-size: 18px;
+  line-height: 1.15;
+}
+
+.note {
+  min-height: 1.4em;
+  margin-top: 10px;
+  font-weight: 800;
+}
+
+.dock {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  padding: 10px 0 6px;
+  background: linear-gradient(180deg, rgba(228, 212, 255, 0), #e4d4ff 28%);
+}
+
+.big-btn {
+  flex: 1 1 160px;
+  padding: 12px 14px;
+}
+
+.big-btn.sun,
+.big-btn.ready {
+  background: #ffe29a;
+}
+
+.big-btn.ghost {
+  background: #fff;
+}
+
+.score-card {
+  max-width: 640px;
+  margin: 8px auto 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.score-card h1,
+.score-title {
+  color: var(--spa-deep);
+  text-shadow: none;
+  font-size: clamp(36px, 6vw, 56px);
+}
+
+.score-points {
+  margin: 0;
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--spa-deep);
+}
+
+.score-doll {
+  margin: 4px 0;
+}
+
+.match-list {
+  width: 100%;
+  margin: 4px 0;
+  padding: 0;
+  list-style: none;
+}
+
+.match-list li {
+  margin: 6px 0;
+  padding: 10px 12px;
+  border-radius: 16px;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.match-list .hit {
+  background: #e5ffd8;
+}
+
+.match-list .miss {
+  background: #ffe3ef;
+}
+
+.ledger-note,
+.best-note {
+  font-size: 16px;
+}
+
+.party-row {
+  justify-content: center;
+  width: 100%;
+}
+
+.party-guest {
+  width: 140px;
+  text-align: center;
+}
+
+.party-guest .doll {
+  transform: scale(0.7);
+  transform-origin: top center;
+}
+
+.party-guest .guest-name,
+.party-guest .guest-best {
+  margin: 0;
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: rgba(90, 40, 90, 0.35);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 16px;
+}
+
+.sheet {
+  width: min(560px, 100%);
+  max-height: min(80vh, 680px);
+  overflow: auto;
+  padding: 16px 16px 20px;
+  margin-bottom: 8px;
+}
+
+.sheet ol {
+  margin: 8px 0 14px;
+  padding-left: 22px;
+}
+
+.sheet li {
+  margin: 6px 0;
+}
+
+.sheet .big-btn {
+  width: 100%;
+}
+
+/* Dolls */
+
+.doll {
+  position: relative;
+  width: 176px;
+  height: 248px;
+  margin: 0 auto;
+}
+
+.doll .head {
+  position: absolute;
+  top: 34px;
+  left: 28px;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: var(--skin);
+  border: 3px solid rgba(90, 50, 40, 0.28);
+  z-index: 2;
+  overflow: hidden;
+}
+
+.doll.mannequin .head::after {
+  content: "";
+  position: absolute;
+  top: 16px;
+  left: 22px;
+  width: 36px;
+  height: 16px;
+  background: rgba(255, 255, 255, 0.55);
+  border-radius: 50%;
+  transform: rotate(-18deg);
+}
+
+.eye {
+  position: absolute;
+  top: 46px;
+  width: 22px;
+  height: 26px;
+  background: #fff;
+  border-radius: 50%;
+  border: 2px solid rgba(90, 50, 40, 0.45);
+  z-index: 2;
+}
+
+.eye.left { left: 26px; }
+.eye.right { right: 26px; }
+
+.eye i {
+  display: block;
+  width: 10px;
+  height: 12px;
+  margin: 6px auto 0;
+  background: #2b2118;
+  border-radius: 50%;
+}
+
+.blush {
+  position: absolute;
+  top: 72px;
+  width: 22px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--blush);
+  opacity: 0.9;
+  z-index: 1;
+}
+
+.blush.left { left: 18px; }
+.blush.right { right: 18px; }
+
+.doll[data-makeup="fresh"] .blush,
+.doll[data-makeup="none"] .blush {
+  opacity: 0;
+}
+
+.mouth {
+  position: absolute;
+  left: 42px;
+  top: 78px;
+  width: 34px;
+  height: 16px;
+  border-bottom: 4px solid var(--lip);
+  border-radius: 0 0 20px 20px;
+  z-index: 2;
+}
+
+.doll[data-makeup="berry"] .mouth,
+.doll[data-makeup="pink-sparkle"] .mouth,
+.doll[data-makeup="mermaid"] .mouth {
+  height: 12px;
+  background: var(--lip);
+  border-radius: 0 0 12px 12px;
+  border-bottom-width: 0;
+}
+
+.mask {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 10px;
+  height: 52px;
+  border-radius: 40px 40px 30px 30px;
+  background: var(--mask);
+  z-index: 3;
+}
+
+.doll[data-skin="none"] .mask {
+  display: none;
+}
+
+.cuke,
+.drop,
+.spark,
+.star-paint {
+  display: none;
+  position: absolute;
+  z-index: 4;
+}
+
+.doll[data-skin="cucumber"] .cuke {
+  display: block;
+  top: 50px;
+  width: 28px;
+  height: 14px;
+  background: #7dbe4a;
+  border-radius: 50%;
+  border: 2px solid #5d9a32;
+}
+
+.cuke.left { left: 22px; }
+.cuke.right { right: 22px; }
+
+.doll[data-skin="splash"] .drop {
+  display: block;
+  width: 8px;
+  height: 12px;
+  background: #7ec4ff;
+  border-radius: 50%;
+}
+
+.drop-a { left: 18px; top: 18px; }
+.drop-b { right: 16px; top: 28px; }
+.drop-c { left: 54px; top: 8px; }
+
+.doll[data-makeup="pink-sparkle"] .spark,
+.doll[data-makeup="star"] .spark {
+  display: block;
+  width: 8px;
+  height: 8px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 0 3px rgba(255, 214, 90, 0.8);
+}
+
+.spark { top: 18px; left: 28px; }
+.spark.two { top: 30px; right: 22px; left: auto; }
+
+.doll[data-makeup="star"] .star-paint {
+  display: block;
+  right: 10px;
+  top: 64px;
+  font-size: 16px;
+}
+
+.robe {
+  position: absolute;
+  top: 138px;
+  left: 36px;
+  width: 104px;
+  height: 98px;
+  background: #fff;
+  border: 3px solid rgba(184, 92, 168, 0.35);
+  border-radius: 40px 40px 24px 24px;
+  z-index: 1;
+}
+
+.sash {
+  position: absolute;
+  top: 28px;
+  left: 12px;
+  right: 12px;
+  height: 16px;
+  background: var(--outfit);
+  border-radius: 8px;
+}
+
+.hand {
+  position: absolute;
+  top: 34px;
+  width: 42px;
+  height: 26px;
+  background: var(--skin);
+  border-radius: 14px;
+  border: 2px solid rgba(90, 50, 40, 0.25);
+  display: flex;
+  justify-content: center;
+  gap: 1px;
+  padding-top: 2px;
+  z-index: 3;
+}
+
+.hand.left { left: -18px; }
+.hand.right { right: -18px; }
+
+.hand i {
+  width: 7px;
+  height: 12px;
+  border-radius: 4px 4px 3px 3px;
+  background: var(--nail);
+  border: 1px solid rgba(90, 40, 40, 0.2);
+}
+
+.neck {
+  position: absolute;
+  top: 140px;
+  left: 72px;
+  width: 32px;
+  height: 22px;
+  background: var(--skin);
+  z-index: 1;
+}
+
+.pole {
+  position: absolute;
+  top: 158px;
+  left: 80px;
+  width: 16px;
+  height: 58px;
+  background: linear-gradient(#e7c39a, #c4926a);
+  border-radius: 8px;
+  z-index: 0;
+}
+
+.base {
+  position: absolute;
+  top: 208px;
+  left: 42px;
+  width: 92px;
+  height: 16px;
+  background: #c4926a;
+  border-radius: 10px;
+}
+
+.hair span {
+  position: absolute;
+}
+
+.hair-plain .cap,
+.hair-bun .cap,
+.hair-braids .cap,
+.hair-spikes .cap {
+  top: 32px;
+  left: 26px;
+  width: 124px;
+  height: 52px;
+  background: var(--hair);
+  border-radius: 62px 62px 16px 16px;
+  z-index: 3;
+}
+
+.hair-bun .ball {
+  top: 6px;
+  left: 60px;
+  width: 56px;
+  height: 56px;
+  background: var(--hair);
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.28);
+  z-index: 4;
+}
+
+.hair-bun .crown {
+  top: 0;
+  left: 66px;
+  width: 46px;
+  height: 22px;
+  background: #ffd45a;
+  clip-path: polygon(0 100%, 0 46%, 18% 72%, 34% 18%, 50% 72%, 66% 8%, 82% 72%, 100% 46%, 100% 100%);
+  z-index: 5;
+}
+
+.hair-spikes .spike {
+  top: 8px;
+  width: 22px;
+  height: 42px;
+  background: var(--hair);
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+  z-index: 4;
+}
+
+.hair-spikes .spike:nth-child(1) { left: 36px; top: 18px; height: 34px; }
+.hair-spikes .spike:nth-child(2) { left: 56px; top: 8px; height: 46px; }
+.hair-spikes .spike:nth-child(3) { left: 78px; top: 2px; height: 52px; }
+.hair-spikes .spike:nth-child(4) { left: 100px; top: 8px; height: 46px; }
+.hair-spikes .spike:nth-child(5) { left: 120px; top: 18px; height: 34px; }
+
+.hair-waves .flow {
+  top: 42px;
+  left: 6px;
+  width: 164px;
+  height: 170px;
+  background: var(--hair);
+  border-radius: 80px 80px 70px 70px;
+  z-index: 1;
+}
+
+.hair-waves .bangs,
+.hair-bob .bangs {
+  top: 38px;
+  left: 32px;
+  width: 112px;
+  height: 34px;
+  background: var(--hair);
+  border-radius: 40px 40px 12px 12px;
+  z-index: 3;
+}
+
+.hair-bob .bob {
+  top: 40px;
+  left: 14px;
+  width: 148px;
+  height: 124px;
+  background: var(--hair);
+  border-radius: 74px 74px 58px 58px;
+  z-index: 1;
+}
+
+.hair-curls .curl {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--hair);
+  box-shadow: inset -6px -4px 0 rgba(0, 0, 0, 0.08);
+  z-index: 3;
+}
+
+.hair-curls .curl:nth-child(1) { top: 18px; left: 18px; }
+.hair-curls .curl:nth-child(2) { top: 8px; left: 48px; }
+.hair-curls .curl:nth-child(3) { top: 4px; left: 78px; }
+.hair-curls .curl:nth-child(4) { top: 12px; left: 112px; }
+.hair-curls .curl:nth-child(5) { top: 40px; left: 8px; }
+.hair-curls .curl:nth-child(6) { top: 44px; left: 128px; }
+.hair-curls .curl:nth-child(7) { top: 34px; left: 68px; width: 42px; height: 26px; }
+
+.hair-braids .braid {
+  top: 72px;
+  width: 18px;
+  height: 108px;
+  background: repeating-linear-gradient(
+    180deg,
+    var(--hair) 0 10px,
+    rgba(255, 255, 255, 0.28) 10px 14px
+  );
+  border-radius: 10px;
+  z-index: 3;
+}
+
+.hair-braids .braid.left { left: 16px; }
+.hair-braids .braid.right { right: 16px; }
+
+.hair-braids .band {
+  bottom: 4px;
+  left: 1px;
+  width: 16px;
+  height: 8px;
+  background: #ff6fa5;
+  border-radius: 4px;
+}
+
+.confetti {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 7;
+  overflow: hidden;
+}
+
+.confetti span {
+  position: absolute;
+  top: -20px;
+  font-size: 28px;
+  animation: spa-fall 1.4s ease-in forwards;
+}
+
+@keyframes spa-fall {
+  to { transform: translateY(100vh) rotate(20deg); opacity: 0.2; }
+}
+
+@media (min-width: 980px) {
+  .salon {
+    display: grid;
+    grid-template-columns: minmax(240px, 300px) minmax(340px, 1fr) minmax(280px, 400px);
+    grid-template-areas: "wish stage tools";
+    align-items: start;
+  }
+
+  .wish { grid-area: wish; }
+  .stage { grid-area: stage; min-height: 420px; align-items: center; }
+  .tools { grid-area: tools; }
+}
+
+@media (orientation: landscape) and (max-height: 820px) {
+  h1 { font-size: 40px; }
+  .doll { transform: scale(0.86); transform-origin: top center; }
+  .spot { padding-bottom: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .confetti span { animation: none; }
+}
+
+button:focus-visible,
+a:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 2px;
+}
