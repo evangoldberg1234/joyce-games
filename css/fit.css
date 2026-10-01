@@ -1,0 +1,465 @@
+/* Shared viewport fit. Loaded last so it wins over page styles.
+   The page is one screen. Content scrolls. Bottom bars stay on screen. */
+
+html {
+  height: 100vh;
+  height: 100dvh;
+  height: var(--app-h, 100dvh);
+  overflow: hidden;
+}
+
+body {
+  min-height: 100vh;
+  min-height: 100dvh;
+  min-height: var(--app-h, 100dvh);
+}
+
+body.home,
+body.game {
+  height: 100vh;
+  height: 100dvh;
+  height: var(--app-h, 100dvh);
+  max-height: 100vh;
+  max-height: 100dvh;
+  max-height: var(--app-h, 100dvh);
+  min-height: 0;
+  overflow: hidden;
+}
+
+body.home {
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+body.game {
+  display: flex;
+  flex-direction: column;
+}
+
+body.game > .topbar,
+body.game > .quest-top,
+body.game > .dock {
+  flex: 0 0 auto;
+}
+
+body.game > .app,
+body.game > .quest-app,
+body.game > .books-app,
+body.game > .hw-app {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: min(1100px, 100%);
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+body.spa {
+  height: 100vh;
+  height: 100dvh;
+  height: var(--app-h, 100dvh);
+  max-height: var(--app-h, 100dvh);
+}
+
+/* Bottom bars. The page padding already includes the safe area.
+   The bar repeats the inset so a fixed or sticky bar cannot slide
+   under the home indicator. */
+body.game > .dock,
+.play-layout > .side,
+.stack-top,
+.quest-app > .q-next:last-child,
+.books-app > .book-next:last-child,
+.hw-app > .hw-shoot,
+.panel > .big-btn:last-child {
+  padding-bottom: max(8px, env(safe-area-inset-bottom));
+}
+
+.stack-top,
+.quest-app > .q-next:last-child,
+.panel > .big-btn:last-child {
+  position: sticky;
+  bottom: 0;
+  z-index: 4;
+}
+
+.play-layout .actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 4;
+  padding-bottom: max(8px, env(safe-area-inset-bottom));
+  background: rgba(255, 255, 255, 0.96);
+  border-radius: 18px;
+}
+
+/* Question screens: the card scrolls, the buttons stay underneath. */
+.quest-app:has(.q-card) {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.quest-app:has(.q-card) > .q-card {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.quest-app:has(.q-card) > .q-next,
+.quest-app:has(.q-card) > .quest-side {
+  flex: 0 0 auto;
+  position: static;
+}
+
+/* Puzzle play: shrink the board into the space above the buttons. */
+.app:has(.play-layout) {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 8px 12px 8px;
+}
+
+.play-layout {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+}
+
+.play-layout > .level-line,
+.play-layout > .legend,
+.play-layout > .chips {
+  flex: 0 0 auto;
+  width: min(640px, 100%);
+}
+
+.play-layout > .clue-card {
+  flex: 0 0 auto;
+  max-height: 140px;
+  width: min(640px, 100%);
+  overflow: auto;
+}
+
+.play-layout > .board-card {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  overflow: auto;
+  container-type: size;
+  container-name: puzzle;
+}
+
+.play-layout > .side {
+  position: static;
+  z-index: 5;
+  flex: 0 1 auto;
+  min-height: 0;
+  width: min(560px, 100%);
+  max-height: 46%;
+  overflow: auto;
+  padding-top: 4px;
+}
+
+.board {
+  --gutter: clamp(40px, 16cqi, 112px);
+  --gutter-top: clamp(32px, 14cqb, 84px);
+  --cell: clamp(
+    48px,
+    min(
+      calc((100cqi - var(--gutter) - 8px) / var(--n, 4)),
+      calc((100cqb - var(--gutter-top) - 8px) / var(--n, 4))
+    ),
+    104px
+  );
+}
+
+.board.cozy,
+.board.wide {
+  --cell: clamp(
+    48px,
+    min(
+      calc((100cqi - var(--gutter) - 8px) / var(--n, 4)),
+      calc((100cqb - var(--gutter-top) - 8px) / var(--n, 4))
+    ),
+    112px
+  );
+}
+
+.cell {
+  min-width: 48px;
+  min-height: 48px;
+}
+
+/* Floors for controls that were under 48px. Do not lower controls
+   that already use a taller min-height. */
+.chip,
+.starbar,
+.parent-note summary,
+.play-pill {
+  min-height: 48px;
+}
+
+.play-pill {
+  display: inline-flex;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+/* Yellow game buttons share the class "sun" with the sky decoration.
+   Keep them in the button bar at a full tap size. */
+button.sun,
+.big-btn.sun {
+  position: static;
+  top: auto;
+  right: auto;
+  width: auto;
+  height: auto;
+  border-radius: 18px;
+}
+
+.action,
+.big-btn,
+.menu-btn,
+.q-choice,
+.q-next,
+.home-link,
+.how-btn {
+  min-width: 48px;
+}
+
+/* Wide short screens: board beside the buttons, both inside the height. */
+@media (orientation: landscape) and (max-height: 1100px) {
+  .play-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(240px, 360px);
+    grid-template-rows: auto auto auto auto minmax(0, 1fr);
+    align-items: stretch;
+    justify-content: stretch;
+    gap: 6px 16px;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .play-layout > .level-line,
+  .play-layout > .legend,
+  .play-layout > .chips,
+  .play-layout > .clue-card {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .play-layout > .board-card,
+  .play-layout > .side {
+    grid-row: -1;
+    max-height: none;
+    height: 100%;
+    min-height: 0;
+  }
+
+  .play-layout > .side {
+    position: static;
+    align-self: end;
+    width: 100%;
+    overflow: auto;
+  }
+}
+
+/* Narrow cover screen and phones. */
+@media (max-width: 520px) {
+  .wrap {
+    padding: 12px 12px 8px;
+  }
+
+  h1 {
+    font-size: clamp(40px, 12vw, 64px);
+  }
+
+  .game-card {
+    flex-basis: 100%;
+    min-height: 0;
+    grid-template-columns: 72px 1fr;
+    gap: 2px 10px;
+    padding: 10px 12px;
+    border-radius: 24px;
+  }
+
+  .game-emoji {
+    width: 64px;
+    height: 64px;
+    font-size: 36px;
+  }
+
+  .game-title {
+    font-size: clamp(24px, 7vw, 32px);
+  }
+
+  .game-about {
+    font-size: 16px;
+  }
+
+  .parade {
+    margin: 12px 0 4px;
+    font-size: 28px;
+  }
+
+  .foot {
+    padding-bottom: calc(96px + env(safe-area-inset-bottom));
+  }
+
+  .topbar,
+  .quest-top {
+    gap: 6px;
+    padding: 8px 10px 0;
+  }
+
+  .topbar .home-link,
+  .topbar .how-btn,
+  .topbar .score-pill,
+  .topbar .style-pill,
+  .topbar .starbar,
+  .quest-top .home-link,
+  .quest-top .starbar {
+    min-height: 48px;
+    padding: 4px 10px;
+    font-size: 16px;
+  }
+
+  .play-layout > .legend {
+    font-size: 16px;
+    line-height: 1.25;
+    max-height: 2.6em;
+    overflow: hidden;
+  }
+
+  .play-layout > .chips {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    max-height: 56px;
+    overflow-x: auto;
+  }
+
+  .play-layout .key {
+    min-height: 48px;
+    font-size: 24px;
+  }
+
+  .play-layout .status {
+    min-height: 40px;
+    padding: 4px 8px;
+    font-size: 16px;
+  }
+
+  .play-layout > .level-line h2 {
+    font-size: 26px;
+  }
+
+  .play-layout > .clue-card {
+    max-height: 96px;
+  }
+
+  .play-layout > .side {
+    max-height: 230px;
+  }
+
+  .game-name {
+    font-size: clamp(20px, 5vw, 28px);
+  }
+
+  .guest-card {
+    min-height: 0;
+    flex-basis: 140px;
+    max-width: none;
+  }
+
+  .actions {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .action {
+    padding: 8px 6px;
+    font-size: 16px;
+  }
+
+  .key {
+    font-size: clamp(22px, 6vw, 34px);
+  }
+
+  .treat {
+    --ball: clamp(72px, 24vw, 136px);
+    --ball-h: clamp(52px, 16vw, 94px);
+    --base-w: clamp(96px, 32vw, 176px);
+  }
+}
+
+@media (max-height: 820px) {
+  .stage .doll,
+  .spot .doll {
+    zoom: 0.72;
+  }
+
+  .hello-avatar {
+    font-size: 48px;
+  }
+
+  .menu-btn {
+    min-height: 56px;
+    font-size: 22px;
+  }
+
+  .picker-intro,
+  .screen-intro {
+    font-size: 22px;
+    margin: 4px auto 8px;
+  }
+}
+
+.bb-next {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+}
+
+/* How-to sheets stay inside the visible height. */
+.overlay,
+.bb-overlay {
+  top: 0;
+  right: 0;
+  bottom: auto;
+  left: 0;
+  height: 100vh;
+  height: 100dvh;
+  height: var(--app-h, 100dvh);
+  max-height: var(--app-h, 100dvh);
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+}
+
+.sheet {
+  max-height: min(92vh, 92dvh, calc(var(--app-h, 92dvh) - 32px));
+}
+
+/* Chat bubble: keep the open panel inside the visible height.
+   chat.js also writes --kc-vh in pixels on resize. */
+.kc-root {
+  --kc-vh: 100vh;
+  --kc-vh: 100dvh;
+  --kc-vh: var(--app-h, 100dvh);
+}
+
+@media (max-width: 560px) {
+  .kc-panel {
+    height: 100vh;
+    height: 100dvh;
+    height: var(--kc-vh);
+    max-height: var(--kc-vh);
+  }
+}
