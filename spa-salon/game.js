@@ -1,8 +1,9 @@
 /* Spa Salon
    Style one guest at a time. Hair is tried on the mannequin, then put on the guest.
    Makeup, skincare, and nails go straight on the guest.
-   The 40 / 20 / 5 / 0 result is style points kept in this game.
-   It is not sent to the star server. The star bar only shows the real balance. */
+   Dig a hole is a silly extra station. It does not change the 40 / 20 / 5 / 0 look.
+   The first finished dig adds 5 style points, kept in this game.
+   Style points are not sent to the star server. The star bar only shows the real balance. */
 (function () {
   var LOOKS = window.SPA_LOOKS;
   var STORE_KEY = "joyce-spa-salon";
@@ -23,6 +24,12 @@
   var retrying = false;
   var report = null;
   var levelEnding = false;
+  var DIG_GOAL = 8;
+  var DIG_BONUS = 5;
+  var digProgress = 0;
+  var digDone = false;
+  var digTimer = null;
+  var ignoreDigClick = false;
 
   try {
     if (!localStorage.getItem(HOWTO_KEY)) howtoOpen = true;
@@ -83,6 +90,11 @@
     return typeof n === "number" ? n : null;
   }
 
+  function digBonusPoints() {
+    var n = store.digBonus;
+    return typeof n === "number" && n > 0 ? n : 0;
+  }
+
   function totalPoints() {
     var sum = 0;
     var i;
@@ -90,7 +102,7 @@
       var n = bestFor(LOOKS.guests[i].id);
       if (n) sum += n;
     }
-    return sum;
+    return sum + digBonusPoints();
   }
 
   function readyCount() {
@@ -124,6 +136,9 @@
     tab = "hair";
     tryHair = null;
     look = blankLook();
+    stopDigging();
+    digProgress = 0;
+    digDone = false;
     retrying = !!isRetry;
     report = null;
     var guest = guestById(id);
@@ -215,6 +230,170 @@
       return;
     }
     JoyceBrainBreaks.levelEnd({ won: !!won, level: level }).then(go, go);
+  }
+
+  function stopDigging() {
+    if (digTimer) {
+      clearInterval(digTimer);
+      digTimer = null;
+    }
+    var scene = document.getElementById("dig-scene");
+    if (scene) scene.classList.remove("is-digging");
+  }
+
+  function paintDig() {
+    var scene = document.getElementById("dig-scene");
+    if (!scene) return;
+    scene.style.setProperty("--dug", String(digProgress));
+    scene.setAttribute("data-depth", String(digProgress));
+    var meter = document.getElementById("dig-meter");
+    if (meter) {
+      meter.setAttribute("aria-valuenow", String(digProgress));
+      meter.setAttribute("aria-valuetext", digProgress + " of " + DIG_GOAL);
+    }
+    var fill = document.getElementById("dig-meter-fill");
+    if (fill) fill.style.width = Math.round((digProgress / DIG_GOAL) * 100) + "%";
+  }
+
+  function showDigFind() {
+    var scene = document.getElementById("dig-scene");
+    if (scene) scene.setAttribute("data-found", "true");
+    var first = digBonusPoints() === 0;
+    if (first) {
+      store.digBonus = DIG_BONUS;
+      saveStore();
+      paintStyle();
+      burst();
+    }
+    var yay = document.getElementById("dig-yay");
+    if (yay) {
+      yay.hidden = false;
+      yay.textContent = first ? "Tee-hee! It's poop! +5 style points." : "Tee-hee! It's poop again!";
+    }
+    var live = document.getElementById("dig-note");
+    if (live) {
+      live.textContent = first
+        ? "Silly surprise. Those 5 style points stay in this game."
+        : "You already got the silly style points.";
+    }
+    var btn = document.getElementById("dig-btn");
+    if (btn) btn.textContent = "Dig again";
+  }
+
+  function digOnce() {
+    if (digDone) {
+      stopDigging();
+      return;
+    }
+    digProgress += 1;
+    if (digProgress >= DIG_GOAL) {
+      digProgress = DIG_GOAL;
+      digDone = true;
+      stopDigging();
+      paintDig();
+      showDigFind();
+      return;
+    }
+    paintDig();
+  }
+
+  function resetDig() {
+    digProgress = 0;
+    digDone = false;
+    var scene = document.getElementById("dig-scene");
+    if (scene) scene.setAttribute("data-found", "false");
+    paintDig();
+    var yay = document.getElementById("dig-yay");
+    if (yay) yay.hidden = true;
+    var live = document.getElementById("dig-note");
+    if (live) live.textContent = "Tap or hold Dig. Something silly is under the grass.";
+    var btn = document.getElementById("dig-btn");
+    if (btn) btn.textContent = "Dig!";
+  }
+
+  function onDigPointerDown(event) {
+    if (digDone) return;
+    if (event.pointerType === "mouse" && event.button !== 0) return;
+    event.preventDefault();
+    ignoreDigClick = true;
+    var scene = document.getElementById("dig-scene");
+    if (scene) scene.classList.add("is-digging");
+    digOnce();
+    if (digTimer) clearInterval(digTimer);
+    digTimer = setInterval(digOnce, 170);
+  }
+
+  function endDigHold() {
+    stopDigging();
+  }
+
+  window.addEventListener("pointerup", endDigHold);
+  window.addEventListener("pointercancel", endDigHold);
+
+  function renderDig(tools) {
+    var scene = el("div", "dig-scene");
+    scene.id = "dig-scene";
+    scene.setAttribute("data-found", digDone ? "true" : "false");
+    scene.setAttribute("aria-label", "Cartoon hole in the grass");
+    var world = el("div", "dig-world");
+    world.appendChild(el("div", "dig-cloud"));
+    world.appendChild(el("div", "dig-flower dig-flower-l", "🌸"));
+    world.appendChild(el("div", "dig-flower dig-flower-r", "🌼"));
+    world.appendChild(el("div", "dig-rock"));
+    world.appendChild(el("div", "dig-grass"));
+    world.appendChild(el("div", "dig-mound dig-mound-l"));
+    world.appendChild(el("div", "dig-mound dig-mound-r"));
+    var hole = el("div", "dig-hole");
+    hole.appendChild(el("div", "dig-pit"));
+    var pile = el("div", "poop");
+    pile.setAttribute("aria-hidden", "true");
+    pile.appendChild(el("span", "blob blob-a"));
+    pile.appendChild(el("span", "blob blob-b"));
+    pile.appendChild(el("span", "blob blob-c"));
+    pile.appendChild(el("span", "blob blob-d"));
+    hole.appendChild(pile);
+    world.appendChild(hole);
+    world.appendChild(el("div", "dig-shovel", "⛏️"));
+    world.appendChild(el("p", "dig-mark", "Dig here"));
+    scene.appendChild(world);
+    tools.appendChild(scene);
+
+    tools.appendChild(el("p", "dig-meter-label", "Dig meter"));
+    var meter = el("div", "dig-meter");
+    meter.id = "dig-meter";
+    meter.setAttribute("role", "meter");
+    meter.setAttribute("aria-label", "Dig meter");
+    meter.setAttribute("aria-valuemin", "0");
+    meter.setAttribute("aria-valuemax", String(DIG_GOAL));
+    var fill = el("span", "dig-meter-fill");
+    fill.id = "dig-meter-fill";
+    meter.appendChild(fill);
+    tools.appendChild(meter);
+
+    var yay = el("p", "dig-yay", digDone ? (digBonusPoints() ? "Tee-hee! It's poop! +5 style points." : "Tee-hee! It's poop!") : "");
+    yay.id = "dig-yay";
+    yay.hidden = !digDone;
+    tools.appendChild(yay);
+
+    var digBtn = makeButton(digDone ? "Dig again" : "Dig!", "big-btn sun dig-btn", function () {
+      if (ignoreDigClick) {
+        ignoreDigClick = false;
+        return;
+      }
+      if (digDone) resetDig();
+    });
+    digBtn.id = "dig-btn";
+    digBtn.addEventListener("pointerdown", onDigPointerDown);
+    tools.appendChild(digBtn);
+
+    var live = el("p", "note dig-note");
+    live.id = "dig-note";
+    live.setAttribute("aria-live", "polite");
+    if (digDone && digBonusPoints()) live.textContent = "Silly surprise. Those 5 style points stay in this game.";
+    else if (digDone) live.textContent = "You already got the silly style points.";
+    else live.textContent = "Tap or hold Dig. Something silly is under the grass.";
+    tools.appendChild(live);
+    paintDig();
   }
 
   function burst() {
@@ -387,7 +566,7 @@
 
   function renderSalon() {
     var guest = currentGuest();
-    var salon = el("section", "salon");
+    var salon = el("section", "salon" + (tab === "dig" ? " is-digging-tab" : ""));
     salon.setAttribute("data-screen", "salon");
 
     var wish = el("div", "wish");
@@ -404,7 +583,9 @@
     if (retrying) wish.appendChild(el("p", "retry-note", "New try. Match every part of the list."));
     salon.appendChild(wish);
 
-    var stage = el("div", "stage");
+    var stage = null;
+    if (tab !== "dig") {
+    stage = el("div", "stage");
     var person = el("figure", "spot");
     var personDoll = el("div", "doll-wrap");
     mountDoll(personDoll, {
@@ -438,10 +619,12 @@
     stand.appendChild(manCap);
     stage.appendChild(stand);
     salon.appendChild(stage);
+    }
 
     var tools = el("div", "tools");
     var tabs = el("div", "tabs");
-    LOOKS.cats.forEach(function (cat) {
+    var stations = LOOKS.cats.concat([{ id: "dig", label: "Dig", emoji: "⛏️" }]);
+    stations.forEach(function (cat) {
       var button = document.createElement("button");
       button.type = "button";
       button.id = "tab-" + cat.id;
@@ -449,8 +632,10 @@
       button.setAttribute("aria-pressed", tab === cat.id ? "true" : "false");
       button.textContent = cat.emoji + " " + cat.label;
       button.addEventListener("click", function () {
+        stopDigging();
         tab = cat.id;
         if (cat.id === "hair") note = tryHair ? "Put this hair on " + guest.name + " when you like it." : "Tap a hair style for the mannequin.";
+        else if (cat.id === "dig") note = "Tap or hold Dig. Something silly is under the grass.";
         else note = "Tap one. It goes right on " + guest.name + ".";
         render();
       });
@@ -458,6 +643,9 @@
     });
     tools.appendChild(tabs);
 
+    if (tab === "dig") {
+      renderDig(tools);
+    } else {
     var choices = el("div", "choices");
     var list = LOOKS[tab];
     list.forEach(function (item) {
@@ -488,6 +676,7 @@
     live.setAttribute("aria-live", "polite");
     live.textContent = note;
     tools.appendChild(live);
+    }
     salon.appendChild(tools);
     app.appendChild(salon);
 
@@ -618,6 +807,7 @@
       "Tap a hair style. It goes on the mannequin head first.",
       "Tap Put this hair on the guest when you want them to wear it.",
       "Pick makeup, skincare, and nail polish. Those go right on the guest.",
+      "Tap Dig anytime. Tap or hold Dig until a silly surprise pops up. The first time adds 5 style points.",
       "Tap All done. The spa checks the list.",
       "Looks amazing is 40 style points. Looks okay is 20. Looks kinda bad is 5. Looks horrible is 0.",
       "Style points stay in this game. The star bar is your real stars."
@@ -625,7 +815,7 @@
       list.appendChild(el("li", null, line));
     });
     sheet.appendChild(list);
-    sheet.appendChild(makeButton("Let's style", "big-btn sun", function () {
+    var go = makeButton("Let's style", "big-btn sun sticky-go", function () {
       howtoOpen = false;
       try {
         localStorage.setItem(HOWTO_KEY, "1");
@@ -633,9 +823,11 @@
         /* The help can open again from the button. */
       }
       render();
-    }));
+    });
+    go.id = "lets-style";
+    sheet.appendChild(go);
     overlay.appendChild(sheet);
-    app.appendChild(overlay);
+    document.documentElement.appendChild(overlay);
   }
 
   function clearDock() {
@@ -643,8 +835,16 @@
     if (old && old.parentNode) old.parentNode.removeChild(old);
   }
 
+  function clearOverlay() {
+    var old = document.querySelector("body.spa .overlay, html > .overlay");
+    if (!old) old = document.querySelector(".overlay");
+    if (old && old.parentNode) old.parentNode.removeChild(old);
+  }
+
   function render() {
+    stopDigging();
     clearDock();
+    clearOverlay();
     app.innerHTML = "";
     paintStyle();
     if (!LOOKS) {

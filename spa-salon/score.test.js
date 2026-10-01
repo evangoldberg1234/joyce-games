@@ -55,5 +55,10 @@ assert.strictEqual(none.rows[0].gotName, "Not picked");
 var game = fs.readFileSync(path.join(__dirname, "game.js"), "utf8");
 assert.ok(!/KidsStars\s*\.\s*earn\b/.test(game), "style points must not call KidsStars.earn");
 assert.ok(/style points/.test(game), "the page should name them style points");
+assert.ok(/Tap Dig anytime/.test(game), "how to play should mention digging");
+assert.ok(/store\.digBonus/.test(game), "the dig bonus stays in this game's save");
+assert.ok(/id: "dig"/.test(game), "dig is a salon station");
+assert.ok(/lets-style/.test(game), "the how-to play button stays labeled");
+assert.ok(/document\.documentElement\.appendChild\(overlay\)/.test(game), "how to play sits above the dock");
 
 console.log("Spa Salon score checks passed.");

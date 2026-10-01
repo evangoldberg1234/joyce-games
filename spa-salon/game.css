@@ -462,20 +462,31 @@ h1 {
 .overlay {
   position: fixed;
   inset: 0;
-  z-index: 40;
+  z-index: 80;
   background: rgba(90, 40, 90, 0.35);
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  padding: 16px;
+  padding:
+    max(16px, env(safe-area-inset-top))
+    16px
+    max(16px, env(safe-area-inset-bottom))
+    16px;
 }
 
 .sheet {
   width: min(560px, 100%);
-  max-height: min(80vh, 680px);
+  max-height: min(88dvh, 760px);
   overflow: auto;
   padding: 16px 16px 20px;
-  margin-bottom: 8px;
+  margin-bottom: 0;
+}
+
+.sheet .big-btn.sticky-go {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  margin-top: 10px;
 }
 
 .sheet ol {
@@ -861,6 +872,250 @@ h1 {
   border-radius: 4px;
 }
 
+/* Dig a hole — cartoon ground, softer realistic pile. */
+
+.dig-scene {
+  --dug: 0;
+}
+
+.dig-world {
+  position: relative;
+  height: 228px;
+  border-radius: 24px;
+  overflow: hidden;
+  border: 4px solid #7a4e22;
+  background: linear-gradient(180deg, #8fd4ff 0 42%, #7ed44a 42% 70%, #59b833 70% 100%);
+}
+
+.dig-cloud {
+  position: absolute;
+  top: 18px;
+  left: 16px;
+  width: 70px;
+  height: 26px;
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 24px -12px 0 #fff, 50px 2px 0 #fff;
+}
+
+.dig-flower {
+  position: absolute;
+  z-index: 4;
+  font-size: 28px;
+  line-height: 1;
+}
+
+.dig-flower-l { left: 10px; bottom: 58px; }
+.dig-flower-r { right: 64px; bottom: 64px; font-size: 24px; }
+
+.dig-rock {
+  position: absolute;
+  right: 22px;
+  bottom: 58px;
+  width: 30px;
+  height: 22px;
+  background: #e4e0f4;
+  border: 3px solid #7d6ea8;
+  border-radius: 45% 55% 42% 58%;
+  z-index: 4;
+}
+
+.dig-grass {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 54px;
+  background:
+    radial-gradient(circle at 12px 0, #8ee05a 10px, transparent 11px) 0 0 / 24px 18px repeat-x,
+    linear-gradient(#6fc63e, #4ea428);
+  z-index: 1;
+  pointer-events: none;
+}
+
+.dig-mound {
+  position: absolute;
+  bottom: 28px;
+  width: 72px;
+  height: 34px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 32% 30%, #f2c56a, #d3923c 42%, #b56d28 100%);
+  border: 4px solid #7c4a16;
+  box-shadow: inset -8px -6px 0 rgba(120, 60, 10, 0.18);
+  z-index: 4;
+  opacity: min(1, calc(var(--dug) / 4));
+  transform: scale(calc(0.35 + var(--dug) * 0.09));
+}
+
+.dig-mound-l {
+  left: 8%;
+  transform-origin: 80% 100%;
+}
+
+.dig-mound-r {
+  right: 8%;
+  transform-origin: 20% 100%;
+}
+
+.dig-hole {
+  position: absolute;
+  left: 50%;
+  bottom: 18px;
+  width: calc(46px + (var(--dug) * 16px));
+  height: calc(18px + (var(--dug) * 10px));
+  transform: translateX(-50%);
+  z-index: 2;
+}
+
+.dig-pit {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background:
+    radial-gradient(ellipse at 50% 42%, #3a2414 0%, #6b4222 55%, #c4843a 100%);
+  border: 6px solid #f0c36a;
+  box-shadow:
+    0 0 0 5px #c9843a,
+    inset 0 12px 0 rgba(30, 14, 6, 0.35);
+}
+
+.poop {
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  width: 92px;
+  height: 62px;
+  margin-left: -46px;
+  opacity: 0;
+  z-index: 2;
+  filter: drop-shadow(1px 5px 2px rgba(48, 24, 10, 0.4));
+}
+
+.dig-scene[data-found="true"] .poop {
+  opacity: 1;
+  animation: poop-pop 0.45s ease-out;
+}
+
+.poop .blob {
+  position: absolute;
+  background:
+    radial-gradient(ellipse at 30% 28%, rgba(230, 198, 156, 0.9) 0%, rgba(230, 198, 156, 0) 34%),
+    radial-gradient(ellipse at 55% 62%, #a56b3d 0%, #7a4c28 48%, #5a351c 100%);
+  box-shadow: inset 0 -7px 8px rgba(48, 22, 8, 0.28);
+}
+
+.blob-a {
+  width: 54px;
+  height: 36px;
+  left: 4px;
+  bottom: 2px;
+  border-radius: 48% 52% 46% 54% / 58% 46% 54% 42%;
+}
+
+.blob-b {
+  width: 48px;
+  height: 32px;
+  right: 2px;
+  bottom: 6px;
+  border-radius: 52% 46% 50% 50% / 48% 56% 44% 52%;
+}
+
+.blob-c {
+  width: 40px;
+  height: 30px;
+  left: 26px;
+  bottom: 22px;
+  border-radius: 50% 48% 52% 46% / 46% 54% 48% 52%;
+}
+
+.blob-d {
+  width: 26px;
+  height: 20px;
+  left: 34px;
+  bottom: 42px;
+  border-radius: 48% 52% 46% 54%;
+}
+
+.dig-shovel {
+  position: absolute;
+  right: 12px;
+  top: 48px;
+  font-size: 44px;
+  line-height: 1;
+  z-index: 5;
+  transform-origin: 70% 80%;
+}
+
+.dig-scene.is-digging .dig-shovel {
+  animation: dig-chop 0.17s linear infinite;
+}
+
+@keyframes dig-chop {
+  50% { transform: rotate(-22deg) translateY(8px); }
+}
+
+@keyframes poop-pop {
+  0% { transform: scale(0.25); opacity: 0; }
+  70% { transform: scale(1.06); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.dig-mark {
+  position: absolute;
+  left: 50%;
+  bottom: 28px;
+  transform: translateX(-50%);
+  margin: 0;
+  font-size: 16px;
+  font-weight: 800;
+  color: #fff;
+  text-shadow: 0 2px 0 #3d7a22;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.dig-scene:not([data-depth="0"]) .dig-mark {
+  opacity: 0;
+}
+
+.dig-meter-label {
+  margin: 8px 0 4px;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.dig-meter {
+  height: 22px;
+  border-radius: 999px;
+  border: 3px solid var(--line);
+  background: #fff;
+  overflow: hidden;
+}
+
+.dig-meter-fill {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: linear-gradient(90deg, #ffe29a, #ff8ec8);
+}
+
+.dig-yay {
+  margin: 8px 0 0;
+  text-align: center;
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--spa-deep);
+}
+
+.dig-btn {
+  width: 100%;
+  min-height: 76px;
+  margin-top: 8px;
+  font-size: 28px;
+  touch-action: none;
+}
+
 .confetti {
   position: fixed;
   inset: 0;
@@ -891,6 +1146,11 @@ h1 {
   .wish { grid-area: wish; }
   .stage { grid-area: stage; align-items: center; }
   .tools { grid-area: tools; }
+
+  .salon.is-digging-tab {
+    grid-template-columns: minmax(240px, 320px) minmax(340px, 1fr);
+    grid-template-areas: "wish tools";
+  }
 }
 
 @media (orientation: landscape) and (max-height: 820px) {
@@ -899,7 +1159,9 @@ h1 {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .confetti span { animation: none; }
+  .confetti span,
+  .dig-scene.is-digging .dig-shovel,
+  .dig-scene[data-found="true"] .poop { animation: none; }
 }
 
 button:focus-visible,
