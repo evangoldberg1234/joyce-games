@@ -48,7 +48,7 @@ const JOYCE_GAMES = [
   {
     title: "Spa Salon",
     emoji: "💇",
-    about: "Try hair on a mannequin, then makeup, skin, and nails.",
+    about: "Try hair on a mannequin, then makeup, skin, and nails. Dig a silly hole too.",
     href: "spa-salon/index.html",
     accent: "#f8c6e4"
   }
