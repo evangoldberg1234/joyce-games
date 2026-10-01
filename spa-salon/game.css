@@ -513,8 +513,13 @@ h1 {
 }
 
 .sheet .howto-go {
-  flex: none;
+  /* .sun is the sky decoration (absolute, 92px). Keep this button in the card. */
+  position: static;
+  top: auto;
+  right: auto;
   width: 100%;
+  height: auto;
+  flex: none;
   min-height: 72px;
   margin: 0 0 10px;
   font-size: 28px;

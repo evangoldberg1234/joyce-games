@@ -648,7 +648,8 @@
     foot.appendChild(makeButton("Let's play", "big-btn sun howto-go", closeHowto));
     sheet.appendChild(foot);
     overlay.appendChild(sheet);
-    app.appendChild(overlay);
+    /* On the body, above the header. Inside #app the header paints over the card. */
+    document.body.appendChild(overlay);
   }
 
   function clearDock() {
@@ -656,8 +657,14 @@
     if (old && old.parentNode) old.parentNode.removeChild(old);
   }
 
+  function clearOverlay() {
+    var old = document.querySelector(".overlay");
+    if (old && old.parentNode) old.parentNode.removeChild(old);
+  }
+
   function render() {
     clearDock();
+    clearOverlay();
     app.innerHTML = "";
     paintStyle();
     if (!LOOKS) {
