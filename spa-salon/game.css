@@ -375,7 +375,7 @@ h1 {
   padding: 12px 14px;
 }
 
-.big-btn.sun,
+.big-btn.warm,
 .big-btn.ready {
   background: #ffe29a;
 }
@@ -981,14 +981,13 @@ h1 {
 
 .poop {
   position: absolute;
-  left: 50%;
-  top: 42%;
-  width: 92px;
-  height: 62px;
-  margin-left: -46px;
+  left: 10%;
+  right: 10%;
+  top: 16%;
+  bottom: 14%;
   opacity: 0;
-  z-index: 2;
-  filter: drop-shadow(1px 5px 2px rgba(48, 24, 10, 0.4));
+  z-index: 3;
+  transform-origin: 50% 80%;
 }
 
 .dig-scene[data-found="true"] .poop {
@@ -999,40 +998,39 @@ h1 {
 .poop .blob {
   position: absolute;
   background:
-    radial-gradient(ellipse at 30% 28%, rgba(230, 198, 156, 0.9) 0%, rgba(230, 198, 156, 0) 34%),
-    radial-gradient(ellipse at 55% 62%, #a56b3d 0%, #7a4c28 48%, #5a351c 100%);
-  box-shadow: inset 0 -7px 8px rgba(48, 22, 8, 0.28);
+    radial-gradient(ellipse at 32% 26%, rgba(236, 214, 184, 0.95) 0%, rgba(236, 214, 184, 0) 36%),
+    radial-gradient(ellipse at 48% 58%, #c49268 0%, #a56b40 38%, #7a4c2a 100%);
 }
 
 .blob-a {
-  width: 54px;
-  height: 36px;
-  left: 4px;
-  bottom: 2px;
+  width: 64%;
+  height: 52%;
+  left: 0;
+  bottom: 0;
   border-radius: 48% 52% 46% 54% / 58% 46% 54% 42%;
 }
 
 .blob-b {
-  width: 48px;
-  height: 32px;
-  right: 2px;
-  bottom: 6px;
+  width: 60%;
+  height: 50%;
+  right: 0;
+  bottom: 6%;
   border-radius: 52% 46% 50% 50% / 48% 56% 44% 52%;
 }
 
 .blob-c {
-  width: 40px;
-  height: 30px;
-  left: 26px;
-  bottom: 22px;
+  width: 52%;
+  height: 44%;
+  left: 22%;
+  bottom: 30%;
   border-radius: 50% 48% 52% 46% / 46% 54% 48% 52%;
 }
 
 .blob-d {
-  width: 26px;
-  height: 20px;
-  left: 34px;
-  bottom: 42px;
+  width: 36%;
+  height: 32%;
+  left: 32%;
+  bottom: 54%;
   border-radius: 48% 52% 46% 54%;
 }
 
@@ -1056,7 +1054,7 @@ h1 {
 
 @keyframes poop-pop {
   0% { transform: scale(0.25); opacity: 0; }
-  70% { transform: scale(1.06); opacity: 1; }
+  70% { transform: scale(1.05); opacity: 1; }
   100% { transform: scale(1); opacity: 1; }
 }
 
@@ -1108,12 +1106,15 @@ h1 {
   color: var(--spa-deep);
 }
 
-.dig-btn {
+.dock .dig-btn {
+  position: relative;
+  flex: 1 1 100%;
   width: 100%;
   min-height: 76px;
-  margin-top: 8px;
+  margin-top: 0;
   font-size: 28px;
   touch-action: none;
+  background: #ffe29a;
 }
 
 .confetti {

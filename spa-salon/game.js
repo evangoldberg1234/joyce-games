@@ -375,17 +375,6 @@
     yay.hidden = !digDone;
     tools.appendChild(yay);
 
-    var digBtn = makeButton(digDone ? "Dig again" : "Dig!", "big-btn sun dig-btn", function () {
-      if (ignoreDigClick) {
-        ignoreDigClick = false;
-        return;
-      }
-      if (digDone) resetDig();
-    });
-    digBtn.id = "dig-btn";
-    digBtn.addEventListener("pointerdown", onDigPointerDown);
-    tools.appendChild(digBtn);
-
     var live = el("p", "note dig-note");
     live.id = "dig-note";
     live.setAttribute("aria-live", "polite");
@@ -393,7 +382,6 @@
     else if (digDone) live.textContent = "You already got the silly style points.";
     else live.textContent = "Tap or hold Dig. Something silly is under the grass.";
     tools.appendChild(live);
-    paintDig();
   }
 
   function burst() {
@@ -557,7 +545,7 @@
     });
     app.appendChild(grid);
     if (readyCount() === LOOKS.guests.length) {
-      app.appendChild(makeButton("See the sparkling salon", "big-btn sun", function () {
+      app.appendChild(makeButton("See the sparkling salon", "big-btn warm", function () {
         screen = "party";
         render();
       }));
@@ -679,8 +667,21 @@
     }
     salon.appendChild(tools);
     app.appendChild(salon);
+    if (tab === "dig") paintDig();
 
     var dock = el("div", "dock");
+    if (tab === "dig") {
+      var digBtn = makeButton(digDone ? "Dig again" : "Dig!", "big-btn dig-btn", function () {
+        if (ignoreDigClick) {
+          ignoreDigClick = false;
+          return;
+        }
+        if (digDone) resetDig();
+      });
+      digBtn.id = "dig-btn";
+      digBtn.addEventListener("pointerdown", onDigPointerDown);
+      dock.appendChild(digBtn);
+    }
     dock.appendChild(makeButton("Guests", "big-btn ghost", function () {
       screen = "lobby";
       render();
@@ -702,8 +703,8 @@
       }
     );
     apply.id = "apply-hair";
-    dock.appendChild(apply);
-    var done = makeButton("All done", "big-btn sun" + (missingParts(guest).length ? "" : " ready"), finishLook);
+    if (tab !== "dig") dock.appendChild(apply);
+    var done = makeButton("All done", "big-btn warm" + (missingParts(guest).length ? "" : " ready"), finishLook);
     done.id = "all-done";
     dock.appendChild(done);
     document.body.appendChild(dock);
@@ -745,7 +746,7 @@
     app.appendChild(panel);
     var nextLabel = "Try again";
     if (report.won) nextLabel = nextGuestAfter(guest.id) ? "Next guest" : "See the salon";
-    var go = makeButton(nextLabel, "big-btn sun", function () {
+    var go = makeButton(nextLabel, "big-btn warm", function () {
       go.disabled = true;
       afterScore();
     });
@@ -789,7 +790,7 @@
     panel.appendChild(row);
     app.appendChild(panel);
     var dock = el("div", "dock");
-    dock.appendChild(makeButton("Style someone again", "big-btn sun", function () {
+    dock.appendChild(makeButton("Style someone again", "big-btn warm", function () {
       screen = "lobby";
       render();
     }));
@@ -815,7 +816,7 @@
       list.appendChild(el("li", null, line));
     });
     sheet.appendChild(list);
-    var go = makeButton("Let's style", "big-btn sun sticky-go", function () {
+    var go = makeButton("Let's style", "big-btn warm sticky-go", function () {
       howtoOpen = false;
       try {
         localStorage.setItem(HOWTO_KEY, "1");
