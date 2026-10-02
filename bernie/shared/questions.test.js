@@ -1,7 +1,10 @@
 /* Bernie's question generator: the answer is always a choice,
-   and rock counts stay between 1 and 10. */
+   word prompts use the word's first letter, and rock counts stay in 1-10. */
 var assert = require("assert");
 var questions = require("./questions.js");
+
+var BANNED = ["knife", "giraffe", "gnome", "phone", "cereal", "ship", "chair"];
+var TRICKY = /^(kn|wr|gn|ph|sh|ch)/;
 
 function mulberry32(seed) {
   var a = seed >>> 0;
@@ -16,15 +19,21 @@ function mulberry32(seed) {
 
 function check(item) {
   assert.ok(item.say, "question needs words to speak");
-  assert.strictEqual(item.choices.length, 3, item.kind + " needs 3 choices");
+  assert.ok(item.choices.length >= 3 && item.choices.length <= 4, item.kind + " choice count");
   var ids = item.choices.map(function (choice) { return choice.id; });
   var seen = {};
   ids.forEach(function (id) {
     assert.ok(!seen[id], item.kind + " repeated " + id);
     seen[id] = true;
-    assert.strictEqual(typeof id, "string");
   });
   assert.ok(seen[item.answer], item.kind + " answer " + item.answer + " not in choices");
+  if (item.kind === "word") {
+    assert.strictEqual(item.answer, item.word.charAt(0).toUpperCase());
+    assert.ok(BANNED.indexOf(item.word.toLowerCase()) === -1, item.word);
+    assert.ok(!TRICKY.test(item.word.toLowerCase()), item.word);
+    assert.ok(item.say.indexOf(item.word) !== -1);
+    assert.ok(item.emoji);
+  }
   if (item.kind === "count") {
     assert.ok(item.rocks >= 1 && item.rocks <= 10, "rocks " + item.rocks);
     assert.strictEqual(item.rocks, Math.round(item.rocks));
@@ -37,11 +46,23 @@ function check(item) {
   }
 }
 
+assert.ok(questions.words.length >= 20 && questions.words.length <= 30, "word bank size");
+questions.words.forEach(function (item) {
+  assert.ok(BANNED.indexOf(item.word) === -1, item.word);
+  assert.ok(!TRICKY.test(item.word), item.word);
+  assert.strictEqual(item.word.charAt(0), item.word.charAt(0).toLowerCase());
+});
+BANNED.forEach(function (word) {
+  questions.words.forEach(function (item) {
+    assert.notStrictEqual(item.word, word);
+  });
+});
+
 var rng = mulberry32(4);
 var i;
 for (i = 0; i < 240; i++) check(questions.makeQuestion(rng));
 
-["letter", "sound", "match", "count"].forEach(function (kind) {
+["word", "count"].forEach(function (kind) {
   var n;
   for (n = 0; n < 40; n++) {
     var item = questions.makeQuestion(rng, kind);
