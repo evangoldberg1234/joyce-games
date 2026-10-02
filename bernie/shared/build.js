@@ -19,9 +19,12 @@
     var speak = opts.speak;
     var photo = !!(vehicle.board && vehicle.parts[0] && vehicle.parts[0].src);
     var placed = [];
-    var question = questions.makeQuestion();
+    var question = null;
     var lock = false;
     var snapNow = null;
+    var started = false;
+    var guess = root.BernieGuess.createState(0);
+    var speechGen = 0;
 
     var wrap = el("div", "build");
     var art = el("div", "art");
@@ -92,6 +95,68 @@
       choices.hidden = !on;
     }
 
+    function speechDone(gen, played) {
+      if (gen !== speechGen) return;
+      if (played) root.BernieGuess.noteSpoken(guess, Date.now());
+      else root.BernieGuess.noteSpeechUnavailable(guess);
+    }
+
+    function speakLines(list) {
+      var gen = ++speechGen;
+      root.BernieGuess.noteSpeechStarted(guess);
+      var timer = window.setTimeout(function () {
+        if (gen !== speechGen) return;
+        if (guess.round.speaking) root.BernieGuess.noteSpeechUnavailable(guess);
+      }, 8000);
+      speak.lines(list, function (played) {
+        window.clearTimeout(timer);
+        speechDone(gen, played);
+      });
+    }
+
+    function speakQuestion() {
+      speakLines([question.say]);
+    }
+
+    /* Short feedback must not let the cancelled question reset the listen clock. */
+    function speakFeedback(text) {
+      speechGen += 1;
+      speak.speak(text);
+    }
+
+    function greyChoice(id) {
+      var buttons = choices.querySelectorAll(".choice");
+      var i;
+      for (i = 0; i < buttons.length; i++) {
+        if (buttons[i].dataset.id === id) {
+          buttons[i].disabled = true;
+          buttons[i].classList.add("spent");
+        }
+      }
+    }
+
+    function enableChoices() {
+      choices.classList.remove("dim");
+      var buttons = choices.querySelectorAll(".choice");
+      var i;
+      for (i = 0; i < buttons.length; i++) {
+        if (!buttons[i].classList.contains("spent")) buttons[i].disabled = false;
+      }
+    }
+
+    function startCooldown() {
+      choices.classList.add("dim");
+      var buttons = choices.querySelectorAll(".choice");
+      var i;
+      for (i = 0; i < buttons.length; i++) buttons[i].disabled = true;
+      window.setTimeout(function () {
+        if (!started) return;
+        root.BernieGuess.endCooldown(guess, Date.now());
+        enableChoices();
+        speakQuestion();
+      }, root.BernieGuess.COOLDOWN_MS);
+    }
+
     function paintQuestion() {
       visual.innerHTML = "";
       visual.className = "q-visual";
@@ -114,10 +179,12 @@
         visual.removeAttribute("aria-label");
       }
 
+      choices.classList.remove("dim");
       choices.innerHTML = "";
       question.choices.forEach(function (choice) {
         var btn = el("button", "choice");
         btn.type = "button";
+        btn.dataset.id = choice.id;
         btn.textContent = choice.label;
         btn.addEventListener("click", function () {
           choose(choice.id);
@@ -179,10 +246,12 @@
         return;
       }
       question = questions.makeQuestion();
+      root.BernieGuess.nextQuestion(guess, Date.now());
       showQuestions(true);
       paintQuestion();
       note.textContent = "";
       lock = false;
+      speakQuestion();
     }
 
     function present(part) {
@@ -311,19 +380,35 @@
       snapNow();
     });
 
+    function missOn() {
+      question = questions.makeQuestion();
+      root.BernieGuess.nextQuestion(guess, Date.now());
+      showQuestions(true);
+      paintQuestion();
+      note.textContent = "";
+      lock = false;
+      speakQuestion();
+    }
+
     function choose(id) {
-      if (!speak.isArmed()) {
-        speak.arm();
-        speak.speak(question.say);
+      if (!started || lock) return;
+      var result = root.BernieGuess.answer(guess, id === question.answer, Date.now());
+      if (result.ignore) return;
+      if (result.cooldown) {
+        if (result.greyChoice) greyChoice(id);
+        note.textContent = result.say;
+        speakFeedback(result.say);
+        startCooldown();
         return;
       }
-      if (lock) return;
-      if (id !== question.answer) {
-        speak.speak("Try again.");
-        note.textContent = "Try again";
-        choices.classList.remove("shake");
-        void choices.offsetWidth;
-        choices.classList.add("shake");
+      if (result.greyChoice) {
+        greyChoice(id);
+        note.textContent = result.say;
+        speakFeedback(result.say);
+        return;
+      }
+      if (!result.earned) {
+        missOn();
         return;
       }
 
@@ -346,20 +431,56 @@
         return;
       }
       question = questions.makeQuestion();
-      speak.lines(["Yes!", question.say]);
+      root.BernieGuess.nextQuestion(guess, Date.now());
+      speakLines(["Yes!", question.say]);
       paintQuestion();
       window.setTimeout(function () {
         lock = false;
       }, 400);
     }
 
+    function showStart() {
+      paintVehicle();
+      showQuestions(false);
+      note.textContent = "";
+      choices.hidden = false;
+      choices.innerHTML = "";
+      var start = el("button", "choice start-go");
+      start.type = "button";
+      if (vehicle.finale || vehicle.ghost) {
+        var photo = el("img");
+        photo.src = vehicle.finale || vehicle.ghost;
+        photo.alt = "";
+        start.appendChild(photo);
+      } else {
+        var emoji = el("span", "start-emoji");
+        emoji.textContent = "🚜";
+        start.appendChild(emoji);
+      }
+      var label = el("span");
+      label.textContent = "Start";
+      start.appendChild(label);
+      start.addEventListener("click", function () {
+        if (started) return;
+        started = true;
+        speak.arm();
+        question = questions.makeQuestion();
+        root.BernieGuess.nextQuestion(guess, Date.now());
+        showQuestions(true);
+        paintQuestion();
+        note.textContent = "";
+        speakLines(["Let's build a loader!", question.say]);
+      });
+      choices.appendChild(start);
+    }
+
     speaker.addEventListener("click", function () {
+      if (!question) return;
       speak.arm();
-      speak.speak(question.say);
+      speakQuestion();
     });
 
-    paintVehicle();
-    paintQuestion();
+    showStart();
   }
 
   root.BernieBuild = { start: start };

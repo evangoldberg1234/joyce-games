@@ -43,31 +43,56 @@
     return best;
   }
 
-  function utter(synth, text, voice) {
+  function utter(synth, text, voice, ondone) {
     var said = new root.SpeechSynthesisUtterance(text);
     said.lang = voice && voice.lang ? voice.lang : "en-US";
     said.rate = 0.85;
     if (voice) said.voice = voice;
+    if (ondone) {
+      var settled = false;
+      function finish(ok) {
+        if (settled) return;
+        settled = true;
+        ondone(ok);
+      }
+      said.onend = function () { finish(true); };
+      said.onerror = function () { finish(false); };
+    }
     synth.speak(said);
   }
 
-  function run(synth, list) {
+  function run(synth, list, onend) {
     var voices = synth.getVoices ? synth.getVoices() : [];
     var voice = pickVoice(voices || []);
+    var texts = [];
+    var i;
+    for (i = 0; i < list.length; i++) {
+      if (list[i]) texts.push(list[i]);
+    }
     synth.cancel();
     if (synth.paused && synth.resume) synth.resume();
-    list.forEach(function (text) {
-      if (text) utter(synth, text, voice);
+    if (!texts.length) {
+      if (onend) onend(false);
+      return;
+    }
+    texts.forEach(function (text, index) {
+      utter(synth, text, voice, index === texts.length - 1 ? onend : null);
     });
   }
 
-  function lines(list) {
-    if (!armed || !list || !list.length) return;
+  function lines(list, onend) {
+    if (!armed || !list || !list.length) {
+      if (onend) onend(false);
+      return;
+    }
     var synth = root.speechSynthesis;
-    if (!synth || typeof root.SpeechSynthesisUtterance !== "function") return;
+    if (!synth || typeof root.SpeechSynthesisUtterance !== "function") {
+      if (onend) onend(false);
+      return;
+    }
     var ready = synth.getVoices ? synth.getVoices() : [];
     if (ready && ready.length) {
-      try { run(synth, list); } catch (err) { /* Buttons still work. */ }
+      try { run(synth, list, onend); } catch (err) { if (onend) onend(false); }
       return;
     }
 
@@ -78,14 +103,14 @@
       if (!now || !now.length) return;
       finished = true;
       if (synth.removeEventListener) synth.removeEventListener("voiceschanged", later);
-      try { run(synth, list); } catch (err) { /* Buttons still work. */ }
+      try { run(synth, list, onend); } catch (err) { if (onend) onend(false); }
     }
     if (synth.addEventListener) synth.addEventListener("voiceschanged", later);
     root.setTimeout(function () {
       if (finished) return;
       finished = true;
       if (synth.removeEventListener) synth.removeEventListener("voiceschanged", later);
-      try { run(synth, list); } catch (err) { /* Buttons still work. */ }
+      try { run(synth, list, onend); } catch (err) { if (onend) onend(false); }
     }, 700);
   }
 
