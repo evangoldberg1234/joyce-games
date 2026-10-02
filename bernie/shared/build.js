@@ -47,17 +47,22 @@
 
     function paintQuestion() {
       visual.innerHTML = "";
+      visual.className = "q-visual";
       if (question.kind === "count") {
         visual.setAttribute("aria-label", question.rocks + " rocks");
         var i;
         for (i = 0; i < question.rocks; i++) {
           visual.appendChild(el("span", "rock"));
         }
-      } else if (question.show) {
-        visual.removeAttribute("aria-label");
-        var big = el("p", "big-letter");
-        big.textContent = question.show;
-        visual.appendChild(big);
+      } else if (question.kind === "word") {
+        visual.className = "q-visual word";
+        visual.setAttribute("aria-label", question.word);
+        var emoji = el("p", "big-emoji");
+        emoji.textContent = question.emoji;
+        var word = el("p", "word");
+        word.textContent = question.word;
+        visual.appendChild(emoji);
+        visual.appendChild(word);
       } else {
         visual.removeAttribute("aria-label");
       }
@@ -102,7 +107,7 @@
         speak.lines(["Yes!", "Let's drive!"]);
         window.setTimeout(function () {
           if (opts.onDone) opts.onDone();
-        }, 650);
+        }, 900);
         return;
       }
 

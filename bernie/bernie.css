@@ -123,6 +123,7 @@ body.bernie {
 }
 
 .art {
+  position: relative;
   flex: 1 1 auto;
   min-height: 140px;
   display: grid;
@@ -130,18 +131,42 @@ body.bernie {
 }
 
 .loader-svg {
-  width: min(100%, 520px);
+  width: min(100%, 560px);
   height: auto;
   max-height: 100%;
+  overflow: visible;
 }
 
-.part { opacity: 0; }
+.part.ghost.plan { opacity: 0.28; }
+.part.ghost.burst { opacity: 0.78; }
 .part.on { opacity: 1; }
-.part.snap { animation: snap-in 0.45s ease; }
+
+.part.snap {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: snap-in 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
 
 @keyframes snap-in {
-  0% { opacity: 0; }
-  100% { opacity: 1; }
+  0% { transform: translate(var(--snap-x), var(--snap-y)) scale(1.7); }
+  42% { transform: translate(var(--snap-x), var(--snap-y)) scale(1.7); }
+  100% { transform: translate(0px, 0px) scale(1); }
+}
+
+.earn-label {
+  position: absolute;
+  left: 50%;
+  top: 4%;
+  z-index: 3;
+  margin: 0;
+  transform: translateX(-50%);
+  padding: 4px 14px;
+  border-radius: 14px;
+  background: rgba(255, 244, 196, 0.94);
+  color: #5a3a08;
+  font-size: 28px;
+  font-weight: 800;
+  pointer-events: none;
 }
 
 .try {
@@ -159,6 +184,25 @@ body.bernie {
   justify-content: center;
   gap: 8px;
   min-height: 0;
+}
+
+.q-visual.word {
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+
+.big-emoji {
+  margin: 0;
+  font-size: 64px;
+  line-height: 1;
+}
+
+.word {
+  margin: 0;
+  color: #5a3a08;
+  font-size: 22px;
+  font-weight: 800;
 }
 
 .rock {
@@ -222,7 +266,15 @@ body.bernie {
   overflow: hidden;
   touch-action: none;
   border-radius: 28px;
-  background: linear-gradient(#9fd8ff 0 46%, #d7efb8 46% 62%, #c48a45 62% 100%);
+  background: #c4924e;
+}
+
+.scenery {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
 }
 
 .pile,
@@ -231,82 +283,38 @@ body.bernie {
   position: absolute;
 }
 
+.pile,
+.truck {
+  pointer-events: none;
+}
+
+.pile svg,
+.truck svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
 .pile {
-  width: 120px;
-  height: 84px;
-  transform: translate(-50%, -50%);
+  width: 150px;
+  height: 112px;
+  transform: translate(-42%, -78%);
 }
-
-.mound {
-  position: absolute;
-  bottom: 0;
-  border-radius: 50%;
-  background: #8a5a2b;
-}
-
-.mound-a { left: 10px; width: 70px; height: 58px; }
-.mound-b { left: 40px; width: 76px; height: 72px; background: #a06a38; }
-.mound-c { left: 18px; width: 46px; height: 36px; bottom: 28px; background: #6e4522; }
 
 .truck {
-  width: 150px;
-  height: 90px;
-  transform: translate(-50%, -60%);
-}
-
-.truck .bed {
-  position: absolute;
-  left: 8px;
-  bottom: 22px;
-  width: 86px;
-  height: 36px;
-  border: 4px solid #5a3a08;
-  border-radius: 6px 6px 0 0;
-  background: #f4f4f4;
-}
-
-.truck .cab {
-  position: absolute;
-  right: 8px;
-  bottom: 22px;
-  width: 48px;
-  height: 48px;
-  border: 4px solid #1d4e96;
-  border-radius: 8px 10px 4px 4px;
-  background: #3d8bfd;
-}
-
-.truck .wheel {
-  position: absolute;
-  bottom: 6px;
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  background: #222;
-  box-shadow: inset 0 0 0 6px #d0d0d0;
-}
-
-.truck .back-wheel { left: 18px; }
-.truck .front-wheel { right: 22px; }
-
-.truck .dirt {
-  position: absolute;
-  left: 16px;
-  bottom: 26px;
-  width: 70px;
-  height: 0;
-  border-radius: 8px 8px 0 0;
-  background: #8a5a2b;
+  width: 188px;
+  height: 100px;
+  transform: translate(-50%, -78%);
 }
 
 .rig {
-  width: 150px;
+  width: 210px;
   z-index: 2;
   touch-action: none;
 }
 
 .rig .loader-svg {
-  width: 150px;
+  width: 210px;
   display: block;
 }
 
@@ -378,13 +386,24 @@ body.is-driving .stage {
   overscroll-behavior: none;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .part.snap,
+  .choices.shake,
+  .cheer.show,
+  .wiggle {
+    animation: none;
+  }
+}
+
 @media (max-width: 520px) {
   .pic-name { font-size: 32px; }
   .vid-name { font-size: 24px; }
   .pic { min-height: 180px; }
   .pic-art { font-size: 76px; }
-  .rig { width: 124px; }
-  .rig .loader-svg { width: 124px; }
-  .pile { width: 92px; height: 68px; }
-  .truck { width: 118px; height: 78px; }
+  .big-emoji { font-size: 56px; }
+  .earn-label { font-size: 22px; }
+  .rig { width: 158px; }
+  .rig .loader-svg { width: 158px; }
+  .pile { width: 108px; height: 80px; }
+  .truck { width: 132px; height: 72px; }
 }
