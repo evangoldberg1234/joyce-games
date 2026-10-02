@@ -130,43 +130,126 @@ body.bernie {
   place-items: center;
 }
 
-.loader-svg {
-  width: min(100%, 560px);
-  height: auto;
+.board {
+  position: relative;
+  width: min(100%, 520px);
   max-height: 100%;
-  overflow: visible;
+  touch-action: none;
 }
 
-.part.ghost.plan { opacity: 0.28; }
-.part.ghost.burst { opacity: 0.78; }
-.part.on { opacity: 1; }
-
-.part.snap {
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: snap-in 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both;
-}
-
-@keyframes snap-in {
-  0% { transform: translate(var(--snap-x), var(--snap-y)) scale(1.7); }
-  42% { transform: translate(var(--snap-x), var(--snap-y)) scale(1.7); }
-  100% { transform: translate(0px, 0px) scale(1); }
-}
-
-.earn-label {
+.board .ghost {
   position: absolute;
-  left: 50%;
-  top: 4%;
-  z-index: 3;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  opacity: 0.42;
+  filter: grayscale(0.7) brightness(1.5);
+  pointer-events: none;
+}
+
+.board .bit,
+.photo-rig .bit,
+.photo-rig .plate {
+  position: absolute;
+  height: auto;
+  pointer-events: none;
+}
+
+.photo-rig .plate {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.board .target {
+  opacity: 0.55;
+  animation: target-pulse 1s ease-in-out infinite;
+}
+
+@keyframes target-pulse {
+  50% { opacity: 0.2; }
+}
+
+.float-piece {
+  position: fixed;
+  z-index: 6;
+  height: auto;
+  touch-action: none;
+  user-select: none;
+  filter: drop-shadow(0 10px 8px rgba(40, 24, 8, 0.35));
+}
+
+.inset {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: 96px;
+  pointer-events: none;
+}
+
+.inset img {
+  width: 96px;
+  height: 72px;
+  object-fit: cover;
+  border: 3px solid #ffe14a;
+  border-radius: 16px;
+  background: #1c1c1c;
+  box-shadow: 0 4px 0 rgba(90, 58, 8, 0.35);
+}
+
+.inset p {
   margin: 0;
-  transform: translateX(-50%);
-  padding: 4px 14px;
-  border-radius: 14px;
+  padding: 1px 8px;
+  border-radius: 10px;
   background: rgba(255, 244, 196, 0.94);
   color: #5a3a08;
-  font-size: 28px;
+  font-size: 15px;
   font-weight: 800;
-  pointer-events: none;
+}
+
+.finale {
+  width: min(100%, 520px);
+  height: auto;
+  border-radius: 18px;
+}
+
+.drive-go {
+  grid-column: 1 / -1;
+  min-height: 80px;
+  font-size: 36px;
+}
+
+.placing {
+  touch-action: none;
+}
+
+.photo-rig {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1000 / 618;
+}
+
+.linkage,
+.bucket-pivot {
+  position: absolute;
+  inset: 0;
+}
+
+.scoop-dirt {
+  position: absolute;
+  left: 82%;
+  top: 36%;
+  width: 11%;
+  height: 8%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #d7b07a, #6a3c18 70%);
+  box-shadow: 0 2px 0 rgba(40, 22, 8, 0.35);
 }
 
 .try {
@@ -274,6 +357,7 @@ body.bernie {
   inset: 0;
   width: 100%;
   height: 100%;
+  object-fit: cover;
   pointer-events: none;
 }
 
@@ -289,22 +373,24 @@ body.bernie {
 }
 
 .pile svg,
+.pile img,
 .truck svg {
   display: block;
   width: 100%;
   height: 100%;
+  object-fit: contain;
 }
 
 .pile {
   width: 150px;
   height: 112px;
-  transform: translate(-42%, -78%);
+  transform: translate(-50%, -100%);
 }
 
 .truck {
   width: 188px;
   height: 100px;
-  transform: translate(-50%, -78%);
+  transform: translate(-50%, -100%);
 }
 
 .rig {
@@ -313,8 +399,9 @@ body.bernie {
   touch-action: none;
 }
 
+.rig .photo-rig,
 .rig .loader-svg {
-  width: 210px;
+  width: 100%;
   display: block;
 }
 
@@ -387,7 +474,7 @@ body.is-driving .stage {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .part.snap,
+  .board .target,
   .choices.shake,
   .cheer.show,
   .wiggle {
@@ -402,8 +489,10 @@ body.is-driving .stage {
   .pic-art { font-size: 76px; }
   .big-emoji { font-size: 56px; }
   .earn-label { font-size: 22px; }
-  .rig { width: 158px; }
-  .rig .loader-svg { width: 158px; }
-  .pile { width: 108px; height: 80px; }
-  .truck { width: 132px; height: 72px; }
+  .rig { width: 176px; }
+  .pile { width: 100px; height: 76px; }
+  .truck { width: 124px; height: 68px; }
+  .inset { width: 78px; }
+  .inset img { width: 78px; height: 58px; }
+  .inset p { font-size: 13px; }
 }
