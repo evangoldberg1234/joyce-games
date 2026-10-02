@@ -211,10 +211,24 @@
     var all = vehicle.parts.map(function (part) { return part.id; });
 
     var scene = el("div", "scene");
-    scene.appendChild(scenery());
+    if (vehicle.yard) {
+      var yard = el("img", "scenery");
+      yard.src = vehicle.yard;
+      yard.alt = "";
+      scene.appendChild(yard);
+    } else {
+      scene.appendChild(scenery());
+    }
     var pile = el("div", "pile");
     pile.setAttribute("aria-hidden", "true");
-    pile.appendChild(pileArt());
+    if (vehicle.pile) {
+      var mound = el("img");
+      mound.src = vehicle.pile;
+      mound.alt = "";
+      pile.appendChild(mound);
+    } else {
+      pile.appendChild(pileArt());
+    }
     var truck = el("div", "truck");
     truck.setAttribute("aria-hidden", "true");
     var dirt = truckArt(truck);
