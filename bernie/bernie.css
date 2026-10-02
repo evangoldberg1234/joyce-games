@@ -143,15 +143,23 @@ body.bernie {
   width: 100%;
   height: 100%;
   object-fit: fill;
-  opacity: 0.28;
+  opacity: 0.42;
+  filter: grayscale(0.7) brightness(1.5);
   pointer-events: none;
 }
 
 .board .bit,
-.photo-rig .bit {
+.photo-rig .bit,
+.photo-rig .plate {
   position: absolute;
   height: auto;
   pointer-events: none;
+}
+
+.photo-rig .plate {
+  inset: 0;
+  width: 100%;
+  height: 100%;
 }
 
 .board .target {
@@ -235,10 +243,10 @@ body.bernie {
 
 .scoop-dirt {
   position: absolute;
-  left: 80%;
-  top: 42%;
-  width: 12%;
-  height: 7%;
+  left: 82%;
+  top: 36%;
+  width: 11%;
+  height: 8%;
   border-radius: 50%;
   background: radial-gradient(circle at 35% 35%, #d7b07a, #6a3c18 70%);
   box-shadow: 0 2px 0 rgba(40, 22, 8, 0.35);
@@ -376,13 +384,13 @@ body.bernie {
 .pile {
   width: 150px;
   height: 112px;
-  transform: translate(-42%, -78%);
+  transform: translate(-50%, -100%);
 }
 
 .truck {
   width: 188px;
   height: 100px;
-  transform: translate(-50%, -78%);
+  transform: translate(-50%, -100%);
 }
 
 .rig {

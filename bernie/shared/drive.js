@@ -297,7 +297,7 @@
       }
       rig.style.left = (pos.x * 100) + "%";
       rig.style.top = (pos.y * 100) + "%";
-      rig.style.transform = "translate(-50%, -70%) scaleX(" + facing + ")";
+      rig.style.transform = "translate(-50%, -100%) scaleX(" + facing + ")";
       var piled = Math.min(loads, 6);
       dirt.setAttribute("height", String(piled * 8));
       dirt.setAttribute("y", String(100 - piled * 8));
@@ -340,7 +340,7 @@
     function go(next) {
       target = {
         x: clamp(next.x, 0.1, 0.9),
-        y: clamp(next.y, 0.34, 0.78)
+        y: origin.y
       };
       if (!raf) raf = window.requestAnimationFrame(step);
     }
@@ -371,7 +371,7 @@
       if (dragging && grab) {
         face(here.x - grab.x);
         pos.x = clamp(grab.ox + (here.x - grab.x), 0.1, 0.9);
-        pos.y = clamp(grab.oy + (here.y - grab.y), 0.34, 0.78);
+        pos.y = origin.y;
         paint();
         return;
       }

@@ -3,33 +3,21 @@
 (function () {
   var BOARD = { w: 1000, h: 618 };
   var PARTS = [
-    { id: "counterweight", name: "Counterweight", src: "img/counterweight.webp", x: 8, y: 225, w: 313, h: 385, group: "body" },
-    { id: "rear-wheel", name: "Rear wheel", src: "img/rear-wheel.webp", x: 87, y: 327, w: 264, h: 237, inset: "img/inset-rear-wheel.webp", group: "body" },
-    { id: "engine", name: "Engine", src: "img/engine.webp", x: 116, y: 215, w: 289, h: 280, inset: "img/inset-engine.webp", group: "body" },
-    { id: "cab", name: "Cab", src: "img/cab.webp", x: 332, y: 8, w: 292, h: 273, inset: "img/inset-cab.webp", group: "body" },
-    { id: "frame", name: "Front frame", src: "img/frame.webp", x: 303, y: 161, w: 489, h: 441, group: "body" },
-    { id: "front-wheel", name: "Front wheel", src: "img/front-wheel.webp", x: 557, y: 310, w: 258, h: 226, inset: "img/inset-front-wheel.webp", group: "body" },
-    { id: "arms", name: "Lift arms", src: "img/arms.webp", x: 490, y: 10, w: 335, h: 282, inset: "img/inset-arms.webp", group: "arms" },
-    { id: "bucket", name: "Bucket", src: "img/bucket.webp", x: 756, y: 173, w: 235, h: 376, inset: "img/inset-bucket.webp", group: "bucket" }
+    { id: "counterweight", name: "Counterweight", src: "img/counterweight.webp", x: 6, y: 223, w: 308, h: 350, group: "body" },
+    { id: "rear-wheel", name: "Rear wheel", src: "img/rear-wheel.webp", x: 156, y: 344, w: 265, h: 268, inset: "img/inset-rear-wheel.webp", group: "body" },
+    { id: "engine", name: "Engine", src: "img/engine.webp", x: 114, y: 213, w: 271, h: 277, inset: "img/inset-engine.webp", group: "body" },
+    { id: "cab", name: "Cab", src: "img/cab.webp", x: 342, y: 6, w: 395, h: 277, inset: "img/inset-cab.webp", group: "body" },
+    { id: "frame", name: "Front frame", src: "img/frame.webp", x: 294, y: 40, w: 496, h: 558, group: "body" },
+    { id: "front-wheel", name: "Front wheel", src: "img/front-wheel.webp", x: 608, y: 296, w: 281, h: 255, inset: "img/inset-front-wheel.webp", group: "body" },
+    { id: "arms", name: "Lift arms", src: "img/arms.webp", x: 472, y: 175, w: 320, h: 141, inset: "img/inset-arms.webp", group: "arms" },
+    { id: "bucket", name: "Bucket", src: "img/bucket.webp", x: 758, y: 134, w: 235, h: 411, inset: "img/inset-bucket.webp", group: "bucket" }
   ];
-  /* Arm pivot and bucket pin, in board pixels. */
+  /* Front-frame pin the lift arms rotate around. The body never tilts. */
   var LINK = {
-    pivot: { x: 545, y: 200 },
-    hinge: { x: 812, y: 228 },
-    carry: { arm: -18, bucket: -14 },
-    dump: { arm: -6, bucket: 36 }
+    pivot: { x: 518, y: 247 },
+    carry: -20,
+    dump: -28
   };
-
-  function piece(part) {
-    var img = document.createElement("img");
-    img.className = "bit";
-    img.alt = "";
-    img.src = part.src;
-    img.style.left = (part.x / BOARD.w * 100) + "%";
-    img.style.top = (part.y / BOARD.h * 100) + "%";
-    img.style.width = (part.w / BOARD.w * 100) + "%";
-    return img;
-  }
 
   function layer(className, origin) {
     var node = document.createElement("div");
@@ -40,33 +28,30 @@
     return node;
   }
 
-  /* Drive pose. Assembly is drawn by the shared build engine. */
+  function plate(src) {
+    var img = document.createElement("img");
+    img.className = "plate";
+    img.alt = "";
+    img.src = src;
+    return img;
+  }
+
+  /* Drive pose: one still body, and the arms+bucket rotating on the pin. */
   function draw(host, state) {
     host.innerHTML = "";
     var pose = state.pose || "rest";
     var rig = document.createElement("div");
     rig.className = "photo-rig";
     var link = layer("linkage", LINK.pivot);
-    var bucketPivot = layer("bucket-pivot", LINK.hinge);
-    var spin = pose === "carry" ? LINK.carry : (pose === "dump" ? LINK.dump : null);
-    if (spin) {
-      link.style.transform = "rotate(" + spin.arm + "deg)";
-      bucketPivot.style.transform = "rotate(" + spin.bucket + "deg)";
-    }
-    var i;
-    for (i = 0; i < PARTS.length; i++) {
-      var part = PARTS[i];
-      if (state.parts.indexOf(part.id) === -1) continue;
-      if (part.group === "arms") link.appendChild(piece(part));
-      else if (part.group === "bucket") bucketPivot.appendChild(piece(part));
-      else rig.appendChild(piece(part));
-    }
+    var angle = pose === "carry" ? LINK.carry : (pose === "dump" ? LINK.dump : 0);
+    if (angle) link.style.transform = "rotate(" + angle + "deg)";
+    link.appendChild(plate("img/linkage.webp"));
     if (state.carrying) {
       var dirt = document.createElement("div");
       dirt.className = "scoop-dirt";
-      bucketPivot.appendChild(dirt);
+      link.appendChild(dirt);
     }
-    link.appendChild(bucketPivot);
+    rig.appendChild(plate("img/body.webp"));
     rig.appendChild(link);
     host.appendChild(rig);
   }
@@ -81,9 +66,9 @@
     pile: "img/pile.webp",
     draw: draw,
     drive: {
-      start: { x: 0.5, y: 0.68 },
-      pile: { x: 0.84, y: 0.66 },
-      dump: { x: 0.16, y: 0.68 },
+      start: { x: 0.5, y: 0.86 },
+      pile: { x: 0.82, y: 0.86 },
+      dump: { x: 0.18, y: 0.86 },
       near: 120
     }
   };

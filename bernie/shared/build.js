@@ -175,7 +175,7 @@
       wrap.classList.remove("placing");
       paintBoard();
       if (placed.length >= vehicle.parts.length) {
-        showFinale();
+        window.setTimeout(showFinale, reduced() ? 40 : 900);
         return;
       }
       question = questions.makeQuestion();
