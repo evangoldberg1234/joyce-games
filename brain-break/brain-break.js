@@ -98,7 +98,12 @@
     }
 
     function levelFor(who, subject) {
-      return window.BBEngine.effectiveLevel(who[subject].level, subject, gameLevel, styleBoost());
+      var boost = styleBoost();
+      var stored = who[subject].level;
+      if (typeof window.BBEngine.presentLevel === "function") {
+        return window.BBEngine.presentLevel(stored, subject, gameLevel, boost);
+      }
+      return window.BBEngine.effectiveLevel(stored, subject, gameLevel, boost);
     }
 
     function makeQuestion(subject, who, rng, reading) {

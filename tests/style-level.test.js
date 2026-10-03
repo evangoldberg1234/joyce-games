@@ -64,6 +64,13 @@ for (var n = 1; n <= 12; n++) {
 
 assert.strictEqual(style.questionLevel(6, "young", 4), 6);
 
+/* +2 from a fresh Joyce math level (4) is 6: two-digit, no carry.
+   Advanced still asks that floor, then presents math at least at 9. */
+assert.strictEqual(engine.effectiveLevel(4, "math", 1, style.boost("advanced")), 6);
+assert.ok(engine.presentLevel(4, "math", 1, style.boost("advanced")) >= 9);
+assert.strictEqual(engine.presentLevel(4, "math", 1, style.boost("young")), engine.effectiveLevel(4, "math", 1));
+assert.strictEqual(engine.presentLevel(4, "math", 1, style.boost("older")), 5);
+
 var practice = fs.readFileSync(path.join(__dirname, "../practice/practice.js"), "utf8");
 assert.ok(practice.indexOf("questionLevel") !== -1);
 assert.ok(practice.indexOf("practiceReward") !== -1);

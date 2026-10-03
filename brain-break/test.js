@@ -296,8 +296,31 @@ assert.strictEqual(engine.effectiveLevel(4, "math", 1, 1), 5);
 assert.strictEqual(engine.effectiveLevel(4, "math", 1, 2), 6);
 assert.strictEqual(engine.effectiveLevel(11, "math", 9, 2), engine.MAX.math);
 assert.ok(engine.effectiveLevel(4, "math", 1, 2) >= engine.effectiveLevel(4, "math", 1));
+assert.strictEqual(engine.presentLevel(4, "math", 1), engine.effectiveLevel(4, "math", 1));
+assert.strictEqual(engine.presentLevel(4, "math", 1, 0), 4);
+assert.strictEqual(engine.presentLevel(4, "math", 1, -2), 4);
+assert.strictEqual(engine.presentLevel(4, "math", 1, 1), 5);
+assert.strictEqual(engine.presentLevel(4, "words", 1, 2), 6);
+assert.ok(engine.presentLevel(4, "math", 1, 2) >= 9);
+assert.strictEqual(engine.presentLevel(8, "math", 1, 2), 10);
+assert.strictEqual(engine.presentLevel(11, "math", 9, 2), engine.MAX.math);
+for (var hardSeed = 1; hardSeed <= 40; hardSeed++) {
+  var hard = engine.generateMath(engine.presentLevel(4, "math", 1, 2), engine.mulberry32(hardSeed));
+  assert.ok(hard.level >= 9, "advanced fresh math stayed easy at " + hard.level);
+  var op = hard.check.op;
+  if (op === "add") {
+    assert.ok(hard.check.a >= 10 && hard.check.b >= 10, hard.prompt);
+    assert.ok((hard.check.a % 10) + (hard.check.b % 10) >= 10, hard.prompt);
+  } else if (op === "sub") {
+    assert.ok(hard.check.a >= 10 && hard.check.b >= 10, hard.prompt);
+    assert.ok((hard.check.a % 10) < (hard.check.b % 10), hard.prompt);
+  } else {
+    assert.ok(op === "chain" || op === "missing-add", hard.prompt);
+  }
+}
 assert.ok(pageSource.indexOf("Yes!") !== -1);
 assert.ok(pageSource.indexOf("Almost! Try another one.") !== -1);
 assert.ok(pageSource.indexOf("styleBoost") !== -1);
+assert.ok(pageSource.indexOf("presentLevel") !== -1);
 
 console.log("Brain Break checks passed (" + bank.length + " questions, " + schedule.length + " Shabbats, " + vocab.length + " words).");

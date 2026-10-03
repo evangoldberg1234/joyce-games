@@ -89,6 +89,33 @@ body.game > .dock,
   z-index: 4;
 }
 
+/* Treasure Map: the walk button used to stick over the last islands.
+   The grid scrolls. The button stays underneath, on screen. */
+body.game > .quest-app[data-screen="map"] {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+body.game > .quest-app[data-screen="map"] > .mascot {
+  flex: 0 0 auto;
+}
+
+body.game > .quest-app[data-screen="map"] > .map-grid {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  align-content: start;
+}
+
+body.game > .quest-app[data-screen="map"] > .q-next,
+body.game > .quest-app[data-screen="map"] > .quest-side {
+  position: static;
+  flex: 0 0 auto;
+  z-index: auto;
+}
+
 .play-layout .actions {
   position: sticky;
   bottom: 0;
