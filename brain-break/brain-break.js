@@ -90,8 +90,15 @@
         });
     }
 
+    function styleBoost() {
+      if (!window.JoyceStyle || typeof window.JoyceStyle.boost !== "function") return 0;
+      var n = Number(window.JoyceStyle.boost());
+      if (!isFinite(n) || n < 0) return 0;
+      return n;
+    }
+
     function levelFor(who, subject) {
-      return window.BBEngine.effectiveLevel(who[subject].level, subject, gameLevel);
+      return window.BBEngine.effectiveLevel(who[subject].level, subject, gameLevel, styleBoost());
     }
 
     function makeQuestion(subject, who, rng, reading) {
@@ -234,10 +241,17 @@
         grade(true);
         button.classList.add("right");
         var note = overlay.querySelector(".bb-note");
-        if (note) note.textContent = "Yes!";
         var buttons = overlay.querySelectorAll(".bb-choice");
         for (var i = 0; i < buttons.length; i++) buttons[i].disabled = true;
-        advanceTimer = window.setTimeout(nextStep, 700);
+        if (!window.JoyceStyle) {
+          if (note) note.textContent = "Yes!";
+          advanceTimer = window.setTimeout(nextStep, 700);
+          return;
+        }
+        var lead = window.JoyceStyle.t("bb.yes", "Yes!");
+        var showWhy = window.JoyceStyle.get() !== "young" && question.explain;
+        if (note) note.textContent = showWhy ? lead + " " + question.explain : lead;
+        advanceTimer = window.setTimeout(nextStep, showWhy ? 1800 : 700);
         return;
       }
       misses += 1;
@@ -250,7 +264,11 @@
         return;
       }
       var hint = overlay.querySelector(".bb-note");
-      if (hint) hint.textContent = "Almost! Try another one.";
+      if (!window.JoyceStyle) {
+        if (hint) hint.textContent = "Almost! Try another one.";
+      } else if (hint) {
+        hint.textContent = window.JoyceStyle.t("bb.almost", "Almost! Try another one.");
+      }
     }
 
     function speak(text, lang) {
@@ -286,7 +304,7 @@
       top.className = "bb-top";
       var kicker = document.createElement("p");
       kicker.className = "bb-kicker";
-      kicker.textContent = "Brain Break";
+      kicker.textContent = window.JoyceStyle ? window.JoyceStyle.t("bb.kicker", "Brain Break") : "Brain Break";
       top.appendChild(kicker);
       if (phase !== "players" || questions.length) {
         var switcher = document.createElement("button");
@@ -297,7 +315,9 @@
           : (chatCfg.kid && state.player === chatCfg.kid) ? (chatCfg.kidName || "Player")
           : state.player === "joyce" ? "Joyce"
           : "Player";
-        switcher.textContent = state.player ? whoName + " · switch" : "Switch player";
+        switcher.textContent = state.player
+          ? whoName + " · switch"
+          : (window.JoyceStyle ? window.JoyceStyle.t("bb.switch", "Switch player") : "Switch player");
         switcher.addEventListener("click", function () {
           if (phase !== "players") returnPhase = phase;
           phase = "players";
@@ -310,10 +330,10 @@
       if (phase === "players") {
         var title = document.createElement("h2");
         title.className = "bb-title";
-        title.textContent = "Who is playing?";
+        title.textContent = window.JoyceStyle ? window.JoyceStyle.t("bb.who", "Who is playing?") : "Who is playing?";
         var sub = document.createElement("p");
         sub.className = "bb-sub";
-        sub.textContent = "Tap your name.";
+        sub.textContent = window.JoyceStyle ? window.JoyceStyle.t("bb.tap", "Tap your name.") : "Tap your name.";
         var players = document.createElement("div");
         players.className = "bb-players";
         var primaryId = (window.KIDS_CHAT && window.KIDS_CHAT.kid) || "joyce";
@@ -326,21 +346,31 @@
       } else if (phase === "done") {
         var emoji = document.createElement("div");
         emoji.className = "bb-done-emoji";
-        emoji.textContent = "⭐ 🎉 ⭐";
         var doneTitle = document.createElement("h2");
         doneTitle.className = "bb-title";
-        doneTitle.textContent = "Brain break complete!";
         var doneText = document.createElement("p");
         doneText.className = "bb-sub";
-        doneText.textContent = won
-          ? "You finished the level. Back to the game!"
-          : "Good try. Back to the game!";
         var keep = document.createElement("button");
         keep.type = "button";
         keep.className = "bb-next";
-        keep.textContent = "Keep playing";
         keep.addEventListener("click", endBreak);
-        card.appendChild(emoji);
+        if (!window.JoyceStyle) {
+          emoji.textContent = "⭐ 🎉 ⭐";
+          doneTitle.textContent = "Brain break complete!";
+          doneText.textContent = won
+            ? "You finished the level. Back to the game!"
+            : "Good try. Back to the game!";
+          keep.textContent = "Keep playing";
+        } else {
+          var register = window.JoyceStyle.get();
+          emoji.textContent = register === "young" ? "⭐" : "";
+          doneTitle.textContent = window.JoyceStyle.t("bb.doneTitle", "Brain break complete!");
+          doneText.textContent = won
+            ? window.JoyceStyle.t("bb.doneWin", "You finished the level. Back to the game!")
+            : window.JoyceStyle.t("bb.doneLoss", "Good try. Back to the game!");
+          keep.textContent = window.JoyceStyle.t("bb.keep", "Keep playing");
+        }
+        if (emoji.textContent) card.appendChild(emoji);
         card.appendChild(doneTitle);
         card.appendChild(doneText);
         card.appendChild(keep);
@@ -363,7 +393,7 @@
         if (question.subject === "parsha" && question.weekTitle) {
           var week = document.createElement("p");
           week.className = "bb-week";
-          week.textContent = "This week: " + question.weekTitle;
+          week.textContent = (window.JoyceStyle ? window.JoyceStyle.t("bb.week", "This week: ") : "This week: ") + question.weekTitle;
           card.appendChild(week);
         }
         var prompt = document.createElement("p");
@@ -380,7 +410,7 @@
             var hear = document.createElement("button");
             hear.type = "button";
             hear.className = "bb-speak";
-            hear.textContent = "Hear it";
+            hear.textContent = window.JoyceStyle ? window.JoyceStyle.t("bb.hear", "Hear it") : "Hear it";
             hear.addEventListener("click", function () {
               speak(question.speak || question.word, question.speakLang);
             });
@@ -398,7 +428,7 @@
           var got = document.createElement("button");
           got.type = "button";
           got.className = "bb-next";
-          got.textContent = "Got it";
+          got.textContent = window.JoyceStyle ? window.JoyceStyle.t("bb.got", "Got it") : "Got it";
           got.addEventListener("click", nextStep);
           card.appendChild(answer);
           card.appendChild(explain);
@@ -441,10 +471,16 @@
     }
 
     function labelFor(question) {
-      if (question.subject === "math") return "Adding and subtracting";
-      if (question.subject === "words") return "Word problem";
-      if (question.subject === "translate") return "Word match";
-      return "Torah portion";
+      if (!window.JoyceStyle) {
+        if (question.subject === "math") return "Adding and subtracting";
+        if (question.subject === "words") return "Word problem";
+        if (question.subject === "translate") return "Word match";
+        return "Torah portion";
+      }
+      if (question.subject === "math") return window.JoyceStyle.t("bb.math", "Adding and subtracting");
+      if (question.subject === "words") return window.JoyceStyle.t("bb.words", "Word problem");
+      if (question.subject === "translate") return window.JoyceStyle.t("bb.translate", "Word match");
+      return window.JoyceStyle.t("bb.parsha", "Torah portion");
     }
 
     function seedFromLevelTest(opts) {
@@ -456,6 +492,14 @@
       if (!state.player) state.player = name;
       save();
       return { kid: name, plan: plan };
+    }
+
+    if (typeof window !== "undefined" && window.addEventListener) {
+      window.addEventListener("jw-style-change", function () {
+        if (!breakOpen) return;
+        refreshLaterQuestions();
+        render();
+      });
     }
 
     return {

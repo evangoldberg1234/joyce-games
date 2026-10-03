@@ -28,6 +28,27 @@
     if (prices && typeof prices.practice === "number") return prices.practice;
     return 1;
   }
+
+  function tone(key, fallback, vars) {
+    if (window.JoyceStyle && typeof window.JoyceStyle.t === "function") {
+      return window.JoyceStyle.t(key, fallback, vars);
+    }
+    return fallback;
+  }
+
+  function askLevel() {
+    if (window.JoyceStyle && typeof window.JoyceStyle.questionLevel === "function") {
+      return window.JoyceStyle.questionLevel(level, null, 10);
+    }
+    return level;
+  }
+
+  function rewardNote() {
+    if (window.JoyceStyle && typeof window.JoyceStyle.practiceReward === "function") {
+      return window.JoyceStyle.practiceReward().note;
+    }
+    return "1 star earned";
+  }
   var current = null;
   var busy = false;
   var starNote = "";
@@ -48,7 +69,7 @@
 
   function nextQuestion() {
     var avoid = {};
-    current = window.QuestionBank.pick(subject, level, avoid, Math.random);
+    current = window.QuestionBank.pick(subject, askLevel(), avoid, Math.random);
     busy = false;
     renderQuestion();
   }
@@ -58,12 +79,11 @@
     app.setAttribute("data-screen", "pick");
     var box = document.createElement("div");
     box.className = "mascot";
+    var price = practicePrice();
+    var unit = price === 1 ? "star" : "stars";
     var lead = starsOn()
-      ? botName + " has extra questions. A right answer can earn " + practicePrice() + " star."
-      : botName + " has extra questions. Play as many as you like.";
-    if (starsOn() && practicePrice() !== 1) {
-      lead = botName + " has extra questions. A right answer can earn " + practicePrice() + " stars.";
-    }
+      ? tone("practice.lead", botName + " has further questions, pitched from your level. A correct answer can earn " + price + " " + unit + ".", { bot: botName, n: price, unit: unit })
+      : tone("practice.free", botName + " has further questions. Work through as many as you wish.", { bot: botName });
     box.innerHTML = "<div class='mascot-face'>" + botEmoji + "</div><p>" + lead + "</p>";
     app.appendChild(box);
     var grid = document.createElement("div");
@@ -96,7 +116,7 @@
     var quit = document.createElement("button");
     quit.type = "button";
     quit.className = "quest-side";
-    quit.textContent = "Pick another subject";
+    quit.textContent = tone("practice.quit", "Choose another subject");
     quit.addEventListener("click", function () {
       savePractice();
       renderHome();
@@ -117,7 +137,7 @@
     var go = document.createElement("button");
     go.type = "button";
     go.className = "q-next";
-    go.textContent = "Next question";
+    go.textContent = tone("practice.next", "Continue");
     go.addEventListener("click", nextQuestion);
     function showNext() {
       app.appendChild(go);
@@ -134,7 +154,7 @@
       level: askedLevel
     }).then(function (res) {
       if (res && res.ok) {
-        starNote = "1 star earned";
+        starNote = rewardNote();
         if (window.KidsStars.atCap(res)) starNote = starNote + " " + window.KidsStars.capMessage();
       } else {
         starNote = window.KidsStars.messageFor(res);
@@ -146,6 +166,11 @@
   }
 
   renderHome();
+  window.addEventListener("jw-style-change", function () {
+    var screen = app.getAttribute("data-screen");
+    if (screen === "pick") renderHome();
+    else if (screen === "question" && current) renderQuestion();
+  });
   if (window.KidsStars && KidsStars.syncLevels) {
     KidsStars.syncLevels().then(function (res) {
       if (!res || res.source !== "server") return;

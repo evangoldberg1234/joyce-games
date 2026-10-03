@@ -3,14 +3,36 @@
   const list = document.getElementById("game-list");
   const games = (typeof JOYCE_GAMES !== "undefined" && JOYCE_GAMES) || [];
 
-  if (!games.length) {
-    const empty = document.createElement("p");
-    empty.className = "empty-note";
-    empty.textContent = "New games are coming soon.";
-    list.appendChild(empty);
-    return;
+  function tone(key, fallback, vars) {
+    if (window.JoyceStyle && typeof window.JoyceStyle.t === "function") {
+      return window.JoyceStyle.t(key, fallback, vars);
+    }
+    return fallback;
   }
 
+  var ABOUT_KEY = {
+    "level-test/index.html": "game.treasure",
+    "practice/index.html": "game.practice",
+    "books/index.html": "game.books",
+    "homework/index.html": "game.homework",
+    "animal-puzzle/index.html": "game.animals",
+    "ice-cream-scoop/index.html": "game.icecream",
+    "spa-salon/index.html": "game.spa"
+  };
+
+  function draw() {
+    list.innerHTML = "";
+    if (!games.length) {
+      const empty = document.createElement("p");
+      empty.className = "empty-note";
+      empty.textContent = tone("home.empty", "New games are in preparation.");
+      list.appendChild(empty);
+      return;
+    }
+    paint(games);
+  }
+
+  function paint(games) {
   function allowed(game) {
     var feats = window.KIDS_SETTINGS && window.KIDS_SETTINGS.features;
     if (!feats) return true;
@@ -35,10 +57,11 @@
     title.className = "game-title";
     title.textContent = game.title;
 
-    var aboutText = game.about || "Tap to play.";
+    var aboutKey = ABOUT_KEY[game.href] || "";
+    var aboutText = tone(aboutKey, game.about || "Open this.");
     var feats = window.KIDS_SETTINGS && window.KIDS_SETTINGS.features;
     if (feats && !feats.stars && String(game.href || "").indexOf("practice/") === 0) {
-      aboutText = "Extra questions at your level.";
+      aboutText = tone("game.practice.free", "Further questions at your measured level.");
     }
 
     const about = document.createElement("span");
@@ -47,7 +70,7 @@
 
     const play = document.createElement("span");
     play.className = "play-pill";
-    play.textContent = "Play";
+    play.textContent = tone("home.play", "Enter");
 
     card.appendChild(emoji);
     card.appendChild(title);
@@ -55,4 +78,8 @@
     card.appendChild(play);
     list.appendChild(card);
   });
+  }
+
+  draw();
+  window.addEventListener("jw-style-change", draw);
 })();

@@ -53,9 +53,15 @@
     return Math.min(3, Math.floor((gameLevel - 1) / 2));
   }
 
-  function effectiveLevel(storedLevel, subject, gameLevel) {
+  /* styleBoost is optional. Omit it, or pass 0, and the result matches
+     the original stored level plus the game nudge. A negative boost
+     is ignored, so a style switch cannot pull a question below that. */
+  function effectiveLevel(storedLevel, subject, gameLevel, styleBoost) {
     var max = MAX[subject] || 1;
-    return clampLevel((Number(storedLevel) || 1) + gameNudge(gameLevel), max);
+    var base = clampLevel((Number(storedLevel) || 1) + gameNudge(gameLevel), max);
+    var extra = Math.round(Number(styleBoost) || 0);
+    if (extra <= 0) return base;
+    return clampLevel(base + extra, max);
   }
 
   var TEST_SUBJECTS = {

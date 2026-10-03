@@ -5,7 +5,17 @@
   var cfg = window.KIDS_CHAT || {};
   var botName = cfg.botName || "your guide";
   var busy = false;
-  var CHAT_LINE = "Open the chat bubble \uD83D\uDCAC to answer some questions about your book!";
+
+  function tone(key, fallback, vars) {
+    if (window.JoyceStyle && typeof window.JoyceStyle.t === "function") {
+      return window.JoyceStyle.t(key, fallback, vars);
+    }
+    return fallback;
+  }
+
+  function chatLine() {
+    return tone("books.chat", "Tell " + botName + " about the book in the chat.", { bot: botName });
+  }
   var ICONS = {
     check: "\uD83D\uDCAC",
     pages_unknown: "\u2753",
@@ -120,15 +130,15 @@
     var status = res && res.status;
     var min = (res && res.min_pages) || 50;
     if (status === "check" || status === "pages_unknown") {
-      return "Great reading! Now tell " + botName + " about your book in the chat 💬";
+      return tone("books.checked", "The book is recorded. Tell " + botName + " what you made of it.", { bot: botName });
     }
     if (status === "too_short") {
-      return "This book is shorter than " + min + " pages, so it doesn't earn stars, but reading is always awesome!";
+      return tone("books.short", "Under " + min + " pages, so it does not meet the minimum for stars.", { min: min });
     }
-    if (status === "already_paid") return "You already got your stars for this book! 🌟";
-    if (status === "in_progress") return "You're already telling " + botName + " about this book, open the chat!";
-    if (status === "tried_twice") return "You already tried this book twice. Pick a different one!";
-    return "Try another book.";
+    if (status === "already_paid") return tone("books.paid", "Stars for this book are already recorded.");
+    if (status === "in_progress") return tone("books.progress", "A conversation about this book is already open. Continue in the chat.", { bot: botName });
+    if (status === "tried_twice") return tone("books.twice", "This title has already been tried twice. Choose a different book.");
+    return tone("books.other", "Choose another book.");
   }
 
   function slowText(res) {
@@ -140,16 +150,16 @@
   }
 
   function problemText(res) {
-    if (!res) return "Book Club is waking up...";
+    if (!res) return tone("books.asleep", "Book Club is not ready yet.");
     if (res.error === "slow_down") return slowText(res);
     if (res.message) return String(res.message);
-    if (res.error === "locked") return "Ask a grown-up to unlock. Open the chat bubble and enter the family code.";
+    if (res.error === "locked") return tone("books.locked", "A grown-up needs to unlock this. Open the chat and enter the family code.");
     if (res.error === "no_passcode_yet") return "Ask a grown-up to set up Book Club.";
     if (res.error === "library_unavailable") return "The library is busy. Try again in a little while.";
     if (res.error === "bad_work_id") return "That book didn't work. Try another one.";
     if (res.error === "book_not_found") return "I couldn't find that book. Try another one.";
-    if (res.error === "server_error" || res.error === "not_configured") return "Book Club is napping, try again soon";
-    return "Book Club is waking up...";
+    if (res.error === "server_error" || res.error === "not_configured") return tone("books.asleep", "Book Club is not ready yet.");
+    return tone("books.asleep", "Book Club is not ready yet.");
   }
 
   function showProblem(res) {
@@ -183,16 +193,16 @@
     app.innerHTML = "";
     app.setAttribute("data-screen", "locked");
     app.appendChild(el("h1", "book-title", "Book Club"));
-    app.appendChild(el("p", "book-note", "Ask a grown-up to unlock. Open the chat bubble and enter the family code."));
-    app.appendChild(button("Open the chat", "book-next", openChat));
-    app.appendChild(button("Try again", "book-side", showSearch));
+    app.appendChild(el("p", "book-note", tone("books.locked", "A grown-up needs to unlock this. Open the chat and enter the family code.")));
+    app.appendChild(button(tone("books.openChat", "Open the chat"), "book-next", openChat));
+    app.appendChild(button(tone("books.again", "Try again"), "book-side", showSearch));
   }
 
   function showAsleep() {
     app.innerHTML = "";
     app.setAttribute("data-screen", "asleep");
     app.appendChild(el("h1", "book-title", "Book Club"));
-    app.appendChild(el("p", "book-note", "Book Club is waking up..."));
+    app.appendChild(el("p", "book-note", tone("books.asleep", "Book Club is not ready yet.")));
     app.appendChild(button("Try again", "book-next", showSearch));
   }
 
@@ -201,22 +211,22 @@
     app.innerHTML = "";
     app.setAttribute("data-screen", "search");
     app.appendChild(el("h1", "book-title", "Book Club"));
-    app.appendChild(el("p", "book-lead", "Read a book. A long one can earn 20 stars."));
+    app.appendChild(el("p", "book-lead", tone("books.lead", "Record a book you finished. A long one can earn 20 stars. A short one does not.")));
     var form = el("form", "book-form");
-    var titleLabel = el("label", "book-label", "Book title");
+    var titleLabel = el("label", "book-label", tone("books.titleLabel", "Title"));
     titleLabel.setAttribute("for", "book-title-input");
     var titleInput = el("input", "book-input");
     titleInput.id = "book-title-input";
     titleInput.type = "text";
     titleInput.autocomplete = "off";
     titleInput.enterKeyHint = "search";
-    var authorLabel = el("label", "book-label", "Author, if you know it");
+    var authorLabel = el("label", "book-label", tone("books.authorLabel", "Author, if you know it"));
     authorLabel.setAttribute("for", "book-author-input");
     var authorInput = el("input", "book-input");
     authorInput.id = "book-author-input";
     authorInput.type = "text";
     authorInput.autocomplete = "off";
-    var find = el("button", "book-next", "Find");
+    var find = el("button", "book-next", tone("books.find", "Search"));
     find.type = "submit";
     var note = el("p", "book-note", "");
     note.setAttribute("data-note", "1");
@@ -231,7 +241,7 @@
       lookup(titleInput.value, authorInput.value, note, find);
     });
     app.appendChild(form);
-    app.appendChild(button("My books", "book-side", showShelf));
+    app.appendChild(button(tone("books.mine", "My shelf"), "book-side", showShelf));
   }
 
   function lookup(title, author, note, find) {
@@ -239,12 +249,12 @@
     title = String(title || "").trim();
     author = String(author || "").trim();
     if (!title) {
-      note.textContent = "Type the book's name.";
+      note.textContent = tone("books.needTitle", "Enter the title.");
       return;
     }
     busy = true;
     find.disabled = true;
-    note.textContent = "Looking...";
+    note.textContent = tone("books.looking", "Searching the library...");
     window.KidBooks.lookup(title, author).then(function (res) {
       busy = false;
       if (!res || res.ok === false) {
@@ -255,7 +265,7 @@
       if (!results.length) {
         showSearch();
         var again = document.querySelector("[data-note]");
-        if (again) again.textContent = "No book with that name. Try again.";
+        if (again) again.textContent = tone("books.none", "No title matched. Try another spelling.");
         var input = document.getElementById("book-title-input");
         if (input) input.value = title;
         return;
@@ -267,7 +277,7 @@
   function showResults(results) {
     app.innerHTML = "";
     app.setAttribute("data-screen", "results");
-    app.appendChild(el("h1", "book-title", "Is it one of these?"));
+    app.appendChild(el("h1", "book-title", tone("books.which", "Is it one of these?")));
     var list = el("div", "book-list");
     results.forEach(function (book) {
       var card = el("button", "book-card");
@@ -291,7 +301,7 @@
     busy = true;
     app.innerHTML = "";
     app.setAttribute("data-screen", "wait");
-    app.appendChild(el("p", "book-lead", "One moment..."));
+    app.appendChild(el("p", "book-lead", tone("books.moment", "One moment.")));
     window.KidBooks.start(book.work_id).then(function (res) {
       busy = false;
       if (!res || res.ok === false) {
@@ -314,8 +324,8 @@
     app.appendChild(el("p", "book-note", message));
     var spoken = message;
     if (status === "check" || status === "pages_unknown") {
-      app.appendChild(el("p", "book-aside", CHAT_LINE));
-      spoken = message + " " + CHAT_LINE;
+      app.appendChild(el("p", "book-aside", chatLine()));
+      spoken = message + " " + chatLine();
       nudgeChat();
     }
     speak(spoken);
@@ -323,7 +333,7 @@
       app.appendChild(button("Open the chat", "book-next", openChat));
     }
     app.appendChild(button("Find another book", "book-side", showSearch));
-    app.appendChild(button("My books", "book-side", showShelf));
+    app.appendChild(button(tone("books.mine", "My shelf"), "book-side", showShelf));
   }
 
   function showShelf() {
@@ -331,7 +341,7 @@
     busy = true;
     app.innerHTML = "";
     app.setAttribute("data-screen", "shelf-wait");
-    app.appendChild(el("p", "book-lead", "Opening your books..."));
+    app.appendChild(el("p", "book-lead", tone("books.opening", "Opening your shelf.")));
     window.KidBooks.list().then(function (res) {
       busy = false;
       if (!res || res.ok === false) {
@@ -345,8 +355,8 @@
   function paintShelf(books) {
     app.innerHTML = "";
     app.setAttribute("data-screen", "shelf");
-    app.appendChild(el("h1", "book-title", "My books"));
-    if (!books.length) app.appendChild(el("p", "book-lead", "No books yet. Find one you have read."));
+    app.appendChild(el("h1", "book-title", tone("books.shelf", "My shelf")));
+    if (!books.length) app.appendChild(el("p", "book-lead", tone("books.empty", "The shelf is empty. Add a book you have finished.")));
     var list = el("div", "book-list");
     books.forEach(function (book) {
       var card = el("article", "book-card book-card-static");
@@ -387,4 +397,17 @@
 
   if (!bookClubOn()) showOff();
   else showSearch();
+  window.addEventListener("jw-style-change", function () {
+    var screen = app.getAttribute("data-screen");
+    if (screen !== "search") return;
+    var titleEl = document.getElementById("book-title-input");
+    var authorEl = document.getElementById("book-author-input");
+    var title = titleEl ? titleEl.value : "";
+    var author = authorEl ? authorEl.value : "";
+    showSearch();
+    var nextTitle = document.getElementById("book-title-input");
+    var nextAuthor = document.getElementById("book-author-input");
+    if (nextTitle) nextTitle.value = title;
+    if (nextAuthor) nextAuthor.value = author;
+  });
 })();

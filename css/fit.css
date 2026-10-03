@@ -38,8 +38,15 @@ body.game {
 
 body.game > .topbar,
 body.game > .quest-top,
-body.game > .dock {
+body.game > .dock,
+body.game > #joyce-chrome {
   flex: 0 0 auto;
+}
+
+#joyce-chrome {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 body.game > .app,

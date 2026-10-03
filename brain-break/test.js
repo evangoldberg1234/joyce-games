@@ -289,4 +289,15 @@ assert.strictEqual(seeded.math.placed, true);
 assert.strictEqual(seeded.words.level, 1);
 assert.ok(pageSource.indexOf("seedFromLevelTest") !== -1);
 
+assert.strictEqual(engine.effectiveLevel(4, "math", 1, 0), engine.effectiveLevel(4, "math", 1));
+assert.strictEqual(engine.effectiveLevel(4, "math", 7, 0), engine.effectiveLevel(4, "math", 7));
+assert.strictEqual(engine.effectiveLevel(4, "math", 1, -3), engine.effectiveLevel(4, "math", 1));
+assert.strictEqual(engine.effectiveLevel(4, "math", 1, 1), 5);
+assert.strictEqual(engine.effectiveLevel(4, "math", 1, 2), 6);
+assert.strictEqual(engine.effectiveLevel(11, "math", 9, 2), engine.MAX.math);
+assert.ok(engine.effectiveLevel(4, "math", 1, 2) >= engine.effectiveLevel(4, "math", 1));
+assert.ok(pageSource.indexOf("Yes!") !== -1);
+assert.ok(pageSource.indexOf("Almost! Try another one.") !== -1);
+assert.ok(pageSource.indexOf("styleBoost") !== -1);
+
 console.log("Brain Break checks passed (" + bank.length + " questions, " + schedule.length + " Shabbats, " + vocab.length + " words).");

@@ -26,6 +26,13 @@
   var levelEnding = false;
   var DIG_GOAL = 8;
   var DIG_BONUS = 5;
+
+  function tone(key, fallback, vars) {
+    if (window.JoyceStyle && typeof window.JoyceStyle.t === "function") {
+      return window.JoyceStyle.t(key, fallback, vars);
+    }
+    return fallback;
+  }
   var digProgress = 0;
   var digDone = false;
   var digTimer = null;
@@ -268,16 +275,18 @@
     var yay = document.getElementById("dig-yay");
     if (yay) {
       yay.hidden = false;
-      yay.textContent = first ? "Tee-hee! It's poop! +5 style points." : "Tee-hee! It's poop again!";
+      yay.textContent = first
+        ? tone("spa.digFirst", "Excavation complete. +" + DIG_BONUS + " style points, as advertised.", { n: DIG_BONUS })
+        : tone("spa.digAgainMsg", "The same find, again.");
     }
     var live = document.getElementById("dig-note");
     if (live) {
       live.textContent = first
-        ? "Silly surprise. Those 5 style points stay in this game."
-        : "You already got the silly style points.";
+        ? tone("spa.digStay", "Those " + DIG_BONUS + " style points remain in this game.", { n: DIG_BONUS })
+        : tone("spa.digAlready", "Those style points are already counted.");
     }
     var btn = document.getElementById("dig-btn");
-    if (btn) btn.textContent = "Dig again";
+    if (btn) btn.textContent = tone("spa.digAgain", "Dig again");
   }
 
   function digOnce() {
@@ -306,7 +315,7 @@
     var yay = document.getElementById("dig-yay");
     if (yay) yay.hidden = true;
     var live = document.getElementById("dig-note");
-    if (live) live.textContent = "Tap or hold Dig. Something silly is under the grass.";
+    if (live) live.textContent = tone("spa.digHint", "Tap or hold Dig. Something is buried under the grass.");
     var btn = document.getElementById("dig-btn");
     if (btn) btn.textContent = "Dig!";
   }
@@ -370,7 +379,7 @@
     meter.appendChild(fill);
     tools.appendChild(meter);
 
-    var yay = el("p", "dig-yay", digDone ? (digBonusPoints() ? "Tee-hee! It's poop! +5 style points." : "Tee-hee! It's poop!") : "");
+    var yay = el("p", "dig-yay", digDone ? (digBonusPoints() ? tone("spa.digFirst", "Excavation complete. +" + DIG_BONUS + " style points, as advertised.", { n: DIG_BONUS }) : tone("spa.digAgainMsg", "The same find, again.")) : "");
     yay.id = "dig-yay";
     yay.hidden = !digDone;
     tools.appendChild(yay);
@@ -378,9 +387,9 @@
     var live = el("p", "note dig-note");
     live.id = "dig-note";
     live.setAttribute("aria-live", "polite");
-    if (digDone && digBonusPoints()) live.textContent = "Silly surprise. Those 5 style points stay in this game.";
-    else if (digDone) live.textContent = "You already got the silly style points.";
-    else live.textContent = "Tap or hold Dig. Something silly is under the grass.";
+    if (digDone && digBonusPoints()) live.textContent = tone("spa.digStay", "Those " + DIG_BONUS + " style points remain in this game.", { n: DIG_BONUS });
+    else if (digDone) live.textContent = tone("spa.digAlready", "Those style points are already counted.");
+    else live.textContent = tone("spa.digHint", "Tap or hold Dig. Something is buried under the grass.");
     tools.appendChild(live);
   }
 
@@ -509,9 +518,9 @@
   }
 
   function renderLobby() {
-    app.appendChild(el("p", "kicker", "A huge spa just for you"));
+    app.appendChild(el("p", "kicker", tone("spa.kicker", "The salon is open")));
     app.appendChild(el("h1", null, "Spa Salon"));
-    app.appendChild(el("p", "subline", "Try hair on the mannequin, then style the guest. Style points stay in this game."));
+    app.appendChild(el("p", "subline", tone("spa.sub", "Test hair on the mannequin, then dress the guest. Style points stay inside this game.")));
     var progress = el("p", "progress", readyCount() + " of " + LOOKS.guests.length + " guests look ready · " + totalPoints() + " style points");
     app.appendChild(progress);
 
@@ -623,7 +632,7 @@
         stopDigging();
         tab = cat.id;
         if (cat.id === "hair") note = tryHair ? "Put this hair on " + guest.name + " when you like it." : "Tap a hair style for the mannequin.";
-        else if (cat.id === "dig") note = "Tap or hold Dig. Something silly is under the grass.";
+        else if (cat.id === "dig") note = tone("spa.digHint", "Tap or hold Dig. Something is buried under the grass.");
         else note = "Tap one. It goes right on " + guest.name + ".";
         render();
       });
@@ -736,8 +745,8 @@
     report.rows.forEach(function (row) {
       var li = el("li", row.hit ? "hit" : "miss");
       li.textContent = row.hit
-        ? "Yes · " + row.wantedName
-        : "Wanted " + row.wantedName + ". You picked " + row.gotName + ".";
+        ? tone("spa.hit", "Matched. " + row.wantedName, { name: row.wantedName })
+        : tone("spa.miss", "The list asked for " + row.wantedName + ". This look has " + row.gotName + ".", { wanted: row.wantedName, got: row.gotName });
       list.appendChild(li);
     });
     panel.appendChild(list);
@@ -813,30 +822,36 @@
     sheet.setAttribute("role", "dialog");
     sheet.setAttribute("aria-modal", "true");
     sheet.setAttribute("aria-labelledby", "howto-title");
-    var title = el("h2", null, "How to play");
+    var title = el("h2", null, tone("chrome.howto", "Instructions"));
     title.id = "howto-title";
     sheet.appendChild(title);
-    sheet.appendChild(el("p", "howto-lead", "Welcome to Spa Salon. Each guest wants one look."));
+    sheet.appendChild(el("p", "howto-lead", tone("spa.howtoLead", "Each guest arrives with one requested look.")));
     /* Above the steps so the start control is on screen before any scrolling. */
-    sheet.appendChild(makeButton("Let's play", "big-btn sun howto-go", closeHowto));
+    var start = makeButton("Let's play", "big-btn sun howto-go", closeHowto);
+    start.textContent = tone("spa.lets", "Let's play");
+    sheet.appendChild(start);
     var steps = el("div", "howto-steps");
     var list = document.createElement("ol");
-    [
-      "Read the look list. It tells you the hair, makeup, skincare, and nails.",
-      "Tap a hair style. It goes on the mannequin head first.",
-      "Tap Put this hair on the guest when you want them to wear it.",
-      "Pick makeup, skincare, and nail polish. Those go right on the guest.",
-      "Tap Dig anytime. Tap or hold Dig until a silly surprise pops up. The first time adds 5 style points.",
-      "Tap All done. The spa checks the list.",
-      "Looks amazing is 40 style points. Looks okay is 20. Looks kinda bad is 5. Looks horrible is 0.",
-      "Style points stay in this game. The star bar is your real stars."
-    ].forEach(function (line) {
+    var spaSteps = window.JoyceStyle && window.JoyceStyle.list ? window.JoyceStyle.list("spa.steps") : [];
+    if (!spaSteps.length) {
+      spaSteps = [
+        "Read the look list. It tells you the hair, makeup, skincare, and nails.",
+        "Tap a hair style. It goes on the mannequin head first.",
+        "Tap Put this hair on the guest when you want them to wear it.",
+        "Pick makeup, skincare, and nail polish. Those go right on the guest.",
+        "Tap Dig anytime. Tap or hold Dig until a silly surprise pops up. The first time adds 5 style points.",
+        "Tap All done. The spa checks the list.",
+        "Looks amazing is 40 style points. Looks okay is 20. Looks kinda bad is 5. Looks horrible is 0.",
+        "Style points stay in this game. The star bar is your real stars."
+      ];
+    }
+    spaSteps.forEach(function (line) {
       list.appendChild(el("li", null, line));
     });
     steps.appendChild(list);
     sheet.appendChild(steps);
     var foot = el("div", "howto-foot");
-    var go = makeButton("Let's style", "big-btn warm howto-go", closeHowto);
+    var go = makeButton(tone("spa.style", "Begin"), "big-btn warm howto-go", closeHowto);
     go.id = "lets-style";
     foot.appendChild(go);
     sheet.appendChild(foot);
@@ -874,5 +889,6 @@
     if (howtoOpen && screen !== "score") renderHowto();
   }
 
+  window.addEventListener("jw-style-change", render);
   render();
 })();

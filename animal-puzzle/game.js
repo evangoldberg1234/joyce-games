@@ -444,6 +444,13 @@
     return (window.KIDS_CHAT && window.KIDS_CHAT.kidName) || "friend";
   }
 
+  function tone(key, fallback, vars) {
+    if (window.JoyceStyle && typeof window.JoyceStyle.t === "function") {
+      return window.JoyceStyle.t(key, fallback, vars);
+    }
+    return fallback;
+  }
+
   function hint() {
     var current = puzzle();
     if (hintBusy || justSolved || isSolved(current, cells)) return;
@@ -772,15 +779,23 @@
     overlay.className = "overlay";
     var sheet = document.createElement("div");
     sheet.className = "sheet";
+    var who = childName().replace(/[&<>]/g, "");
+    var steps = window.JoyceStyle && window.JoyceStyle.list ? window.JoyceStyle.list("animal.steps") : [];
+    if (!steps.length) {
+      steps = [
+        "Select an empty cell.",
+        "Choose a letter or a digit.",
+        "Each row, column, and bold box contains every letter and digit once.",
+        "The animal clue names the word. Those letters, in order, spell it. A digit may sit in the line."
+      ];
+    }
+    var items = steps.map(function (line) {
+      return "<li>" + line.replace(/[&<>]/g, "") + "</li>";
+    }).join("");
     sheet.innerHTML =
-      "<h2>How to play</h2>" +
-      "<p>Hi " + childName().replace(/[&<>]/g, "") + "! This is a crossword and a Sudoku.</p>" +
-      "<ol>" +
-      "<li>Tap an empty box.</li>" +
-      "<li>Tap a letter or a number.</li>" +
-      "<li>Every row, every column, and every bold box uses each letter and number one time.</li>" +
-      "<li>The animal clue shows the word. The letters in that line spell the word, in order. A number can sit in the line too.</li>" +
-      "</ol>" +
+      "<h2>" + tone("chrome.howto", "Instructions") + "</h2>" +
+      "<p>" + tone("animal.lead", who + ", this is a crossword paired with a Sudoku.", { name: who }) + "</p>" +
+      "<ol>" + items + "</ol>" +
       '<div class="example">' +
       '<div><span class="clue-emoji">🐱</span> <strong>CAT</strong> across</div>' +
       '<div class="example-row">' +
@@ -789,13 +804,13 @@
       '<div class="example-cell">A</div>' +
       '<div class="example-cell">T</div>' +
       "</div>" +
-      "<p>Say C, A, T. That spells CAT! The number sits in the word.</p>" +
+      "<p>" + tone("animal.example", "Read C, A, T. That spells CAT. The digit sits inside the word.") + "</p>" +
       "</div>" +
-      "<p>Pink boxes mean try a new one. Hint fills one box for you.</p>";
+      "<p>" + tone("animal.pink", "A pink cell is a conflict. Hint fills one cell.") + "</p>";
     var go = document.createElement("button");
     go.type = "button";
     go.className = "big-btn";
-    go.textContent = "Let's play!";
+    go.textContent = tone("animal.go", "Begin");
     go.addEventListener("click", function () {
       safeSet(HOWTO_KEY, "yes");
       howtoOpen = false;
@@ -816,9 +831,9 @@
     party.className = "party";
     party.textContent = current.emoji + " 🎉";
     var title = document.createElement("h2");
-    title.textContent = "You did it!";
+    title.textContent = tone("animal.win", "Solved.");
     var text = document.createElement("p");
-    text.textContent = "The " + current.title.toLowerCase() + " is so happy.";
+    text.textContent = tone("animal.happy", "The " + current.title.toLowerCase() + " puzzle is complete.", { title: current.title.toLowerCase() });
     var next = document.createElement("button");
     next.type = "button";
     next.className = "big-btn";
@@ -868,5 +883,6 @@
     }
   }
 
+  window.addEventListener("jw-style-change", render);
   render();
 })();
