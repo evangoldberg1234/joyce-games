@@ -28,11 +28,11 @@
   <main class="wrap">
     <header class="hero">
       <p class="starbar" id="starbar" data-needs="stars">★</p>
-      <p class="hello">Hello, <span data-child-name>Joyce</span>!</p>
+      <p class="hello" data-style="home.hello">Welcome back, Joyce.</p>
       <h1 data-site-title>Joyce's Web</h1>
-      <p class="tag">Tap a game to play.</p>
-      <p class="star-ask" data-needs="stars">A new game costs <span data-price="newGame">20</span> stars.</p>
-      <button type="button" class="star-game" id="new-game" data-needs="chat stars">Ask <span data-bot-name>Sofie</span> for a new game</button>
+      <p class="tag" data-style="home.tag">Choose where to spend your attention.</p>
+      <p class="star-ask" data-needs="stars" data-style="home.price">A new game costs 20 stars.</p>
+      <button type="button" class="star-game" id="new-game" data-needs="chat stars" data-style="home.newgame">Ask Sofie to devise a new game</button>
     </header>
     <section id="game-list" class="game-list" aria-label="Games"></section>
     <ul class="parade" aria-hidden="true">
@@ -47,7 +47,7 @@
     </ul>
   </main>
   <footer class="foot">
-    <p>Made for <span data-child-name>Joyce</span></p>
+    <p data-style="home.made">Built for Joyce</p>
     <details class="parent-note">
       <summary>For parents</summary>
       <p>Brain Breaks are short learning pauses instead of ads. At the end of every level, whether <span data-child-name>Joyce</span> finishes it or starts it over, she answers a few questions. Questions get a little harder as the game level goes up. Levels are saved on this iPad. Players can switch on the break screen.</p>
@@ -63,5 +63,6 @@
   <script src="stars/stars.js"></script>
   <script src="chat/chat.js" defer></script>
   <script src="js/kid-switch.js"></script>
+  <script src="js/style-level.js"></script>
 </body>
 </html>

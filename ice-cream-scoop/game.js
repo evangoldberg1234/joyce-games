@@ -65,7 +65,25 @@
   var levelIndex = 0;
   var cells = [];
   var selected = null;
-  var message = "Tap a box. Then tap a letter or a number.";
+  var note = { key: "ice.start", fallback: "Select an empty cell, then a letter or a digit.", vars: null };
+
+  function tone(key, fallback, vars) {
+    if (window.JoyceStyle && typeof window.JoyceStyle.t === "function") {
+      return window.JoyceStyle.t(key, fallback, vars);
+    }
+    return fallback;
+  }
+
+  function setNote(key, fallback, vars) {
+    note = { key: key, fallback: fallback, vars: vars || null };
+    return tone(key, fallback, vars);
+  }
+
+  function noteText() {
+    return tone(note.key, note.fallback, note.vars);
+  }
+
+  var message = setNote("ice.start", "Select an empty cell, then a letter or a digit.");
   var justSolved = false;
   var lastAward = null;
   var levelEnding = false;
@@ -359,12 +377,12 @@
   function showFlash(index, symbol) {
     clearFlash();
     hintFlash = { index: index, symbol: symbol };
-    message = "Watch the glowing box!";
+    message = setNote("ice.watch", "Watch the highlighted cell.");
     render();
     hintTimer = window.setTimeout(function () {
       if (!hintFlash || hintFlash.index !== index) return;
       hintFlash = null;
-      message = "That box can be " + symbol + ".";
+      message = setNote("ice.canbe", symbol + " fits that cell.", { symbol: symbol });
       render();
     }, 1300);
   }
@@ -433,9 +451,9 @@
     if (isSolved(current, cells)) {
       justSolved = true;
       lastAward = grant(current);
-      message = "";
+      message = setNote("ice.blank", "");
     } else {
-      message = "Tap a box. Then tap a letter or a number.";
+      message = setNote("ice.start", "Select an empty cell, then a letter or a digit.");
     }
     screen = "play";
     render();
@@ -445,22 +463,22 @@
     var current = puzzle();
     if (justSolved || isSolved(current, cells)) return;
     if (selected === null) {
-      message = "Tap a box first.";
+      message = setNote("ice.first", "Select a cell first.");
       render();
       return;
     }
     if (isGiven(current, selected)) {
-      message = "That box is a starter. Pick an empty one.";
+      message = setNote("ice.starter", "That cell is given. Choose an empty one.");
       render();
       return;
     }
     cells[selected] = symbol;
     var result = conflicts(current, cells);
     var hasBad = Object.keys(result.bad).length > 0;
-    if (hasBad && result.orderBroken) message = "Read the letters in order. They spell " + current.word + ".";
-    else if (hasBad) message = "Two boxes match. Try a new one.";
-    else if (symbol === current.solution[selected]) message = "Nice!";
-    else message = "Keep going!";
+    if (hasBad && result.orderBroken) message = setNote("ice.order", "Read the letters in order. They spell " + current.word + ".", { word: current.word });
+    else if (hasBad) message = setNote("ice.clash", "Those two cells match. Choose a different symbol.");
+    else if (symbol === current.solution[selected]) message = setNote("ice.nice", "That placement holds.");
+    else message = setNote("ice.keep", "Continue.");
     afterMove(current);
   }
 
@@ -468,24 +486,24 @@
     var current = puzzle();
     if (justSolved || isSolved(current, cells)) return;
     if (selected === null) {
-      message = "Tap a box first.";
+      message = setNote("ice.first", "Select a cell first.");
       render();
       return;
     }
     if (isGiven(current, selected)) {
-      message = "That box is a starter. Pick an empty one.";
+      message = setNote("ice.starter", "That cell is given. Choose an empty one.");
       render();
       return;
     }
     cells[selected] = "";
-    message = "That box is empty now.";
+    message = setNote("ice.empty", "That cell is clear.");
     afterMove(current);
   }
 
   function afterMove(current) {
     if (isSolved(current, cells)) {
       justSolved = true;
-      message = "";
+      message = setNote("ice.blank", "");
       lastAward = grant(current);
       burst();
     } else {
@@ -501,7 +519,7 @@
     justSolved = false;
     lastAward = null;
     clearFlash();
-    message = "All clear. You can try again!";
+    message = setNote("ice.cleared", "Cleared. You may begin again.");
     saveProgress(current);
     render();
   }
@@ -706,7 +724,7 @@
     var profile = active();
     var card = el("div", "hello-card");
     card.appendChild(el("div", "hello-avatar", profile.avatar));
-    card.appendChild(el("h2", null, "Hi, " + profile.name + "!"));
+    card.appendChild(el("h2", null, tone("ice.hi", "Welcome back, " + profile.name + ".", { name: profile.name })));
     card.appendChild(el("p", null, profile.points + " scoops · " + waveWord(wavesCleared(profile)) + " cleared"));
     var menu = el("div", "menu");
     menu.appendChild(makeButton("Play waves", "menu-btn play", function () {
@@ -867,7 +885,9 @@
           button.addEventListener("click", function () {
             if (justSolved) return;
             selected = cellIndex;
-            message = isGiven(current, cellIndex) ? "That box is a starter. Pick an empty one." : "Now tap a letter or a number.";
+            message = isGiven(current, cellIndex)
+              ? setNote("ice.starter", "That cell is given. Choose an empty one.")
+              : setNote("ice.now", "Now choose a letter or a digit.");
             render();
           });
         })(index);
@@ -876,7 +896,7 @@
     }
     card.appendChild(board);
 
-    var status = el("p", "status" + (Object.keys(result.bad).length ? " warn" : ""), message);
+    var status = el("p", "status" + (Object.keys(result.bad).length ? " warn" : ""), noteText());
     status.setAttribute("aria-live", "polite");
 
     var controls = el("div", "controls");
@@ -897,7 +917,7 @@
       if (justSolved || isSolved(now, cells)) return;
       var index = hintIndex(now);
       if (index == null) {
-        message = "Erase a pink box and try a new one.";
+        message = setNote("ice.erase", "Clear a pink cell and try a different symbol.");
         render();
         return;
       }
@@ -942,9 +962,9 @@
     sheet.appendChild(el("h2", null, "You did it!"));
     var text = el("p");
     if (award.replay) {
-      text.textContent = "The " + current.title.toLowerCase() + " is happy you came back.";
+      text.textContent = tone("ice.backHappy", "The " + current.title.toLowerCase() + " notes your return.", { title: current.title.toLowerCase() });
     } else {
-      text.textContent = "You earned " + award.pts + " scoops! You have " + active().points + " scoops.";
+      text.textContent = tone("ice.earned", "You earned " + award.pts + " scoops. Your total is " + active().points + ".", { pts: award.pts, total: active().points });
     }
     sheet.appendChild(text);
     if (award.unlocked && award.unlocked.length) {
@@ -1223,17 +1243,21 @@
     var sheet = el("div", "sheet");
     var who = active();
     var name = who ? who.name : "friend";
-    sheet.appendChild(el("h2", null, "How to play"));
-    sheet.appendChild(el("p", null, "Hi " + name + "! This is a crossword and a Sudoku, at the ocean."));
+    sheet.appendChild(el("h2", null, tone("ice.howtoTitle", "Instructions")));
+    sheet.appendChild(el("p", null, tone("ice.howtoLead", name + ", this is a crossword and a Sudoku, set at the ocean.", { name: name })));
     var list = document.createElement("ol");
-    [
-      "Pick a swimmer. That profile keeps your scoops and ice creams on this iPad.",
-      "Tap an empty box. Then tap a letter or a number.",
-      "Every row, every column, and every bold box uses each letter and number one time.",
-      "Mint boxes are the clue. Read the letters in order. They spell the word. A number can sit in the word.",
-      "Finish a wave to earn scoops. Then build an ice cream and save it.",
-      "The scoop board shows who has the most scoops on this iPad."
-    ].forEach(function (line) {
+    var steps = window.JoyceStyle && window.JoyceStyle.list ? window.JoyceStyle.list("ice.steps") : [];
+    if (!steps.length) {
+      steps = [
+        "Choose a swimmer. That profile keeps scoops and ice creams on this iPad.",
+        "Select an empty cell, then a letter or a digit.",
+        "Each row, column, and bold box contains every letter and digit once.",
+        "Mint cells are the clue. Read those letters in order. They spell the word. A digit may sit inside it.",
+        "Finish a wave to earn scoops, then compose an ice cream and save it.",
+        "The scoop board ranks everyone on this iPad."
+      ];
+    }
+    steps.forEach(function (line) {
       list.appendChild(el("li", null, line));
     });
     sheet.appendChild(list);
@@ -1245,10 +1269,10 @@
     row.appendChild(el("div", "example-cell", "C"));
     row.appendChild(el("div", "example-cell", "E"));
     example.appendChild(row);
-    example.appendChild(el("p", null, "Say I, C, E. That spells ICE! The number sits in the word."));
+    example.appendChild(el("p", null, tone("ice.example", "Read I, C, E. That spells ICE. The digit sits inside the word.")));
     sheet.appendChild(example);
-    sheet.appendChild(el("p", null, "Pink boxes mean try a new one. Hint shows one box. It does not fill it in."));
-    sheet.appendChild(makeButton("Let's splash!", "big-btn sun sticky-go", function () {
+    sheet.appendChild(el("p", null, tone("ice.pink", "A pink cell is a conflict. Hint reveals one cell. It does not fill the grid.")));
+    sheet.appendChild(makeButton(tone("ice.go", "Begin"), "big-btn sun sticky-go", function () {
       try { localStorage.setItem(HOWTO_KEY, "yes"); } catch (err) { /* still closes */ }
       howtoOpen = false;
       render();
@@ -1272,5 +1296,6 @@
     else if (screen === "play" && justSolved) renderCelebration();
   }
 
+  window.addEventListener("jw-style-change", render);
   render();
 })();

@@ -13,6 +13,13 @@
     return new Date().toISOString().slice(0, 10);
   }
 
+  function tone(key, fallback, vars) {
+    if (window.JoyceStyle && typeof window.JoyceStyle.t === "function") {
+      return window.JoyceStyle.t(key, fallback, vars);
+    }
+    return fallback;
+  }
+
   function hostLine(text) {
     var box = document.createElement("div");
     box.className = "mascot";
@@ -49,9 +56,10 @@
   function showMap() {
     app.innerHTML = "";
     app.setAttribute("data-screen", "map");
-    app.appendChild(hostLine(botName + " has a treasure map for " + kidName + ". Pick an island, or walk the whole map."));
+    app.appendChild(hostLine(tone("map.intro", botName + " prepared a placement map for " + kidName + ". Choose a subject, or proceed through every one.", { bot: botName, name: kidName })));
     if (data.progress && data.progress.subject) {
-      app.appendChild(button("Continue " + titleOf(data.progress.subject), "q-next", resume));
+      var continueTitle = titleOf(data.progress.subject);
+      app.appendChild(button(tone("map.continue", "Resume " + continueTitle, { title: continueTitle }), "q-next", resume));
     }
     var grid = document.createElement("div");
     grid.className = "map-grid";
@@ -71,9 +79,9 @@
       grid.appendChild(card);
     });
     app.appendChild(grid);
-    app.appendChild(button("Walk the whole map", "q-next", startAll));
+    app.appendChild(button(tone("map.walk", "Assess every subject"), "q-next", startAll));
     if (Object.keys(data.results).length) {
-      app.appendChild(button("See my levels", "quest-side", function () {
+      app.appendChild(button(tone("map.levels", "Review my levels"), "quest-side", function () {
         seedNow().then(showResults);
       }));
     }
@@ -169,7 +177,9 @@
     var next = document.createElement("button");
     next.type = "button";
     next.className = "q-next";
-    next.textContent = data.progress.run.done ? "See this level" : "On we go";
+    next.textContent = data.progress.run.done
+      ? tone("map.see", "Record this level")
+      : tone("map.next", "Continue");
     next.addEventListener("click", function () {
       busy = false;
       if (data.progress.run.done) finishSubject();
@@ -211,7 +221,7 @@
   function showResults(seeded) {
     app.innerHTML = "";
     app.setAttribute("data-screen", "results");
-    app.appendChild(hostLine("The map is marked, " + kidName + "! Here are your levels."));
+    app.appendChild(hostLine(tone("map.results", "Placement is recorded, " + kidName + ". These are your levels.", { name: kidName })));
     var list = document.createElement("div");
     list.className = "result-list";
     window.QuestionBank.subjects.forEach(function (subject) {
@@ -243,17 +253,21 @@
     again.className = "map-grid";
     window.QuestionBank.subjects.forEach(function (subject) {
       if (!data.results[subject.id]) return;
-      again.appendChild(button("Retake " + subject.title, "quest-side", function () {
+      again.appendChild(button(tone("map.retake", "Reassess " + subject.title, { title: subject.title }), "quest-side", function () {
         delete data.results[subject.id];
         window.LevelStore.save(data);
         startSubject(subject.id);
       }));
     });
     app.appendChild(again);
-    app.appendChild(button("Back to the map", "q-next", showMap));
+    app.appendChild(button(tone("map.back", "Return to the map"), "q-next", showMap));
   }
 
   showMap();
+  window.addEventListener("jw-style-change", function () {
+    var screen = app.getAttribute("data-screen");
+    if (screen === "map") showMap();
+  });
   if (window.KidsStars && KidsStars.syncLevels) {
     KidsStars.syncLevels().then(function (res) {
       if (!res || res.source !== "server") return;

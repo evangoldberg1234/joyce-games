@@ -115,8 +115,15 @@
     }
     var note = parent.querySelector("[data-note]");
     if (!note) return;
-    if (correct) note.textContent = "Yes! " + question.explain;
-    else note.textContent = "Almost! " + question.explain;
+    var why = question.explain || "";
+    if (!window.JoyceStyle || typeof window.JoyceStyle.t !== "function") {
+      note.textContent = (correct ? "Yes! " : "Almost! ") + why;
+      return;
+    }
+    var lead = correct
+      ? window.JoyceStyle.t("ask.yes", "Yes! ")
+      : window.JoyceStyle.t("ask.no", "Almost! ");
+    note.textContent = lead + why;
   }
 
   window.Ask = { render: render, lock: lock, voiceFor: voiceFor };

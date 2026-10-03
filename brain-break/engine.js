@@ -53,9 +53,28 @@
     return Math.min(3, Math.floor((gameLevel - 1) / 2));
   }
 
-  function effectiveLevel(storedLevel, subject, gameLevel) {
+  /* styleBoost is optional. Omit it, or pass 0, and the result matches
+     the original stored level plus the game nudge. A negative boost
+     is ignored, so a style switch cannot pull a question below that. */
+  function effectiveLevel(storedLevel, subject, gameLevel, styleBoost) {
     var max = MAX[subject] || 1;
-    return clampLevel((Number(storedLevel) || 1) + gameNudge(gameLevel), max);
+    var base = clampLevel((Number(storedLevel) || 1) + gameNudge(gameLevel), max);
+    var extra = Math.round(Number(styleBoost) || 0);
+    if (extra <= 0) return base;
+    return clampLevel(base + extra, max);
+  }
+
+  /* Level 6 is two-digit ± a one-digit number with no regrouping.
+     A fresh Joyce profile is math level 4; Advanced's +2 therefore
+     lands on 6, which still looks like 47 + 1. Advanced math is
+     presented at least at level 9: two-digit ± two-digit with a carry
+     or a regroup. Omit the boost, or pass 0 or 1, and this matches
+     effectiveLevel exactly. It never lowers a higher adaptive level. */
+  function presentLevel(storedLevel, subject, gameLevel, styleBoost) {
+    var level = effectiveLevel(storedLevel, subject, gameLevel, styleBoost);
+    var extra = Math.round(Number(styleBoost) || 0);
+    if (subject === "math" && extra >= 2 && level < 9) level = Math.min(9, MAX.math);
+    return level;
   }
 
   var TEST_SUBJECTS = {
@@ -764,6 +783,7 @@
     clampLevel: clampLevel,
     gameNudge: gameNudge,
     effectiveLevel: effectiveLevel,
+    presentLevel: presentLevel,
     mapTestLevel: mapTestLevel,
     seedPlan: seedPlan,
     applySeed: applySeed
