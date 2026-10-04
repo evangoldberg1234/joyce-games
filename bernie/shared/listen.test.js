@@ -1,7 +1,5 @@
-/* A 4-year-old mashes the loader: wrong taps, taps during the pause, and taps
-   that land before the question has been heard. "Listen first" may play once
-   for the tap that earned the pause, and the speech engine must not say it
-   again by itself when the pause ends. */
+/* The question stays quiet until Hear it is tapped. A wrong picture says
+   Try again once and greys that button. Other taps keep working. */
 var assert = require("assert");
 
 var now = 10000;
@@ -209,14 +207,12 @@ global.BernieBuild.start({
   speak: global.BernieSpeak
 });
 
-function listens() {
-  return spoken.filter(function (text) { return text === "Listen first"; }).length;
+function times(text) {
+  return spoken.filter(function (line) { return line === text; }).length;
 }
 
 function choices() {
-  return document.body.querySelectorAll(".choice").filter(function (button) {
-    return !button.classList.contains("start-go");
-  });
+  return document.body.querySelectorAll(".choice");
 }
 
 function tap(kind) {
@@ -234,54 +230,61 @@ function mashDisabled() {
   choices().forEach(function (button) { button.poke(); });
 }
 
-document.querySelector(".start-go").click();
-assert.strictEqual(listens(), 0);
+assert.strictEqual(document.querySelector(".start-go"), null);
+var hear = document.querySelector(".speaker");
+assert.strictEqual(hear.textContent, "Hear it");
+assert.strictEqual(hear.hidden, false);
+assert.strictEqual(spoken.length, 0, "the question does not play by itself");
+assert.ok(last.say === "How many rocks?" || last.say.indexOf("Find the ") === 0, last.say);
+assert.ok(last.say.indexOf("letter") === -1);
+assert.strictEqual(choices().length, 3);
+if (last.kind === "picture") {
+  assert.ok(document.querySelector(".big-emoji"));
+  assert.ok(choices().every(function (button) { return button.classList.contains("pic"); }));
+}
 
-/* Too fast: one pause, and mashing while it runs must not say it again. */
-now += 80;
-tap("wrong");
-assert.strictEqual(listens(), 1, "a fast tap says Listen first once");
-var during = listens();
-now += 200;
-mashDisabled();
-mashDisabled();
-assert.strictEqual(listens(), during, "taps during the pause are not new guesses");
-var beforeReread = spoken.length;
-flush(now + guess.COOLDOWN_MS);
-assert.strictEqual(listens(), during, "the pause must not say Listen first again by itself");
-assert.ok(spoken.length > beforeReread, "the question is read again after the pause");
-var reread = spoken[spoken.length - 1];
-assert.strictEqual(reread, last.say, "the re-read is the question, once");
-assert.strictEqual(spoken.filter(function (text) { return text === last.say; }).length, 2);
+hear.click();
+assert.deepStrictEqual(spoken, [last.say]);
+hear.click();
+assert.strictEqual(times(last.say), 2, "Hear it plays the question again");
 
-/* He taps the right picture the instant the buttons return. The pause was enough. */
-now += 40;
-tap("right");
-assert.strictEqual(listens(), during, "after the pause an answer is accepted");
-assert.ok(spoken.indexOf("Yes!") !== -1);
-assert.ok(draws >= 2, "a correct answer after the pause moves the game on");
-
-/* On the next question, two wrong taps may pause once. It still ends. */
-now += 1200;
-flush(now);
+var firstSay = last.say;
+now += 30;
 tap("wrong");
 assert.strictEqual(spoken[spoken.length - 1], "Try again");
-assert.strictEqual(listens(), during);
-now += 40;
-tap("wrong");
-assert.strictEqual(listens(), during + 1);
-now += 100;
-mashDisabled();
-assert.strictEqual(listens(), during + 1);
-flush(now + guess.COOLDOWN_MS);
-assert.strictEqual(listens(), during + 1, "second pause does not replay Listen first");
-now += 40;
-tap("right");
-assert.strictEqual(listens(), during + 1);
+assert.strictEqual(times("Try again"), 1);
+assert.strictEqual(times("Listen first"), 0);
+var spent = choices().filter(function (button) { return button.classList.contains("spent"); });
+assert.strictEqual(spent.length, 1);
+assert.strictEqual(spent[0].disabled, true);
+assert.ok(choices().some(function (button) { return !button.disabled; }));
+assert.strictEqual(document.querySelector(".choices.dim"), null);
 
-/* Sitting still after a pause never starts another one. */
-var parked = listens();
+now += 20;
+tap("wrong");
+assert.strictEqual(times("Try again"), 2);
+assert.strictEqual(times("Listen first"), 0);
+assert.ok(choices().some(function (button) { return !button.disabled && button.dataset.id === last.answer; }));
+
+var drawsBefore = draws;
+tap("right");
+assert.strictEqual(draws, drawsBefore, "a miss earns no part");
+assert.strictEqual(times("Yes!"), 0);
+assert.notStrictEqual(last.say, firstSay);
+assert.strictEqual(times(last.say), 0, "the next question is not read aloud");
 flush(now + 20000);
-assert.strictEqual(listens(), parked);
+assert.strictEqual(times(last.say), 0, "waiting does not start the question");
+
+hear = document.querySelector(".speaker");
+var quiet = spoken.length;
+hear.click();
+assert.strictEqual(spoken[spoken.length - 1], last.say);
+assert.strictEqual(spoken.length, quiet + 1);
+
+tap("right");
+assert.strictEqual(draws, drawsBefore + 1, "a first try earns the part");
+assert.strictEqual(times("Yes!"), 1);
+assert.strictEqual(times("Listen first"), 0);
+assert.ok(draws >= drawsBefore);
 
 console.log("Bernie listen-loop checks passed.");

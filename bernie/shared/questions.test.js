@@ -1,5 +1,5 @@
-/* Bernie's question generator: the answer is always a choice,
-   word prompts use the word's first letter, and rock counts stay in 1-10. */
+/* Bernie's question generator: picture prompts name the thing to find,
+   rock counts stay in 1-10, and the right choice is not stuck in one slot. */
 var assert = require("assert");
 var questions = require("./questions.js");
 
@@ -27,12 +27,19 @@ function check(item) {
     seen[id] = true;
   });
   assert.ok(seen[item.answer], item.kind + " answer " + item.answer + " not in choices");
-  if (item.kind === "word") {
-    assert.strictEqual(item.answer, item.word.charAt(0).toUpperCase());
+  if (item.kind === "picture") {
+    assert.strictEqual(item.answer, item.word);
+    assert.strictEqual(item.say, "Find the " + item.word + "!");
+    assert.ok(item.say.indexOf("letter") === -1, item.say);
     assert.ok(BANNED.indexOf(item.word.toLowerCase()) === -1, item.word);
     assert.ok(!TRICKY.test(item.word.toLowerCase()), item.word);
-    assert.ok(item.say.indexOf(item.word) !== -1);
     assert.ok(item.emoji);
+    var hit = item.choices.filter(function (choice) { return choice.id === item.answer; })[0];
+    assert.strictEqual(hit.label, item.emoji);
+    item.choices.forEach(function (choice) {
+      assert.notStrictEqual(choice.label, choice.id);
+      assert.ok(!/^[A-Z]$/.test(choice.id), choice.id);
+    });
   }
   if (item.kind === "count") {
     assert.ok(item.rocks >= 1 && item.rocks <= 10, "rocks " + item.rocks);
@@ -65,7 +72,7 @@ var prevKey = "";
 for (i = 0; i < 240; i++) {
   var item = questions.makeQuestion(rng);
   check(item);
-  var key = item.kind + ":" + (item.kind === "word" ? item.word : item.rocks);
+  var key = item.kind + ":" + (item.kind === "picture" ? item.word : item.rocks);
   assert.notStrictEqual(key, prevKey, "question repeated back to back");
   prevKey = key;
   var at = item.choices.findIndex(function (choice) { return choice.id === item.answer; });
@@ -76,13 +83,13 @@ slots.forEach(function (count, index) {
   assert.ok(count > 0, "correct answer never landed in position " + index);
 });
 
-["word", "count"].forEach(function (kind) {
+["picture", "count"].forEach(function (kind) {
   var n;
   for (n = 0; n < 40; n++) {
     var next = questions.makeQuestion(rng, kind);
     assert.strictEqual(next.kind, kind);
     check(next);
-    var nextKey = next.kind + ":" + (next.kind === "word" ? next.word : next.rocks);
+    var nextKey = next.kind + ":" + (next.kind === "picture" ? next.word : next.rocks);
     assert.notStrictEqual(nextKey, prevKey, "question repeated back to back");
     prevKey = nextKey;
   }
