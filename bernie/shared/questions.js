@@ -106,8 +106,25 @@
     return pool;
   }
 
+  var lastKey = "";
+
+  function questionKey(item) {
+    return item.kind + ":" + (item.kind === "word" ? item.word : item.rocks);
+  }
+
   function makeQuestion(rng, kind) {
     var random = rng || Math.random;
+    var item;
+    var tries = 0;
+    do {
+      item = buildQuestion(random, kind);
+      tries += 1;
+    } while (questionKey(item) === lastKey && tries < 12);
+    lastKey = questionKey(item);
+    return item;
+  }
+
+  function buildQuestion(random, kind) {
     var which = kind || (random() < 0.5 ? "word" : "count");
 
     if (which === "count") {

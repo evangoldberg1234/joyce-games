@@ -144,12 +144,16 @@
       }
     }
 
+    var cooldownTimer = 0;
+
     function startCooldown() {
+      if (cooldownTimer) return;
       choices.classList.add("dim");
       var buttons = choices.querySelectorAll(".choice");
       var i;
       for (i = 0; i < buttons.length; i++) buttons[i].disabled = true;
-      window.setTimeout(function () {
+      cooldownTimer = window.setTimeout(function () {
+        cooldownTimer = 0;
         if (!started) return;
         root.BernieGuess.endCooldown(guess, Date.now());
         enableChoices();

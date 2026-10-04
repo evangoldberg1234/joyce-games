@@ -43,6 +43,16 @@
     return best;
   }
 
+  var speakSerial = 0;
+  var live = [];
+
+  function hush(utterance) {
+    if (!utterance) return;
+    utterance.onend = null;
+    utterance.onerror = null;
+    utterance.silenced = true;
+  }
+
   function utter(synth, text, voice, ondone) {
     var said = new root.SpeechSynthesisUtterance(text);
     said.lang = voice && voice.lang ? voice.lang : "en-US";
@@ -59,25 +69,38 @@
       said.onerror = function () { finish(false); };
     }
     synth.speak(said);
+    return said;
   }
 
   function run(synth, list, onend) {
+    var serial = ++speakSerial;
     var voices = synth.getVoices ? synth.getVoices() : [];
     var voice = pickVoice(voices || []);
     var texts = [];
     var i;
+    for (i = 0; i < live.length; i++) hush(live[i]);
+    live = [];
     for (i = 0; i < list.length; i++) {
       if (list[i]) texts.push(list[i]);
     }
-    synth.cancel();
-    if (synth.paused && synth.resume) synth.resume();
+    /* Unstick a paused engine, then drop the old queue. Resuming after
+       cancel makes Chrome and iOS say the cancelled line again. */
+    try {
+      if (synth.paused && synth.resume) synth.resume();
+    } catch (err) { /* a stuck engine should not block the next line */ }
+    try { synth.cancel(); } catch (err2) { /* already quiet */ }
+    if (serial !== speakSerial) return;
     if (!texts.length) {
       if (onend) onend(false);
       return;
     }
-    texts.forEach(function (text, index) {
-      utter(synth, text, voice, index === texts.length - 1 ? onend : null);
-    });
+    function done(ok) {
+      if (serial !== speakSerial) return;
+      if (onend) onend(ok);
+    }
+    for (i = 0; i < texts.length; i++) {
+      live.push(utter(synth, texts[i], voice, i === texts.length - 1 ? done : null));
+    }
   }
 
   function lines(list, onend) {

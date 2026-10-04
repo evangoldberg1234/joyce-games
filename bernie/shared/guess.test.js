@@ -53,16 +53,27 @@ assert.strictEqual(during.earned, false);
 var spoken = guess.createState(0);
 guess.noteSpeechStarted(spoken);
 assert.strictEqual(guess.answer(spoken, true, 500).cooldown, true);
+assert.strictEqual(guess.answer(spoken, false, 800).ignore, true);
 guess.endCooldown(spoken, 4000);
 guess.noteSpeechStarted(spoken);
-guess.noteSpoken(spoken, 5000);
-var stillListening = guess.answer(spoken, true, 5500);
-assert.strictEqual(stillListening.cooldown, true);
-assert.strictEqual(stillListening.earned, false);
-guess.endCooldown(spoken, 5500);
-guess.noteSpoken(spoken, 5600);
-var ready = guess.answer(spoken, true, 6700);
-assert.strictEqual(ready.earned, true);
-assert.strictEqual(ready.cooldown, false);
+guess.noteSpoken(spoken, 4200);
+/* The pause already happened, so the re-read must not arm another one. */
+var accepted = guess.answer(spoken, true, 4300);
+assert.strictEqual(accepted.cooldown, false);
+assert.strictEqual(accepted.earned, true);
+assert.strictEqual(accepted.say, "Yes!");
+
+var repeated = guess.createState(0);
+guess.noteSpeechUnavailable(repeated);
+guess.answer(repeated, false, 2000);
+assert.strictEqual(guess.answer(repeated, false, 3000).say, "Listen first");
+assert.strictEqual(guess.answer(repeated, false, 3200).ignore, true);
+guess.endCooldown(repeated, 7000);
+guess.noteSpeechStarted(repeated);
+var calmed = guess.answer(repeated, false, 7100);
+assert.strictEqual(calmed.cooldown, false);
+assert.strictEqual(calmed.say, "Try again");
+assert.strictEqual(calmed.greyChoice, true);
+assert.strictEqual(guess.answer(repeated, true, 8000).earned, false);
 
 console.log("Bernie guess checks passed.");
