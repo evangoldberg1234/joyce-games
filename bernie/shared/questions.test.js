@@ -60,14 +60,31 @@ BANNED.forEach(function (word) {
 
 var rng = mulberry32(4);
 var i;
-for (i = 0; i < 240; i++) check(questions.makeQuestion(rng));
+var slots = [0, 0, 0];
+var prevKey = "";
+for (i = 0; i < 240; i++) {
+  var item = questions.makeQuestion(rng);
+  check(item);
+  var key = item.kind + ":" + (item.kind === "word" ? item.word : item.rocks);
+  assert.notStrictEqual(key, prevKey, "question repeated back to back");
+  prevKey = key;
+  var at = item.choices.findIndex(function (choice) { return choice.id === item.answer; });
+  assert.ok(at >= 0 && at < item.choices.length);
+  slots[at] += 1;
+}
+slots.forEach(function (count, index) {
+  assert.ok(count > 0, "correct answer never landed in position " + index);
+});
 
 ["word", "count"].forEach(function (kind) {
   var n;
   for (n = 0; n < 40; n++) {
-    var item = questions.makeQuestion(rng, kind);
-    assert.strictEqual(item.kind, kind);
-    check(item);
+    var next = questions.makeQuestion(rng, kind);
+    assert.strictEqual(next.kind, kind);
+    check(next);
+    var nextKey = next.kind + ":" + (next.kind === "word" ? next.word : next.rocks);
+    assert.notStrictEqual(nextKey, prevKey, "question repeated back to back");
+    prevKey = nextKey;
   }
 });
 

@@ -19,7 +19,8 @@
       speaking: false,
       speechKnown: false,
       missed: false,
-      cooling: false
+      cooling: false,
+      released: false
     };
   }
 
@@ -31,33 +32,39 @@
   function noteSpeechStarted(state) {
     state.round.speaking = true;
     state.round.speechKnown = true;
-    state.round.spokenAt = null;
+    if (!state.round.released) state.round.spokenAt = null;
   }
 
   function noteSpoken(state, now) {
     state.round.speaking = false;
     state.round.speechKnown = true;
-    state.round.spokenAt = now;
+    if (!state.round.released) state.round.spokenAt = now;
   }
 
   function noteSpeechUnavailable(state) {
     state.round.speaking = false;
+    if (state.round.released) return;
     state.round.speechKnown = false;
     state.round.spokenAt = null;
   }
 
   function tooSoon(round, now) {
+    if (round.released) return false;
     if (round.speaking) return true;
     if (round.speechKnown && round.spokenAt != null) return now < round.spokenAt + LISTEN_MS;
     return now < round.appearedAt + LISTEN_MS;
   }
 
+  /* The pause already cost him the rush. The re-read must not start another one,
+     and the wrong streak starts over so the next guess is a normal guess. */
   function endCooldown(state, now) {
+    state.wrongStreak = 0;
     state.round.cooling = false;
+    state.round.released = true;
     state.round.appearedAt = now;
-    state.round.spokenAt = null;
     state.round.speaking = false;
-    state.round.speechKnown = false;
+    state.round.speechKnown = true;
+    state.round.spokenAt = now - LISTEN_MS;
   }
 
   /* correct is whether this tap is the right answer. */
