@@ -1,5 +1,5 @@
 /* Question bank and generator for Bernie's build-a-vehicle games.
-   No DOM. Words a 4-year-old knows, plus counting. Never an isolated letter. */
+   No DOM. A picture to find, or rocks to count. Never an isolated letter. */
 (function (root) {
   var WORDS = [
     { word: "moose", emoji: "🫎" },
@@ -36,31 +36,6 @@
 
   var BANNED = ["knife", "giraffe", "gnome", "phone", "cereal", "ship", "chair"];
 
-  /* Letters that look like each other. Distractors stay out of this set. */
-  var LOOK = {
-    B: "DPR",
-    D: "BPR",
-    P: "BDR",
-    R: "BP",
-    M: "NW",
-    N: "MW",
-    W: "MN",
-    O: "QCG",
-    Q: "OCG",
-    C: "OGQ",
-    G: "COQ",
-    E: "F",
-    F: "E",
-    I: "LT",
-    L: "IT",
-    T: "IL",
-    U: "V",
-    V: "U",
-    H: "N",
-    K: "X",
-    X: "K"
-  };
-
   function shuffle(rng, list) {
     var arr = list.slice();
     var i;
@@ -85,31 +60,22 @@
     return shuffle(rng, chosen);
   }
 
-  function buttons(list) {
+  function numberButtons(list) {
     return list.map(function (item) {
       return { id: String(item), label: String(item) };
     });
   }
 
-  function initial(word) {
-    return word.charAt(0).toUpperCase();
-  }
-
-  function letterPool(answer) {
-    var avoid = answer + (LOOK[answer] || "");
-    var letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    var pool = [];
-    var i;
-    for (i = 0; i < letters.length; i++) {
-      if (avoid.indexOf(letters.charAt(i)) === -1) pool.push(letters.charAt(i));
-    }
-    return pool;
+  function pictureButtons(list) {
+    return list.map(function (item) {
+      return { id: item.word, label: item.emoji };
+    });
   }
 
   var lastKey = "";
 
   function questionKey(item) {
-    return item.kind + ":" + (item.kind === "word" ? item.word : item.rocks);
+    return item.kind + ":" + (item.kind === "picture" ? item.word : item.rocks);
   }
 
   function makeQuestion(rng, kind) {
@@ -136,21 +102,21 @@
         word: "",
         emoji: "",
         rocks: rocks,
-        choices: buttons(pickSome(random, nums, String(rocks), 3)),
+        choices: numberButtons(pickSome(random, nums, String(rocks), 3)),
         answer: String(rocks)
       };
     }
 
     var item = WORDS[Math.floor(random() * WORDS.length)];
-    var answer = initial(item.word);
+    var others = WORDS.filter(function (word) { return word.word !== item.word; });
     return {
-      kind: "word",
-      say: "What letter does " + item.word + " start with?",
+      kind: "picture",
+      say: "Find the " + item.word + "!",
       word: item.word,
       emoji: item.emoji,
       rocks: 0,
-      choices: buttons(pickSome(random, letterPool(answer), answer, 3)),
-      answer: answer
+      choices: pictureButtons(pickSome(random, others, item, 3)),
+      answer: item.word
     };
   }
 

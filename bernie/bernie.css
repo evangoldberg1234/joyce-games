@@ -318,8 +318,13 @@ body.bernie {
 }
 
 .speaker {
-  min-height: 80px;
-  font-size: 40px;
+  min-height: 88px;
+  font-size: 32px;
+}
+
+.choice.pic {
+  font-size: 64px;
+  line-height: 1;
 }
 
 .choices {
