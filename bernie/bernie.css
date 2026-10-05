@@ -1214,6 +1214,14 @@ body.is-driving .scene {
   z-index: 2;
 }
 
+/* The scoop hangs forward of the side photo, so leave room on the left. */
+.loader-page .art .board {
+  width: 86%;
+  margin-left: auto;
+  margin-right: 2%;
+  overflow: visible;
+}
+
 .loader-page .pile {
   width: clamp(156px, 36vw, 250px);
   height: auto;
