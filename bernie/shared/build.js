@@ -158,6 +158,12 @@
         img.alt = "";
         img.draggable = false;
         btn.appendChild(img);
+        if (choice.id === "front-wheel" || choice.id === "rear-wheel") {
+          var tag = el("span", "wheel-tag");
+          tag.setAttribute("aria-hidden", "true");
+          tag.textContent = choice.id === "front-wheel" ? "F" : "R";
+          btn.appendChild(tag);
+        }
         btn.addEventListener("click", function () {
           choose(choice.id, token);
         });
@@ -171,9 +177,27 @@
       wrap.dataset.placed = String(placed.length);
     }
 
+    function paintWheelCue() {
+      var old = hud.querySelector(".wheel-cue");
+      if (old) old.remove();
+      if (!round || (round.id !== "front-wheel" && round.id !== "rear-wheel")) return;
+      var cue = el("div", "wheel-cue");
+      cue.setAttribute("aria-hidden", "true");
+      var img = el("img");
+      img.src = vehicle.outline || "img/outline.webp";
+      img.alt = "";
+      img.draggable = false;
+      var dot = el("span", "wheel-cue-dot " + (round.id === "front-wheel" ? "front" : "rear"));
+      cue.appendChild(img);
+      cue.appendChild(dot);
+      if (word.nextSibling) hud.insertBefore(cue, word.nextSibling);
+      else hud.appendChild(cue);
+    }
+
     function paintPrompt() {
       if (!round) return;
       word.textContent = title(round.name);
+      paintWheelCue();
       remember();
     }
 
@@ -324,15 +348,18 @@
       flyTo(fromBtn, part, function () {
         if (placed.indexOf(part.id) === -1) placed.push(part.id);
         prevKey = part.key;
+        paintVehicle();
+        paintPips();
+        remember();
         if (willFinish) {
-          paintVehicle();
-          paintPips();
-          remember();
           finishBuild();
           return;
         }
-        busy = false;
-        loadRound();
+        /* Let the landed piece and the filled pip sit before the next question. */
+        root.setTimeout(function () {
+          busy = false;
+          loadRound();
+        }, 1400);
       });
     }
 

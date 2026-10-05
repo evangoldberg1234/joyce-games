@@ -558,6 +558,49 @@ body.bernie {
   pointer-events: none;
 }
 
+.wheel-tag {
+  position: absolute;
+  left: 8px;
+  top: 4px;
+  z-index: 2;
+  color: #1b2a4a;
+  font-size: clamp(48px, 8vw, 72px);
+  font-weight: 900;
+  line-height: 1;
+  -webkit-text-stroke: 5px #fff;
+  paint-order: stroke fill;
+  pointer-events: none;
+}
+
+.wheel-cue {
+  position: relative;
+  width: 112px;
+  aspect-ratio: 1000 / 618;
+  flex: 0 0 auto;
+}
+
+.wheel-cue img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+}
+
+.wheel-cue-dot {
+  position: absolute;
+  width: 28%;
+  height: 44%;
+  border-radius: 50%;
+  border: 3px solid #d00000;
+  background: rgba(255, 210, 40, 0.8);
+  box-shadow: 0 0 0 2px #fff;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.wheel-cue-dot.front { left: 30%; top: 79%; }
+.wheel-cue-dot.rear { left: 80%; top: 71%; }
+
 .choice:disabled,
 .choice.spent {
   opacity: 0.42;
@@ -733,6 +776,10 @@ body.bernie {
   position: static;
   transform: none;
   font-size: clamp(88px, 18vw, 112px);
+  color: #1b2a4a;
+  -webkit-text-stroke: 7px #fff;
+  paint-order: stroke fill;
+  text-shadow: none;
   opacity: 0;
 }
 
@@ -777,11 +824,13 @@ body.bernie {
   z-index: 5;
   margin: 0;
   transform: translateX(-50%);
-  color: #fff;
+  color: #1b2a4a;
   font-size: clamp(36px, 6vw, 64px);
   font-weight: 800;
   line-height: 1;
-  text-shadow: 0 4px 0 #8a5a12;
+  -webkit-text-stroke: 6px #fff;
+  paint-order: stroke fill;
+  text-shadow: none;
   pointer-events: none;
   white-space: nowrap;
 }
@@ -872,7 +921,7 @@ body.bernie {
   width: 14px;
   height: 22px;
   border-radius: 3px;
-  animation: confetti-fall 1.7s ease-in forwards;
+  animation: confetti-fall 3.6s ease-in forwards;
   pointer-events: none;
 }
 
@@ -884,7 +933,8 @@ body.bernie {
 
 @keyframes confetti-fall {
   0% { transform: translateY(0) rotate(0deg); opacity: 1; }
-  100% { transform: translateY(72vh) rotate(240deg); opacity: 0.85; }
+  78% { opacity: 1; }
+  100% { transform: translateY(70vh) rotate(300deg); opacity: 0; }
 }
 
 .rig.honk .photo-rig {

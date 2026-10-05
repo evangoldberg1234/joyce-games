@@ -342,14 +342,16 @@
       dirt.setAttribute("y", String(100 - piled * 18));
     }
 
-    /* Put the bucket (the left edge of the photo) on a point in the scene. */
-    function alignBucket(targetX) {
+    /* Put a point along the loader on a point in the scene.
+       frac is how far across the rig that point sits (the bucket is the right
+       tip once the photo is flipped). */
+    function alignBucket(targetX, frac) {
       var sceneBox = scene.getBoundingClientRect ? scene.getBoundingClientRect() : null;
       var rigBox = rig.getBoundingClientRect ? rig.getBoundingClientRect() : null;
       if (!sceneBox || !rigBox || !sceneBox.width || !rigBox.width) {
-        return facing < 0 ? 0.62 : 0.34;
+        return facing < 0 ? 0.5 : 0.34;
       }
-      var frac = facing < 0 ? 0.94 : 0.12;
+      if (frac == null) frac = facing < 0 ? 0.84 : 0.12;
       var wantLeft = targetX - rigBox.width * frac;
       var minLeft = sceneBox.left + 2;
       var maxLeft = sceneBox.right - rigBox.width - 2;
@@ -466,11 +468,11 @@
       rig.classList.add("honk");
       var colors = ["#ffe14a", "#ff5a5a", "#3ecf8e", "#4aa3ff", "#fff"];
       var i;
-      for (i = 0; i < 18; i++) {
-        var bit = el("span", i % 2 ? "confetti star" : "confetti");
-        bit.style.left = (28 + ((i * 13) % 52)) + "%";
+      for (i = 0; i < 46; i++) {
+        var bit = el("span", i % 3 === 0 ? "confetti star" : "confetti");
+        bit.style.left = (6 + ((i * 17) % 88)) + "%";
         bit.style.top = "76px";
-        bit.style.animationDelay = ((i % 6) * 0.08) + "s";
+        bit.style.animationDelay = ((i % 10) * 0.05) + "s";
         bit.style.background = colors[i % colors.length];
         scene.appendChild(bit);
       }
@@ -499,8 +501,10 @@
           shown = "";
           paint();
           var truckBox = truck.getBoundingClientRect ? truck.getBoundingClientRect() : { left: 0, width: 0 };
-          var bed = truckBox.left + truckBox.width * 0.16;
-          moveTo(alignBucket(bed), 800, function () {
+          /* 0.84 is the tire nearest the truck. Stop it short of the truck's
+             back wheel and let the bucket, which sticks out past that tire, hang over the bed. */
+          var tireTarget = truckBox.left + truckBox.width * 0.2 - 36;
+          moveTo(alignBucket(tireTarget, 0.84), 800, function () {
             if (!alive) return;
             pose = "dump";
             shown = "";
@@ -509,23 +513,26 @@
             filled = n;
             pile.className = "pile scoop-" + n;
             truck.className = "truck fill-" + n;
-            showCount(n);
             window.setTimeout(function () {
               if (!alive) return;
-              if (last) {
-                scoop.hidden = true;
-                again.hidden = false;
-                celebrate();
-                scooping = false;
-                return;
-              }
-              facing = 1;
-              pose = "rest";
-              shown = "";
-              moveTo(parked, 700, function () {
-                scooping = false;
-              });
-            }, last ? 2600 : 1100);
+              showCount(n);
+              window.setTimeout(function () {
+                if (!alive) return;
+                if (last) {
+                  scoop.hidden = true;
+                  again.hidden = false;
+                  celebrate();
+                  scooping = false;
+                  return;
+                }
+                facing = 1;
+                pose = "rest";
+                shown = "";
+                moveTo(parked, 700, function () {
+                  scooping = false;
+                });
+              }, last ? 1800 : 1000);
+            }, 1300);
           });
         }, 560);
       });
