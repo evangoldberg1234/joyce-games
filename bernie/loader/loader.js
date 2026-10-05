@@ -81,9 +81,9 @@
     finale: "img/finale.webp",
     draw: draw,
     drive: {
-      start: { x: 0.48, y: 0.8 },
-      pile: { x: 0.14, y: 0.8 },
-      dump: { x: 0.86, y: 0.8 },
+      start: { x: 0.5, y: window.innerWidth > window.innerHeight ? 0.92 : 0.78 },
+      pile: { x: 0.16, y: window.innerWidth > window.innerHeight ? 0.92 : 0.78 },
+      dump: { x: 0.88, y: window.innerWidth > window.innerHeight ? 0.92 : 0.78 },
       near: 120
     }
   };

@@ -62,46 +62,43 @@
     svg("circle", { cx: "210", cy: "72", r: "64", fill: "url(#sc-sun)" }, board);
     svg("circle", { cx: "210", cy: "72", r: "22", fill: "#fff3c4" }, board);
     svg("path", {
-      d: "M0 168 C 160 132, 300 150, 460 128 C 600 112, 700 146, 800 124 L 800 196 L 0 196 Z",
+      d: "M0 228 C 150 196, 300 214, 460 186 C 600 164, 700 198, 800 176 L 800 250 L 0 250 Z",
       fill: "url(#sc-hill)"
     }, board);
-    svg("rect", { y: "176", width: "800", height: "304", fill: "url(#sc-ground)" }, board);
-    svg("rect", { y: "176", width: "800", height: "304", fill: "url(#sc-grit)" }, board);
+    svg("rect", { y: "210", width: "800", height: "270", fill: "url(#sc-ground)" }, board);
+    svg("rect", { y: "210", width: "800", height: "270", fill: "url(#sc-grit)" }, board);
     svg("path", {
-      d: "M0 196 C 140 184, 280 206, 460 190 C 620 176, 720 202, 800 188",
-      fill: "none", stroke: "rgba(255,236,196,0.35)", "stroke-width": "10"
+      d: "M0 228 C 160 214, 320 240, 500 220 C 660 204, 740 232, 800 216",
+      fill: "none", stroke: "rgba(255,236,196,0.35)", "stroke-width": "8"
     }, board);
-    svg("ellipse", { cx: "180", cy: "340", rx: "46", ry: "8", fill: "rgba(70,40,16,0.18)" }, board);
-    svg("ellipse", { cx: "560", cy: "400", rx: "70", ry: "10", fill: "rgba(70,40,16,0.16)" }, board);
     return board;
   }
 
-  function stonePath(parent, d, light, mid, dark, group) {
-    var g = svg("g", { class: group }, parent);
-    svg("path", { d: d, fill: mid, stroke: dark, "stroke-width": "3", "stroke-linejoin": "round" }, g);
-    return g;
+  function blob(parent, cx, cy, rx, ry, fill, stroke, group, turn) {
+    var g = svg("g", {
+      class: group,
+      transform: "rotate(" + turn + " " + cx + " " + cy + ")"
+    }, parent);
+    svg("ellipse", {
+      cx: cx, cy: cy, rx: rx, ry: ry,
+      fill: fill, stroke: stroke, "stroke-width": "4"
+    }, g);
   }
 
   function pileArt() {
     var board = svg("svg", {
-      viewBox: "0 0 240 210",
+      viewBox: "0 0 240 200",
       "aria-hidden": "true"
     });
-    svg("ellipse", { cx: "120", cy: "196", rx: "108", ry: "12", fill: "rgba(40,32,24,0.3)" }, board);
-    var rocks = [
-      ["M86 92 L112 28 L158 40 L176 96 L132 108 Z", "#e4e0d8", "#8e8980", "#3e3b36", "rock-3"],
-      ["M138 100 L168 46 L214 70 L198 118 L150 122 Z", "#d7b48a", "#7a5a34", "#3d2a16", "rock-3"],
-      ["M16 168 L40 108 L102 96 L128 150 L78 176 Z", "#d5d8dc", "#6e757c", "#34383c", "rock-2"],
-      ["M62 176 L96 104 L162 98 L188 158 L112 184 Z", "#c4bfb4", "#6a6560", "#2e2c29", "rock-2"],
-      ["M148 180 L176 112 L230 128 L226 182 L168 192 Z", "#e0c09a", "#8a6240", "#4a3018", "rock-2"],
-      ["M4 200 L24 150 L86 146 L104 202 Z", "#eeeae3", "#9a958c", "#4a4742", "rock-1"],
-      ["M78 204 L102 148 L168 144 L186 204 Z", "#d0cac0", "#746e66", "#35322e", "rock-1"],
-      ["M156 202 L178 152 L236 148 L240 204 Z", "#c99868", "#6e4c2c", "#3a2814", "rock-1"]
-    ];
-    var i;
-    for (i = 0; i < rocks.length; i++) {
-      stonePath(board, rocks[i][0], rocks[i][1], rocks[i][2], rocks[i][3], rocks[i][4]);
-    }
+    svg("ellipse", { cx: "120", cy: "188", rx: "108", ry: "14", fill: "rgba(40,32,24,0.28)" }, board);
+    blob(board, 108, 58, 40, 30, "#d7d2c8", "#4a4742", "rock-3", -8);
+    blob(board, 156, 70, 36, 28, "#c4a06a", "#4a3018", "rock-3", 12);
+    blob(board, 58, 108, 46, 34, "#cfd3d6", "#34383c", "rock-2", -14);
+    blob(board, 124, 100, 50, 36, "#b7b1a6", "#3e3b36", "rock-2", 6);
+    blob(board, 186, 116, 42, 32, "#d2b48a", "#5a3a1c", "rock-2", 16);
+    blob(board, 46, 156, 48, 34, "#eeeae3", "#4a4742", "rock-1", -6);
+    blob(board, 118, 162, 54, 36, "#c8c2b8", "#35322e", "rock-1", 4);
+    blob(board, 186, 158, 50, 34, "#b98a58", "#3a2814", "rock-1", -10);
     return board;
   }
 

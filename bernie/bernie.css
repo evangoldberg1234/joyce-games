@@ -732,7 +732,7 @@ body.bernie {
 .numeral {
   position: static;
   transform: none;
-  font-size: clamp(88px, 18vw, 168px);
+  font-size: clamp(88px, 18vw, 112px);
   opacity: 0;
 }
 
@@ -814,9 +814,9 @@ body.bernie {
 .tally-board .count-stone,
 .tally-board .count-stone.stone-1,
 .tally-board .count-stone.stone-2 {
-  width: 46px;
-  height: 36px;
-  flex: 0 0 46px;
+  width: 54px;
+  height: 42px;
+  flex: 0 0 54px;
 }
 
 .falling-rock {
@@ -1147,22 +1147,23 @@ body.is-driving .scene {
 }
 
 .loader-page .rig {
-  width: clamp(240px, 62vw, 460px);
+  width: clamp(240px, 62vw, 340px);
+  z-index: 2;
 }
 
 .loader-page .pile {
-  width: clamp(128px, 30vw, 220px);
+  width: clamp(156px, 36vw, 250px);
   height: auto;
-  aspect-ratio: 240 / 210;
-  z-index: 1;
+  aspect-ratio: 240 / 200;
+  z-index: 4;
 }
 
 .loader-page .truck {
-  width: clamp(150px, 34vw, 280px);
+  width: clamp(168px, 38vw, 300px);
   height: auto;
   aspect-ratio: 3 / 1.7;
   transform: translate(-50%, -100%) scaleX(-1);
-  z-index: 1;
+  z-index: 3;
 }
 
 .loader-page .done-line {
@@ -1171,10 +1172,10 @@ body.is-driving .scene {
 }
 
 .loader-page .end-badge {
-  top: 28%;
-  left: 76%;
+  top: 112px;
+  left: 64%;
   z-index: 4;
-  font-size: clamp(96px, 22vw, 160px);
+  font-size: clamp(104px, 20vw, 150px);
 }
 
 @media (max-width: 700px) {
