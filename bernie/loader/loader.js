@@ -12,7 +12,7 @@
     { id: "engine", name: "Engine", src: "img/engine.webp", x: 154, y: 39, w: 840, h: 442, group: "body" },
     { id: "cab", name: "Cab", src: "img/cab.webp", x: 451, y: 5, w: 310, h: 251, group: "body" },
     { id: "arms", name: "Lift arms", src: "img/arms.webp", x: 72, y: 170, w: 474, h: 279, group: "arms" },
-    { id: "bucket", name: "Bucket", src: "img/bucket.webp", x: 0, y: 300, w: 311, h: 270, group: "bucket" }
+    { id: "bucket", name: "Bucket", src: "img/bucket.webp", x: 0, y: 345, w: 311, h: 230, group: "bucket" }
   ];
   /* Boom pin on the chassis. The bucket sits left and below it, so a positive
      turn lifts the arms and the bucket. */
