@@ -186,28 +186,30 @@
     return Math.sqrt(dx * dx + dy * dy) <= limit;
   }
 
+  var SCOOPS = 3;
+
+  function scoopSay(n, total) {
+    var line = n + "!";
+    if (n >= total) return [line, "You did it!"];
+    return [line];
+  }
+
   function start(opts) {
     var vehicle = opts.vehicle;
     var speak = opts.speak;
     var spots = vehicle.drive || {};
-    var origin = spots.start || { x: 0.4, y: 0.62 };
-    var pileAt = spots.pile || { x: 0.8, y: 0.58 };
-    var dumpAt = spots.dump || { x: 0.18, y: 0.62 };
-    function reach() {
-      var rigBox = rig.getBoundingClientRect();
-      return Math.max(96, rigBox.width * 0.95);
-    }
-    var pos = { x: origin.x, y: origin.y };
-    var target = null;
-    var dragging = false;
-    var pointerId = null;
-    var grab = null;
+    var origin = spots.start || { x: 0.5, y: 0.86 };
+    var pileAt = spots.pile || { x: 0.82, y: 0.86 };
+    var dumpAt = spots.dump || { x: 0.18, y: 0.86 };
+    var pos = { x: 0.12, y: origin.y };
+    var goal = { x: Math.min(0.78, pileAt.x + 0.32), y: origin.y };
     var facing = 1;
-    var carrying = false;
     var pose = "rest";
     var loads = 0;
     var raf = 0;
     var shown = "";
+    var alive = true;
+    var scooping = false;
     var all = vehicle.parts.map(function (part) { return part.id; });
 
     var scene = el("div", "scene");
@@ -242,23 +244,31 @@
     scene.appendChild(rig);
     scene.appendChild(cheer);
 
+    var numeral = el("p", "numeral");
+    numeral.textContent = "";
+    numeral.setAttribute("aria-hidden", "true");
+    var banner = el("p", "done-line");
+    banner.textContent = "You did it!";
+    banner.hidden = true;
+    scene.appendChild(numeral);
+    scene.appendChild(banner);
+
+    var play = el("div", "drive-play");
     var bar = el("div", "drive-bar");
     var scoop = el("button", "scoop");
     scoop.type = "button";
     scoop.textContent = "Scoop";
-    var tally = el("p", "tally");
-    tally.textContent = "0";
-    tally.setAttribute("aria-label", "0 loads");
-    var dump = el("button", "dump");
-    dump.type = "button";
-    dump.textContent = "Dump";
+    var again = el("button", "again");
+    again.type = "button";
+    again.textContent = "Build again";
+    again.hidden = true;
     bar.appendChild(scoop);
-    bar.appendChild(tally);
-    bar.appendChild(dump);
+    bar.appendChild(again);
+    play.appendChild(scene);
+    play.appendChild(bar);
 
     opts.mount.innerHTML = "";
-    opts.mount.appendChild(scene);
-    opts.mount.appendChild(bar);
+    opts.mount.appendChild(play);
 
     pile.style.left = (pileAt.x * 100) + "%";
     pile.style.top = (pileAt.y * 100) + "%";
@@ -283,8 +293,14 @@
       event.preventDefault();
     }
 
+    function unlockPage() {
+      document.documentElement.classList.remove("no-scroll");
+      document.body.classList.remove("is-driving");
+    }
+
     function paint() {
-      var key = pose + (carrying ? "-full" : "-empty");
+      if (!alive) return;
+      var key = pose + "-" + loads;
       if (shown !== key) {
         vehicle.draw(art, {
           parts: all,
@@ -298,165 +314,101 @@
       rig.style.left = (pos.x * 100) + "%";
       rig.style.top = (pos.y * 100) + "%";
       rig.style.transform = "translate(-50%, -100%) scaleX(" + facing + ")";
-      var piled = Math.min(loads, 6);
-      dirt.setAttribute("height", String(piled * 8));
-      dirt.setAttribute("y", String(100 - piled * 8));
+      var piled = Math.min(loads, SCOOPS);
+      dirt.setAttribute("height", String(piled * 14));
+      dirt.setAttribute("y", String(100 - piled * 14));
     }
 
-    function point(event) {
-      var box = scene.getBoundingClientRect();
-      return {
-        x: (event.clientX - box.left) / box.width,
-        y: (event.clientY - box.top) / box.height
-      };
-    }
-
-    function face(dx) {
-      if (dx > 0.004) facing = 1;
-      else if (dx < -0.004) facing = -1;
-    }
-
-    function step() {
-      raf = 0;
-      if (!target) return;
-      var dx = target.x - pos.x;
-      var dy = target.y - pos.y;
-      var dist = Math.sqrt(dx * dx + dy * dy);
-      if (dist < 0.012) {
-        pos.x = target.x;
-        pos.y = target.y;
-        target = null;
+    function driveIn() {
+      if (!alive) return;
+      var dx = goal.x - pos.x;
+      if (Math.abs(dx) < 0.01) {
+        pos.x = goal.x;
+        raf = 0;
         paint();
         return;
       }
-      var hop = Math.min(0.025, dist);
-      pos.x += (dx / dist) * hop;
-      pos.y += (dy / dist) * hop;
-      face(dx);
+      pos.x += dx * 0.08;
       paint();
-      raf = window.requestAnimationFrame(step);
+      raf = window.requestAnimationFrame(driveIn);
     }
 
-    function go(next) {
-      target = {
-        x: clamp(next.x, 0.1, 0.9),
-        y: origin.y
-      };
-      if (!raf) raf = window.requestAnimationFrame(step);
-    }
-
-    scene.addEventListener("pointerdown", function (event) {
-      if (event.target.closest && event.target.closest("button")) return;
-      try {
-        if (scene.setPointerCapture) scene.setPointerCapture(event.pointerId);
-      } catch (err) {
-        /* A lost pointer should still move the loader. */
-      }
-      pointerId = event.pointerId;
-      var here = point(event);
-      if (event.target.closest && event.target.closest(".rig")) {
-        dragging = true;
-        target = null;
-        grab = { x: here.x, y: here.y, ox: pos.x, oy: pos.y };
-      } else {
-        dragging = false;
-        grab = null;
-        go(here);
-      }
-    });
-
-    scene.addEventListener("pointermove", function (event) {
-      if (pointerId !== event.pointerId) return;
-      var here = point(event);
-      if (dragging && grab) {
-        face(here.x - grab.x);
-        pos.x = clamp(grab.ox + (here.x - grab.x), 0.1, 0.9);
-        pos.y = origin.y;
-        paint();
-        return;
-      }
-      go(here);
-    });
-
-    function endPointer(event) {
-      if (pointerId !== event.pointerId) return;
-      dragging = false;
-      grab = null;
-      pointerId = null;
-    }
-
-    scene.addEventListener("pointerup", endPointer);
-    scene.addEventListener("pointercancel", endPointer);
-    scene.addEventListener("contextmenu", function (event) {
-      event.preventDefault();
-    });
-    scene.addEventListener("wheel", function (event) {
-      event.preventDefault();
-    }, { passive: false });
-    scene.addEventListener("touchmove", preventScroll, { passive: false });
-    document.addEventListener("touchmove", preventScroll, { passive: false });
-
-    function say(text) {
+    function sayLines(list) {
+      if (!speak) return;
       speak.arm();
-      speak.speak(text);
+      if (speak.lines) speak.lines(list);
+      else speak.speak(list[0]);
+    }
+
+    function dropRocks() {
+      var i;
+      for (i = 0; i < 3; i++) {
+        var rock = el("span", "falling-rock");
+        rock.style.left = (dumpAt.x * 100 + 6) + "%";
+        rock.style.top = "42%";
+        rock.style.animationDelay = (i * 0.12) + "s";
+        scene.appendChild(rock);
+        (function (node) {
+          window.setTimeout(function () {
+            if (node.parentNode) node.remove();
+          }, 900);
+        })(rock);
+      }
     }
 
     function pop(text) {
+      numeral.textContent = text;
+      numeral.classList.remove("show");
+      if (typeof numeral.offsetWidth === "number") void numeral.offsetWidth;
+      numeral.classList.add("show");
       cheer.textContent = text;
-      cheer.classList.remove("show");
-      void cheer.offsetWidth;
-      cheer.classList.add("show");
     }
 
     scoop.addEventListener("click", function () {
-      if (!near(center(rig), center(pile), reach())) {
-        say("Drive to the dirt.");
-        pile.classList.remove("wiggle");
-        void pile.offsetWidth;
-        pile.classList.add("wiggle");
-        return;
-      }
-      if (carrying) {
-        say("Dump it.");
-        return;
-      }
-      carrying = true;
-      pose = "carry";
-      paint();
-      say("Scoop!");
-    });
-
-    dump.addEventListener("click", function () {
-      if (!carrying) {
-        say("Scoop some dirt.");
-        return;
-      }
-      if (!near(center(rig), center(truck), reach())) {
-        say("Drive to the truck.");
-        truck.classList.remove("wiggle");
-        void truck.offsetWidth;
-        truck.classList.add("wiggle");
-        return;
-      }
-      carrying = false;
-      pose = "dump";
+      if (!alive || scooping || loads >= SCOOPS) return;
+      scooping = true;
       loads += 1;
-      tally.textContent = String(loads);
-      tally.setAttribute("aria-label", loads + " loads");
+      var lines = scoopSay(loads, SCOOPS);
+      pose = "carry";
+      shown = "";
       paint();
-      pop("Yay " + loads);
-      say("Yay! " + loads);
+      dropRocks();
+      pop(String(loads));
+      sayLines(lines);
+      var done = loads >= SCOOPS;
       window.setTimeout(function () {
-        if (pose === "dump") {
-          pose = "rest";
-          paint();
+        if (!alive) return;
+        pose = "rest";
+        shown = "";
+        paint();
+        if (done) {
+          scoop.hidden = true;
+          again.hidden = false;
+          banner.hidden = false;
+          numeral.classList.add("parked");
+          cheer.textContent = "You did it!";
         }
+        scooping = false;
       }, 700);
     });
 
+    again.addEventListener("click", function () {
+      if (again.hidden) return;
+      alive = false;
+      if (raf && window.cancelAnimationFrame) window.cancelAnimationFrame(raf);
+      unlockPage();
+      if (opts.onAgain) opts.onAgain();
+    });
+
+    document.addEventListener("touchmove", preventScroll, { passive: false });
     lockPage();
     paint();
+    window.setTimeout(function () {
+      if (alive) pos.x = goal.x;
+      paint();
+    }, 1400);
+    raf = window.requestAnimationFrame(driveIn);
   }
 
-  root.BernieDrive = { start: start };
+  root.BernieDrive = { start: start, scoopSay: scoopSay, scoops: SCOOPS };
 })(typeof window !== "undefined" ? window : global);

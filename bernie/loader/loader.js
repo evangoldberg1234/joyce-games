@@ -5,7 +5,7 @@
   var PARTS = [
     { id: "counterweight", name: "Counterweight", src: "img/counterweight.webp", x: 762, y: 172, w: 232, h: 380, group: "body" },
     { id: "rear-wheel", name: "Rear wheel", src: "img/rear-wheel.webp", x: 693, y: 337, w: 214, h: 215, inset: "img/inset-rear-wheel.webp", group: "body" },
-    { id: "engine", name: "Engine", src: "img/engine.webp", x: 658, y: 39, w: 199, h: 413, inset: "img/inset-engine.webp", group: "body" },
+    { id: "engine", name: "Engine", src: "img/engine.webp", x: 658, y: 39, w: 199, h: 413, inset: "img/inset-engine.webp", group: "body", with: ["counterweight", "engine", "frame"] },
     { id: "cab", name: "Cab", src: "img/cab.webp", x: 451, y: 5, w: 269, h: 149, inset: "img/inset-cab.webp", group: "body" },
     { id: "frame", name: "Front frame", src: "img/frame.webp", x: 218, y: 120, w: 582, h: 492, group: "body" },
     { id: "front-wheel", name: "Front wheel", src: "img/front-wheel.webp", x: 178, y: 370, w: 245, h: 243, inset: "img/inset-front-wheel.webp", group: "body" },
@@ -67,25 +67,31 @@
     draw: draw,
     drive: {
       start: { x: 0.5, y: 0.86 },
-      pile: { x: 0.82, y: 0.86 },
-      dump: { x: 0.18, y: 0.86 },
+      pile: { x: 0.3, y: 0.86 },
+      dump: { x: 0.5, y: 0.86 },
       near: 120
     }
   };
 
   var stage = document.getElementById("stage");
   if (!stage || !window.BernieBuild) return;
-  BernieBuild.start({
-    mount: stage,
-    vehicle: vehicle,
-    questions: window.BernieQuestions,
-    speak: window.BernieSpeak,
-    onDone: function () {
-      BernieDrive.start({
-        mount: stage,
-        vehicle: vehicle,
-        speak: window.BernieSpeak
-      });
-    }
-  });
+
+  function play() {
+    BernieBuild.start({
+      mount: stage,
+      vehicle: vehicle,
+      questions: window.BernieQuestions,
+      speak: window.BernieSpeak,
+      onDone: function () {
+        BernieDrive.start({
+          mount: stage,
+          vehicle: vehicle,
+          speak: window.BernieSpeak,
+          onAgain: play
+        });
+      }
+    });
+  }
+
+  play();
 })();

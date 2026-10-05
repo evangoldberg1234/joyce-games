@@ -1,7 +1,5 @@
-/* Build-a-vehicle. A correct answer offers the next piece.
-   Photo pieces (src, x, y on vehicle.board) are dragged onto the ghost.
-   They snap within 60px, on a tap, or on their own after a few seconds.
-   A vehicle without images still snaps straight onto draw(). */
+/* Build-a-vehicle by finding the next real part.
+   Tap a photo of the part. It flies to its spot. Dragging is not required. */
 (function (root) {
   function el(tag, className) {
     var node = document.createElement(tag);
@@ -13,388 +11,381 @@
     return window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   }
 
+  function title(name) {
+    if (!name) return "";
+    return name.charAt(0).toUpperCase() + name.slice(1);
+  }
+
+  var SHAPES = ["bucket", "arm", "cab", "body", "wheel-front", "wheel-rear"];
+
+  function addShapes(host) {
+    var i;
+    for (i = 0; i < SHAPES.length; i++) host.appendChild(el("span", "ol ol-" + SHAPES[i]));
+  }
+
   function start(opts) {
     var vehicle = opts.vehicle;
     var questions = opts.questions;
     var speak = opts.speak;
     var photo = !!(vehicle.board && vehicle.parts[0] && vehicle.parts[0].src);
     var placed = [];
-    var question = null;
-    var lock = false;
-    var snapNow = null;
-    var started = true;
+    var round = null;
+    var prevKey = "";
+    var roundToken = 1;
+    var busy = false;
+    var started = false;
     var guess = root.BernieGuess.createState();
+    var audio = null;
 
     var wrap = el("div", "build");
-    var art = el("div", "art");
-    var note = el("p", "try");
-    note.setAttribute("role", "status");
-    var visual = el("div", "q-visual");
+    var hud = el("div", "hud");
+    var word = el("p", "prompt-word");
+    var map = el("div", "prompt-map");
     var speaker = el("button", "speaker");
     speaker.type = "button";
-    speaker.setAttribute("aria-label", "Hear it");
     speaker.textContent = "Hear it";
-    var choices = el("div", "choices");
+    speaker.setAttribute("aria-label", "Hear it");
+    var pips = el("div", "pips");
+    pips.setAttribute("aria-hidden", "true");
+    hud.appendChild(word);
+    hud.appendChild(map);
+    hud.appendChild(speaker);
+    hud.appendChild(pips);
 
-    wrap.appendChild(art);
+    var note = el("p", "try");
+    note.setAttribute("role", "status");
+    var art = el("div", "art");
+    var choices = el("div", "choices");
+    var startBtn = el("button", "start-go");
+    startBtn.type = "button";
+    startBtn.textContent = "Start";
+
+    wrap.appendChild(hud);
     wrap.appendChild(note);
-    wrap.appendChild(visual);
-    wrap.appendChild(speaker);
+    wrap.appendChild(art);
     wrap.appendChild(choices);
+    wrap.appendChild(startBtn);
     opts.mount.innerHTML = "";
     opts.mount.appendChild(wrap);
 
-    function bit(part, className) {
-      var img = el("img", className);
+    var board = null;
+
+    function findPart(id) {
+      var i;
+      for (i = 0; i < vehicle.parts.length; i++) {
+        if (vehicle.parts[i].id === id) return vehicle.parts[i];
+      }
+      return null;
+    }
+
+    function piecesFor(id) {
+      var part = findPart(id);
+      if (part && part.with && part.with.length) return part.with;
+      return [id];
+    }
+
+    function placeBox(node, part) {
+      if (!part || !vehicle.board || part.x === undefined) return;
+      var box = vehicle.board;
+      node.style.left = (part.x / box.w * 100) + "%";
+      node.style.top = (part.y / box.h * 100) + "%";
+      node.style.width = (part.w / box.w * 100) + "%";
+      node.style.height = (part.h / box.h * 100) + "%";
+    }
+
+    function bit(part) {
+      var img = el("img", "bit");
       img.src = part.src;
       img.alt = "";
       img.draggable = false;
-      var board = vehicle.board;
-      img.style.left = (part.x / board.w * 100) + "%";
-      img.style.top = (part.y / board.h * 100) + "%";
-      img.style.width = (part.w / board.w * 100) + "%";
+      var box = vehicle.board;
+      img.style.left = (part.x / box.w * 100) + "%";
+      img.style.top = (part.y / box.h * 100) + "%";
+      img.style.width = (part.w / box.w * 100) + "%";
       return img;
     }
 
+    function paintOutline(host, part) {
+      host.innerHTML = "";
+      var skin = el("div", "outline");
+      addShapes(skin);
+      if (part) {
+        var slot = el("span", "ol-slot");
+        placeBox(slot, part);
+        skin.appendChild(slot);
+      }
+      host.appendChild(skin);
+    }
+
     function paintBoard() {
-      var board = art.querySelector(".board");
       if (!board) {
         board = el("div", "board");
         board.style.aspectRatio = vehicle.board.w + " / " + vehicle.board.h;
-        art.insertBefore(board, art.firstChild);
+        art.appendChild(board);
       }
       board.innerHTML = "";
-      var ghost = el("img", "ghost");
-      ghost.src = vehicle.ghost;
-      ghost.alt = "";
-      ghost.draggable = false;
-      board.appendChild(ghost);
+      var skin = el("div", "outline");
+      addShapes(skin);
+      board.appendChild(skin);
+      if (started && round) {
+        var slot = el("div", "slot");
+        placeBox(slot, findPart(round.id));
+        board.appendChild(slot);
+      }
+      var have = {};
       var i;
+      for (i = 0; i < placed.length; i++) {
+        var ids = piecesFor(placed[i]);
+        var j;
+        for (j = 0; j < ids.length; j++) have[ids[j]] = true;
+      }
       for (i = 0; i < vehicle.parts.length; i++) {
-        var part = vehicle.parts[i];
-        if (placed.indexOf(part.id) !== -1) board.appendChild(bit(part, "bit"));
+        if (have[vehicle.parts[i].id]) board.appendChild(bit(vehicle.parts[i]));
       }
     }
 
     function paintVehicle() {
-      if (photo) paintBoard();
-      else {
+      if (photo) {
+        paintBoard();
+        return;
+      }
+      if (vehicle.draw && placed.length) {
         vehicle.draw(art, {
           parts: placed.slice(),
-          bucketUp: false,
-          carrying: false,
-          just: placed.length ? placed[placed.length - 1] : ""
+          just: placed[placed.length - 1]
         });
       }
-    }
-
-    function showQuestions(on) {
-      visual.hidden = !on;
-      speaker.hidden = !on;
-      choices.hidden = !on;
-    }
-
-    function speakQuestion() {
-      if (!question) return;
-      speak.arm();
-      speak.speak(question.say);
-    }
-
-    function speakFeedback(text) {
-      if (!text) return;
-      speak.arm();
-      speak.speak(text);
-    }
-
-    function greyChoice(id) {
-      var buttons = choices.querySelectorAll(".choice");
+      var old = art.querySelectorAll(".bit");
       var i;
-      for (i = 0; i < buttons.length; i++) {
-        if (buttons[i].dataset.id === id) {
-          buttons[i].disabled = true;
-          buttons[i].classList.add("spent");
-        }
+      for (i = old.length - 1; i >= 0; i--) old[i].remove();
+      for (i = 0; i < placed.length; i++) {
+        var mark = el("span", "bit");
+        mark.dataset.id = placed[i];
+        art.appendChild(mark);
       }
     }
 
-    function paintQuestion() {
-      visual.innerHTML = "";
-      visual.className = "q-visual";
-      if (question.kind === "count") {
-        visual.setAttribute("aria-label", question.rocks + " rocks");
-        var i;
-        for (i = 0; i < question.rocks; i++) {
-          visual.appendChild(el("span", "rock"));
-        }
-      } else if (question.kind === "picture") {
-        visual.className = "q-visual picture";
-        visual.setAttribute("aria-label", "Find the " + question.word);
-        var emoji = el("p", "big-emoji");
-        emoji.textContent = question.emoji;
-        visual.appendChild(emoji);
-      } else {
-        visual.removeAttribute("aria-label");
+    function paintPips() {
+      pips.innerHTML = "";
+      var order = questions.order;
+      var i;
+      for (i = 0; i < order.length; i++) {
+        var on = placed.indexOf(order[i].id) !== -1;
+        pips.appendChild(el("span", "pip pip-" + order[i].id + (on ? " got" : "")));
       }
+    }
 
-      choices.classList.remove("dim");
+    function paintChoices() {
       choices.innerHTML = "";
-      question.choices.forEach(function (choice) {
-        var btn = el("button", question.kind === "picture" ? "choice pic" : "choice");
+      if (!round) return;
+      var token = roundToken;
+      round.choices.forEach(function (choice) {
+        var btn = el("button", "choice");
         btn.type = "button";
         btn.dataset.id = choice.id;
-        btn.textContent = choice.label;
+        btn.setAttribute("aria-label", choice.name);
+        var img = el("img", "choice-photo");
+        img.src = "img/inset-" + choice.id + ".webp";
+        img.alt = "";
+        img.draggable = false;
+        btn.appendChild(img);
         btn.addEventListener("click", function () {
-          choose(choice.id);
+          choose(choice.id, token);
         });
         choices.appendChild(btn);
       });
     }
 
-    function showInset(part) {
-      var box = art.querySelector(".inset");
-      if (!part || !part.inset) {
-        if (box) box.remove();
-        return;
-      }
-      if (!box) {
-        box = el("div", "inset");
-        art.appendChild(box);
-      }
-      box.innerHTML = "";
-      var img = el("img");
-      img.src = part.inset;
-      img.alt = "";
-      var cap = el("p");
-      cap.textContent = part.name;
-      box.appendChild(img);
-      box.appendChild(cap);
+    function remember() {
+      wrap.dataset.answer = round ? round.answer : "";
+      wrap.dataset.say = round ? round.say : "";
+      wrap.dataset.placed = String(placed.length);
     }
 
-    function showFinale() {
-      snapNow = null;
-      wrap.classList.remove("placing");
-      showInset(null);
-      showQuestions(false);
-      art.innerHTML = "";
-      var card = el("img", "finale");
-      card.src = vehicle.finale;
-      card.alt = "The loader";
-      art.appendChild(card);
-      note.textContent = "You built it!";
-      choices.hidden = false;
-      choices.innerHTML = "";
-      var go = el("button", "choice drive-go");
-      go.type = "button";
-      go.textContent = "Drive";
-      go.addEventListener("click", function () {
-        speak.arm();
+    function paintPrompt() {
+      if (!round) return;
+      word.textContent = title(round.name);
+      paintOutline(map, findPart(round.id) || round);
+      remember();
+    }
+
+    function showPlay(on) {
+      word.hidden = !on;
+      map.hidden = !on;
+      speaker.hidden = !on;
+      choices.hidden = !on;
+      startBtn.hidden = on;
+    }
+
+    function say(text) {
+      if (!text || !speak) return;
+      speak.arm();
+      speak.speak(text);
+    }
+
+    function blip() {
+      var Ctx = root.AudioContext || root.webkitAudioContext;
+      if (!Ctx) return;
+      try {
+        if (!audio) audio = new Ctx();
+        if (audio.state === "suspended" && audio.resume) audio.resume();
+        var osc = audio.createOscillator();
+        var gain = audio.createGain();
+        osc.type = "sine";
+        osc.frequency.value = 880;
+        osc.connect(gain);
+        gain.connect(audio.destination);
+        var t = audio.currentTime;
+        gain.gain.setValueAtTime(0.0001, t);
+        gain.gain.exponentialRampToValueAtTime(0.15, t + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
+        osc.start(t);
+        osc.stop(t + 0.18);
+      } catch (err) { /* a missing audio device should not stop the build */ }
+    }
+
+    function buttonFor(id) {
+      var buttons = choices.querySelectorAll(".choice");
+      var i;
+      for (i = 0; i < buttons.length; i++) {
+        if (buttons[i].dataset.id === id) return buttons[i];
+      }
+      return null;
+    }
+
+    function grey(id) {
+      var btn = buttonFor(id);
+      if (!btn) return;
+      btn.disabled = true;
+      btn.classList.add("spent");
+    }
+
+    function wiggle(id) {
+      var btn = buttonFor(id);
+      if (!btn) return;
+      btn.classList.remove("wiggle");
+      if (typeof btn.offsetWidth === "number") void btn.offsetWidth;
+      btn.classList.add("wiggle");
+    }
+
+    function flyTo(fromBtn, done) {
+      var slot = board && board.querySelector(".slot");
+      var photoNode = fromBtn && fromBtn.querySelector(".choice-photo");
+      if (reduced() || !fromBtn || !fromBtn.getBoundingClientRect || !slot || !slot.getBoundingClientRect) {
+        done();
+        return;
+      }
+      var from = fromBtn.getBoundingClientRect();
+      var to = slot.getBoundingClientRect();
+      if (!from.width || !to.width) {
+        done();
+        return;
+      }
+      var flyer = el("img", "flyer");
+      flyer.src = photoNode ? photoNode.src : "";
+      flyer.alt = "";
+      flyer.style.left = from.left + "px";
+      flyer.style.top = from.top + "px";
+      flyer.style.width = from.width + "px";
+      flyer.style.height = from.height + "px";
+      document.body.appendChild(flyer);
+      var frame = root.requestAnimationFrame || function (fn) { return root.setTimeout(fn, 16); };
+      frame(function () {
+        flyer.style.left = to.left + "px";
+        flyer.style.top = to.top + "px";
+        flyer.style.width = Math.max(to.width, 24) + "px";
+        flyer.style.height = Math.max(to.height, 24) + "px";
+      });
+      root.setTimeout(function () {
+        flyer.remove();
+        done();
+      }, 620);
+    }
+
+    function loadRound() {
+      root.BernieGuess.nextQuestion(guess);
+      round = questions.makeRound(Math.random, placed.length, prevKey);
+      roundToken += 1;
+      note.textContent = "";
+      paintPrompt();
+      paintChoices();
+      paintVehicle();
+      paintPips();
+    }
+
+    function finishBuild() {
+      choices.hidden = true;
+      speaker.hidden = true;
+      map.hidden = true;
+      word.hidden = false;
+      word.textContent = "You built it!";
+      note.textContent = "";
+      if (board) {
+        var slot = board.querySelector(".slot");
+        if (slot) slot.remove();
+      }
+      paintPips();
+      remember();
+      root.setTimeout(function () {
+        busy = false;
         if (opts.onDone) opts.onDone();
-      });
-      choices.appendChild(go);
+      }, 2000);
     }
 
-    function afterPlace() {
-      showInset(null);
-      wrap.classList.remove("placing");
-      paintBoard();
-      if (placed.length >= vehicle.parts.length) {
-        window.setTimeout(showFinale, reduced() ? 40 : 900);
-        return;
-      }
-      question = questions.makeQuestion();
-      root.BernieGuess.nextQuestion(guess, Date.now());
-      showQuestions(true);
-      paintQuestion();
-      note.textContent = "";
-      lock = false;
-    }
-
-    function present(part) {
-      wrap.classList.add("placing");
-      showQuestions(false);
-      note.textContent = part.name;
-      speakFeedback("Yes!");
-      paintBoard();
-      var board = art.querySelector(".board");
-      board.appendChild(bit(part, "bit target"));
-      showInset(part);
-
-      var img = el("img", "float-piece");
-      img.src = part.src;
-      img.alt = part.name;
-      img.draggable = false;
-      art.appendChild(img);
-
-      var boardBox = board.getBoundingClientRect();
-      var scale = boardBox.width / vehicle.board.w;
-      var width = part.w * scale * 1.2;
-      if (width > boardBox.width * 0.78) width = boardBox.width * 0.78;
-      img.style.width = width + "px";
-      function park(x, y) {
-        var w = img.offsetWidth || width;
-        var h = img.offsetHeight || (width * part.h / part.w);
-        img.style.left = (x - w / 2) + "px";
-        img.style.top = (y - h / 2) + "px";
-      }
-      park(boardBox.left + boardBox.width / 2, boardBox.top + boardBox.height * 0.46);
-      if (!reduced()) {
-        img.style.transform = "scale(1.4)";
-        window.requestAnimationFrame(function () {
-          img.style.transition = "transform 0.45s ease";
-          img.style.transform = "scale(1)";
-        });
-      }
-
-      var timer = window.setTimeout(finish, 4500);
-      var dragging = false;
-      var moved = 0;
-      var pointerId = null;
-      var last = null;
-
-      function targetBox() {
-        var boardEl = art.querySelector(".board");
-        if (!boardEl) return null;
-        var box = boardEl.getBoundingClientRect();
-        if (!box.width || !box.height) return null;
-        return {
-          left: box.left + (part.x / vehicle.board.w) * box.width,
-          top: box.top + (part.y / vehicle.board.h) * box.height,
-          width: (part.w / vehicle.board.w) * box.width,
-          height: (part.h / vehicle.board.h) * box.height
-        };
-      }
-
-      function closeEnough() {
-        var spot = targetBox();
-        if (!spot) return false;
-        var here = img.getBoundingClientRect();
-        var dx = (here.left + here.width / 2) - (spot.left + spot.width / 2);
-        var dy = (here.top + here.height / 2) - (spot.top + spot.height / 2);
-        return Math.sqrt(dx * dx + dy * dy) <= 60;
-      }
-
-      function finish() {
-        if (img.dataset.done) return;
-        img.dataset.done = "1";
-        snapNow = null;
-        window.clearTimeout(timer);
-        var spot = targetBox();
-        if (spot && !reduced()) {
-          img.style.transition = "left 0.35s ease, top 0.35s ease, width 0.35s ease, transform 0.35s ease";
-        } else {
-          img.style.transition = "none";
+    function commit(part, fromBtn) {
+      busy = true;
+      var buttons = choices.querySelectorAll(".choice");
+      var i;
+      for (i = 0; i < buttons.length; i++) buttons[i].disabled = true;
+      say("Yes! The " + part.name + "!");
+      blip();
+      flyTo(fromBtn, function () {
+        if (placed.indexOf(part.id) === -1) placed.push(part.id);
+        prevKey = part.key;
+        if (placed.length >= questions.order.length) {
+          paintVehicle();
+          paintPips();
+          remember();
+          finishBuild();
+          return;
         }
-        img.style.transform = "scale(1)";
-        if (spot) {
-          img.style.left = spot.left + "px";
-          img.style.top = spot.top + "px";
-          img.style.width = spot.width + "px";
-        }
-        window.setTimeout(function () {
-          placed.push(part.id);
-          if (img.parentNode) img.remove();
-          afterPlace();
-        }, reduced() ? 20 : 380);
-      }
-
-      snapNow = finish;
-
-      img.addEventListener("pointerdown", function (event) {
-        if (img.dataset.done) return;
-        dragging = true;
-        moved = 0;
-        pointerId = event.pointerId;
-        last = { x: event.clientX, y: event.clientY };
-        img.style.transition = "none";
-        try {
-          if (img.setPointerCapture) img.setPointerCapture(event.pointerId);
-        } catch (err) { /* still follow the finger */ }
+        busy = false;
+        loadRound();
       });
-
-      img.addEventListener("pointermove", function (event) {
-        if (!dragging || event.pointerId !== pointerId) return;
-        moved += Math.abs(event.clientX - last.x) + Math.abs(event.clientY - last.y);
-        last = { x: event.clientX, y: event.clientY };
-        park(event.clientX, event.clientY - 28);
-      });
-
-      function endDrag(event) {
-        if (!dragging || event.pointerId !== pointerId) return;
-        dragging = false;
-        if (img.dataset.done) return;
-        if (moved < 14 || closeEnough()) finish();
-      }
-
-      img.addEventListener("pointerup", endDrag);
-      img.addEventListener("pointercancel", endDrag);
     }
 
-    art.addEventListener("pointerdown", function (event) {
-      if (!snapNow) return;
-      if (event.target.closest && event.target.closest(".float-piece")) return;
-      snapNow();
-    });
-
-    function missOn() {
-      question = questions.makeQuestion();
-      root.BernieGuess.nextQuestion(guess, Date.now());
-      showQuestions(true);
-      paintQuestion();
-      note.textContent = "";
-      lock = false;
-    }
-
-    function choose(id) {
-      if (!started || lock) return;
-      var result = root.BernieGuess.answer(guess, id === question.answer);
+    function choose(id, token) {
+      if (!started || busy || token !== roundToken || !round) return;
+      var result = root.BernieGuess.answer(guess, id === round.answer);
       if (result.ignore || result.revoke) return;
       if (result.greyChoice) {
-        greyChoice(id);
+        grey(id);
+        wiggle(id);
         note.textContent = result.say;
-        speakFeedback(result.say);
+        say(result.say);
         return;
       }
-      if (!result.earned) {
-        missOn();
-        return;
-      }
-
-      lock = true;
-      note.textContent = "";
-      choices.classList.remove("shake");
-      var part = vehicle.parts[placed.length];
-      if (photo) {
-        present(part);
-        return;
-      }
-
-      placed.push(part.id);
-      paintVehicle();
-      if (placed.length >= vehicle.parts.length) {
-        speakFeedback("Yes!");
-        window.setTimeout(function () {
-          if (opts.onDone) opts.onDone();
-        }, 900);
-        return;
-      }
-      question = questions.makeQuestion();
-      root.BernieGuess.nextQuestion(guess, Date.now());
-      speakFeedback("Yes!");
-      paintQuestion();
-      window.setTimeout(function () {
-        lock = false;
-      }, 400);
+      if (!result.earned) return;
+      commit(round, buttonFor(id));
     }
 
     speaker.addEventListener("click", function () {
-      speakQuestion();
+      if (!started || !round) return;
+      say(round.say);
     });
 
+    startBtn.addEventListener("click", function () {
+      if (started) return;
+      started = true;
+      showPlay(true);
+      paintVehicle();
+      say(round.say);
+    });
+
+    loadRound();
+    showPlay(false);
+    paintPips();
     paintVehicle();
-    question = questions.makeQuestion();
-    root.BernieGuess.nextQuestion(guess, Date.now());
-    showQuestions(true);
-    paintQuestion();
   }
 
   root.BernieBuild = { start: start };

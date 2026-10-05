@@ -1,23 +1,32 @@
-/* A wrong tap greys that one choice. The part is earned only on the first try.
-   Taps are never blocked, and a part he already earned stays earned. */
+/* A wrong tap greys that choice. The part is still earned when he
+   then taps the right one. A second tap on a finished round does nothing. */
 (function (root) {
   function createState() {
     return { round: openRound() };
   }
 
   function openRound() {
-    return { missed: false };
+    return { done: false };
   }
 
   function nextQuestion(state) {
     state.round = openRound();
   }
 
-  /* correct is whether this tap is the right answer. */
   function answer(state, correct) {
     var round = state.round;
+    if (round.done) {
+      return {
+        ignore: true,
+        earned: false,
+        cooldown: false,
+        greyChoice: false,
+        wrong: false,
+        say: "",
+        revoke: false
+      };
+    }
     if (!correct) {
-      round.missed = true;
       return {
         ignore: false,
         earned: false,
@@ -28,14 +37,14 @@
         revoke: false
       };
     }
-    var earned = !round.missed;
+    round.done = true;
     return {
       ignore: false,
-      earned: earned,
+      earned: true,
       cooldown: false,
       greyChoice: false,
       wrong: false,
-      say: earned ? "Yes!" : "",
+      say: "Yes!",
       revoke: false
     };
   }

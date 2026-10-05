@@ -1,8 +1,40 @@
-/* Each piece, drawn at its target, rebuilds the ghost. Run: node bernie/loader/assembly.test.js */
+/* Each piece, drawn at its target, rebuilds the ghost.
+   The build itself is six parts: a miss still awards the right tap,
+   a second tap does not, and the order ends at the drive. */
 var assert = require("assert");
 var fs = require("fs");
 var path = require("path");
 var spawn = require("child_process").spawnSync;
+var questions = require("../shared/questions.js");
+var guess = require("../shared/guess.js");
+
+var ORDER = ["rear-wheel", "front-wheel", "engine", "cab", "arms", "bucket"];
+assert.deepStrictEqual(questions.order.map(function (part) { return part.id; }), ORDER);
+
+var earned = [];
+var state = guess.createState();
+ORDER.forEach(function (id, index) {
+  if (index === 0 || index === 3) {
+    var miss = guess.answer(state, false);
+    assert.strictEqual(miss.earned, false);
+    assert.strictEqual(miss.say, "Try again");
+  }
+  var got = guess.answer(state, true);
+  assert.strictEqual(got.earned, true, id + " still awards after a miss");
+  var extra = guess.answer(state, true);
+  assert.strictEqual(extra.ignore, true, id + " is not awarded twice");
+  assert.strictEqual(extra.earned, false);
+  earned.push(id);
+  guess.nextQuestion(state);
+});
+assert.deepStrictEqual(earned, ORDER);
+assert.strictEqual(earned.length, 6);
+
+var img = path.join(__dirname, "img");
+ORDER.forEach(function (id) {
+  assert.ok(fs.existsSync(path.join(img, "inset-" + id + ".webp")), id);
+  assert.ok(fs.existsSync(path.join(img, id + ".webp")), id);
+});
 
 var root = path.join(__dirname, "..", "..");
 var script = [

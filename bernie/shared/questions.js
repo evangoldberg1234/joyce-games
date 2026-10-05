@@ -1,40 +1,14 @@
-/* Question bank and generator for Bernie's build-a-vehicle games.
-   No DOM. A picture to find, or rocks to count. Never an isolated letter. */
+/* The build is the game. Six loader parts, in the order they go on.
+   Each turn offers the next part plus two others. No animals, no counting. */
 (function (root) {
-  var WORDS = [
-    { word: "moose", emoji: "🫎" },
-    { word: "cat", emoji: "🐱" },
-    { word: "ball", emoji: "⚽" },
-    { word: "truck", emoji: "🚚" },
-    { word: "dog", emoji: "🐶" },
-    { word: "sun", emoji: "☀️" },
-    { word: "fish", emoji: "🐟" },
-    { word: "bus", emoji: "🚌" },
-    { word: "pig", emoji: "🐷" },
-    { word: "duck", emoji: "🦆" },
-    { word: "rabbit", emoji: "🐰" },
-    { word: "lion", emoji: "🦁" },
-    { word: "monkey", emoji: "🐵" },
-    { word: "apple", emoji: "🍎" },
-    { word: "egg", emoji: "🥚" },
-    { word: "hat", emoji: "🎩" },
-    { word: "car", emoji: "🚗" },
-    { word: "van", emoji: "🚐" },
-    { word: "zebra", emoji: "🦓" },
-    { word: "cow", emoji: "🐮" },
-    { word: "bear", emoji: "🐻" },
-    { word: "frog", emoji: "🐸" },
-    { word: "tiger", emoji: "🐯" },
-    { word: "owl", emoji: "🦉" },
-    { word: "kite", emoji: "🪁" },
-    { word: "leaf", emoji: "🍃" },
-    { word: "moon", emoji: "🌙" },
-    { word: "sock", emoji: "🧦" },
-    { word: "tree", emoji: "🌳" },
-    { word: "nest", emoji: "🪺" }
+  var ORDER = [
+    { id: "rear-wheel", name: "rear wheel" },
+    { id: "front-wheel", name: "front wheel" },
+    { id: "engine", name: "engine" },
+    { id: "cab", name: "cab" },
+    { id: "arms", name: "arms" },
+    { id: "bucket", name: "bucket" }
   ];
-
-  var BANNED = ["knife", "giraffe", "gnome", "phone", "cereal", "ship", "chair"];
 
   function shuffle(rng, list) {
     var arr = list.slice();
@@ -48,82 +22,58 @@
     return arr;
   }
 
-  function pickSome(rng, pool, answer, count) {
-    var chosen = [answer];
-    var start = Math.floor(rng() * pool.length);
-    var i = 0;
-    while (chosen.length < count && i < pool.length) {
-      var item = pool[(start + i) % pool.length];
-      if (chosen.indexOf(item) === -1) chosen.push(item);
-      i += 1;
-    }
-    return shuffle(rng, chosen);
+  function pair(rng, pool, salt) {
+    var shift = (Math.floor(rng() * pool.length) + salt) % pool.length;
+    var first = pool[shift];
+    var hop = 1 + Math.floor(rng() * (pool.length - 1));
+    var second = pool[(shift + hop) % pool.length];
+    if (second === first) second = pool[(shift + 1) % pool.length];
+    return [first, second];
   }
 
-  function numberButtons(list) {
-    return list.map(function (item) {
-      return { id: String(item), label: String(item) };
-    });
-  }
-
-  function pictureButtons(list) {
-    return list.map(function (item) {
-      return { id: item.word, label: item.emoji };
-    });
-  }
-
-  var lastKey = "";
-
-  function questionKey(item) {
-    return item.kind + ":" + (item.kind === "picture" ? item.word : item.rocks);
-  }
-
-  function makeQuestion(rng, kind) {
+  function makeRound(rng, index, previousKey) {
     var random = rng || Math.random;
-    var item;
+    var answer = ORDER[index];
+    var pool = ORDER.filter(function (part) { return part.id !== answer.id; });
     var tries = 0;
+    var round;
     do {
-      item = buildQuestion(random, kind);
+      var picked = pair(random, pool, tries);
+      var choices = shuffle(random, [answer, picked[0], picked[1]]);
+      var ids = [answer.id, picked[0].id, picked[1].id].slice().sort();
+      round = {
+        index: index,
+        id: answer.id,
+        name: answer.name,
+        say: "Find the " + answer.name + "!",
+        answer: answer.id,
+        choices: choices.map(function (part) {
+          return { id: part.id, name: part.name };
+        }),
+        key: ids.join("+")
+      };
       tries += 1;
-    } while (questionKey(item) === lastKey && tries < 12);
-    lastKey = questionKey(item);
-    return item;
+    } while (round.key === previousKey && tries < 8);
+    return round;
   }
 
-  function buildQuestion(random, kind) {
-    var which = kind || (random() < 0.5 ? "word" : "count");
-
-    if (which === "count") {
-      var rocks = 1 + Math.floor(random() * 10);
-      var nums = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"];
-      return {
-        kind: "count",
-        say: "How many rocks?",
-        word: "",
-        emoji: "",
-        rocks: rocks,
-        choices: numberButtons(pickSome(random, nums, String(rocks), 3)),
-        answer: String(rocks)
-      };
+  function play(rng) {
+    var random = rng || Math.random;
+    var rounds = [];
+    var prev = "";
+    var i;
+    for (i = 0; i < ORDER.length; i++) {
+      var round = makeRound(random, i, prev);
+      rounds.push(round);
+      prev = round.key;
     }
-
-    var item = WORDS[Math.floor(random() * WORDS.length)];
-    var others = WORDS.filter(function (word) { return word.word !== item.word; });
-    return {
-      kind: "picture",
-      say: "Find the " + item.word + "!",
-      word: item.word,
-      emoji: item.emoji,
-      rocks: 0,
-      choices: pictureButtons(pickSome(random, others, item, 3)),
-      answer: item.word
-    };
+    return rounds;
   }
 
   var api = {
-    makeQuestion: makeQuestion,
-    words: WORDS,
-    banned: BANNED
+    order: ORDER,
+    makeRound: makeRound,
+    play: play
   };
 
   if (typeof module === "object" && module.exports) module.exports = api;
