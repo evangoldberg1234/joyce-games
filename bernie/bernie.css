@@ -533,7 +533,8 @@ body.bernie {
 }
 
 .choice.miss .choice-photo {
-  opacity: 0.45;
+  opacity: 0.72;
+  filter: grayscale(1);
 }
 
 .mark-x {

@@ -40,6 +40,10 @@
     var roundToken = 1;
     var busy = false;
     var started = false;
+    var missedIds = {};
+    var gestureAt = 0;
+    var gestureX = null;
+    var gestureY = null;
     var guess = root.BernieGuess.createState();
 
     var wrap = el("div", "build");
@@ -164,7 +168,26 @@
           tag.textContent = choice.id === "front-wheel" ? "F" : "R";
           btn.appendChild(tag);
         }
-        btn.addEventListener("click", function () {
+        btn.addEventListener("click", function (event) {
+          /* A tap that disables this tile can fall through onto the neighbor.
+             Ignore that second hit when it is the same spot. A real tap on
+             the other tile has a different point, so it still counts. */
+          if (event && typeof event.clientX === "number") {
+            var at = Date.now();
+            var sameSpot = gestureX !== null && at - gestureAt < 450 &&
+              Math.abs(event.clientX - gestureX) < 28 &&
+              Math.abs(event.clientY - gestureY) < 28;
+            if (sameSpot) {
+              if (event.preventDefault) event.preventDefault();
+              if (event.stopPropagation) event.stopPropagation();
+              return;
+            }
+            gestureAt = at;
+            gestureX = event.clientX;
+            gestureY = event.clientY;
+          }
+          if (event && event.preventDefault) event.preventDefault();
+          if (event && event.stopPropagation) event.stopPropagation();
           choose(choice.id, token);
         });
         choices.appendChild(btn);
@@ -230,11 +253,17 @@
       return null;
     }
 
-    function grey(id) {
-      var btn = buttonFor(id);
-      if (!btn) return;
-      btn.disabled = true;
-      btn.classList.add("spent");
+    function releaseUntapped(keepId) {
+      var buttons = choices.querySelectorAll(".choice");
+      var i;
+      for (i = 0; i < buttons.length; i++) {
+        var other = buttons[i];
+        if (other.dataset.id === keepId || missedIds[other.dataset.id]) continue;
+        other.disabled = false;
+        other.classList.remove("spent", "miss", "wiggle");
+        var mark = other.querySelector(".mark-x");
+        if (mark) mark.remove();
+      }
     }
 
     function wiggle(id) {
@@ -247,7 +276,8 @@
 
     function markWrong(id) {
       var btn = buttonFor(id);
-      if (!btn) return;
+      if (!btn || btn.dataset.id !== id) return;
+      missedIds[id] = true;
       btn.disabled = true;
       btn.classList.add("spent", "miss");
       if (!btn.querySelector(".mark-x")) {
@@ -257,6 +287,7 @@
         btn.appendChild(mark);
       }
       wiggle(id);
+      releaseUntapped(id);
     }
 
     function landBox(part) {
@@ -314,6 +345,7 @@
         round = questions.makeRound(Math.random, placed.length, prevKey);
       }
       roundToken += 1;
+      missedIds = {};
       note.textContent = "";
       paintPrompt();
       paintChoices();
@@ -373,7 +405,6 @@
       var result = root.BernieGuess.answer(guess, id === round.answer);
       if (result.ignore || result.revoke) return;
       if (result.greyChoice) {
-        grey(id);
         markWrong(id);
         note.textContent = "";
         return;
