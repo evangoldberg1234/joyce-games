@@ -396,6 +396,11 @@
       return box;
     }
 
+    function cssVar(node, name, value) {
+      if (node.style.setProperty) node.style.setProperty(name, value);
+      else node.style[name] = value;
+    }
+
     /* Stones leave the bucket lip and land in the bed. Nothing is drawn above that path. */
     function dropRocks() {
       var sceneBox = boxOf(scene);
@@ -429,8 +434,8 @@
         }
         rock.style.left = leftPct + "%";
         rock.style.top = topPct + "%";
-        rock.style["--dx"] = dx + "px";
-        rock.style["--dy"] = dy + "px";
+        cssVar(rock, "--dx", dx + "px");
+        cssVar(rock, "--dy", dy + "px");
         rock.style.animationDelay = ((i % 4) * 0.03) + "s";
         scene.appendChild(rock);
         (function (node) {
@@ -498,14 +503,14 @@
       rig.classList.add("honk");
       var sceneBox = boxOf(scene);
       var fall = sceneBox ? Math.max(120, sceneBox.height - 48) : 520;
-      scene.style["--fall"] = fall + "px";
+      cssVar(scene, "--fall", fall + "px");
       var colors = ["#ffe14a", "#ff5a5a", "#3ecf8e", "#4aa3ff", "#fff"];
       var i;
       for (i = 0; i < 46; i++) {
         var bit = el("span", i % 3 === 0 ? "confetti star" : "confetti");
         bit.style.left = (1 + (i * 96 / 45)) + "%";
         bit.style.top = "48px";
-        bit.style["--fall"] = fall + "px";
+        cssVar(bit, "--fall", fall + "px");
         bit.style.animationDelay = ((i % 12) * 0.05) + "s";
         bit.style.background = colors[i % colors.length];
         scene.appendChild(bit);
