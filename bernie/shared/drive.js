@@ -73,7 +73,29 @@
     }, board);
     svg("ellipse", { cx: "180", cy: "360", rx: "46", ry: "8", fill: "rgba(70,40,16,0.18)" }, board);
     svg("ellipse", { cx: "520", cy: "400", rx: "70", ry: "10", fill: "rgba(70,40,16,0.16)" }, board);
+    svg("path", {
+      d: "M40 210 L70 150 L130 168 L150 214 Z",
+      fill: "#b7b2a8", stroke: "#6e6962", "stroke-width": "3"
+    }, board);
+    svg("path", {
+      d: "M78 168 L96 142 L118 156 L108 176 Z",
+      fill: "#d9d4ca"
+    }, board);
+    svg("path", {
+      d: "M620 230 L690 160 L760 188 L740 236 Z",
+      fill: "#9aa0a6", stroke: "#5c636a", "stroke-width": "3"
+    }, board);
+    svg("path", {
+      d: "M700 176 L734 148 L758 170 L730 190 Z",
+      fill: "#d5d8dc"
+    }, board);
     return board;
+  }
+
+  function stonePath(parent, d, light, mid, dark, group) {
+    var g = svg("g", { class: group }, parent);
+    svg("path", { d: d, fill: mid, stroke: dark, "stroke-width": "3", "stroke-linejoin": "round" }, g);
+    return g;
   }
 
   function pileArt() {
@@ -81,30 +103,21 @@
       viewBox: "0 0 200 150",
       "aria-hidden": "true"
     });
-    var defs = svg("defs", {}, board);
-    lin(defs, "pile-soil", "0", "1", [["0%", "#e2bf86"], ["42%", "#a56b38"], ["100%", "#6a3e1c"]]);
-    lin(defs, "pile-dark", "0", "1", [["0%", "#b88448"], ["100%", "#4e2c12"]]);
-    grit(defs, "pile-grit", "#5a3214", "#e8c99a");
-    svg("ellipse", { cx: "100", cy: "132", rx: "84", ry: "12", fill: "rgba(40,22,8,0.35)" }, board);
-    svg("path", {
-      d: "M16 130 C 28 78, 62 34, 104 30 C 146 26, 176 72, 188 130 Z",
-      fill: "url(#pile-soil)"
-    }, board);
-    svg("path", {
-      d: "M48 130 C 62 92, 96 68, 124 74 C 150 80, 164 104, 172 130 Z",
-      fill: "url(#pile-dark)"
-    }, board);
-    svg("path", {
-      d: "M16 130 C 28 78, 62 34, 104 30 C 146 26, 176 72, 188 130 Z",
-      fill: "url(#pile-grit)"
-    }, board);
-    svg("path", {
-      d: "M48 78 C 70 52, 98 48, 120 66",
-      fill: "none", stroke: "rgba(255,228,180,0.55)", "stroke-width": "7", "stroke-linecap": "round"
-    }, board);
-    svg("ellipse", { cx: "64", cy: "108", rx: "10", ry: "7", fill: "#6d4424" }, board);
-    svg("ellipse", { cx: "132", cy: "96", rx: "8", ry: "6", fill: "#8a5a30" }, board);
-    svg("ellipse", { cx: "108", cy: "118", rx: "6", ry: "4", fill: "#4a2c14" }, board);
+    svg("ellipse", { cx: "100", cy: "136", rx: "78", ry: "10", fill: "rgba(40,32,24,0.28)" }, board);
+    var rocks = [
+      ["M18 128 C 12 96, 36 78, 58 86 C 70 74, 96 90, 88 128 Z", "#d7d2c8", "#8e8980", "#3e3b36", "rock-3"],
+      ["M70 132 C 64 100, 96 70, 124 84 C 148 74, 168 104, 156 132 Z", "#c4a882", "#7a5a34", "#3d2a16", "rock-3"],
+      ["M130 130 C 124 102, 150 82, 176 96 C 192 108, 194 124, 182 132 Z", "#cfd3d6", "#6e757c", "#34383c", "rock-2"],
+      ["M36 134 C 30 112, 58 96, 78 108 C 96 98, 112 118, 100 136 Z", "#b7b1a6", "#6a6560", "#2e2c29", "rock-2"],
+      ["M96 136 C 90 114, 118 98, 140 112 C 158 122, 150 138, 128 140 Z", "#d2b48a", "#8a6240", "#4a3018", "rock-2"],
+      ["M48 140 C 44 124, 70 112, 92 122 C 108 116, 118 132, 104 142 Z", "#e4e0d8", "#9a958c", "#4a4742", "rock-1"],
+      ["M108 142 C 102 126, 128 114, 150 126 C 166 134, 160 146, 138 146 Z", "#c8c2b8", "#746e66", "#35322e", "rock-1"],
+      ["M78 144 C 74 132, 96 122, 114 132 C 126 140, 118 150, 98 150 Z", "#b98a58", "#6e4c2c", "#3a2814", "rock-1"]
+    ];
+    var i;
+    for (i = 0; i < rocks.length; i++) {
+      stonePath(board, rocks[i][0], rocks[i][1], rocks[i][2], rocks[i][3], rocks[i][4]);
+    }
     return board;
   }
 
@@ -203,6 +216,7 @@
     var dumpAt = spots.dump || { x: 0.18, y: 0.86 };
     var pos = { x: origin.x, y: origin.y };
     var facing = 1;
+    var parked = origin.x;
     var pose = "rest";
     var loads = 0;
     var filled = 0;
@@ -244,14 +258,21 @@
     scene.appendChild(rig);
     scene.appendChild(cheer);
 
+    var tally = el("div", "tally-board");
     var numeral = el("p", "numeral");
     numeral.textContent = "";
-    numeral.setAttribute("aria-hidden", "true");
+    var stack = el("div", "count-stack");
+    tally.appendChild(numeral);
+    tally.appendChild(stack);
     var banner = el("p", "done-line");
     banner.textContent = "You did it!";
     banner.hidden = true;
-    scene.appendChild(numeral);
+    var badge = el("p", "end-badge");
+    badge.textContent = "🚜⭐";
+    badge.hidden = true;
+    scene.appendChild(tally);
     scene.appendChild(banner);
+    scene.appendChild(badge);
 
     var play = el("div", "drive-play");
     var bar = el("div", "drive-bar");
@@ -271,9 +292,18 @@
     var scoop = iconButton("scoop", "🪣", "Scoop");
     var again = iconButton("again", "↻", "Build again");
     again.hidden = true;
+    var speaker = el("button", "speaker");
+    speaker.type = "button";
+    speaker.textContent = "🔊";
+    speaker.setAttribute("aria-label", "Hear it");
     var loadMark = el("div", "truck-load");
     loadMark.setAttribute("aria-hidden", "true");
+    var rockI;
+    for (rockI = 0; rockI < 9; rockI++) {
+      loadMark.appendChild(el("span", "stone stone-" + (rockI % 3)));
+    }
     truck.appendChild(loadMark);
+    bar.appendChild(speaker);
     bar.appendChild(scoop);
     bar.appendChild(again);
     play.appendChild(scene);
@@ -335,20 +365,24 @@
     function alignBucket(targetX) {
       var sceneBox = scene.getBoundingClientRect ? scene.getBoundingClientRect() : null;
       var rigBox = rig.getBoundingClientRect ? rig.getBoundingClientRect() : null;
-      if (!sceneBox || !rigBox || !sceneBox.width || !rigBox.width) return 0.55;
-      var wantLeft = targetX - rigBox.width * 0.12;
-      var minLeft = sceneBox.left + 4;
-      var maxLeft = sceneBox.right - rigBox.width - 4;
+      if (!sceneBox || !rigBox || !sceneBox.width || !rigBox.width) {
+        return facing < 0 ? 0.62 : 0.34;
+      }
+      var frac = facing < 0 ? 0.94 : 0.12;
+      var wantLeft = targetX - rigBox.width * frac;
+      var minLeft = sceneBox.left + 2;
+      var maxLeft = sceneBox.right - rigBox.width - 2;
       if (wantLeft < minLeft) wantLeft = minLeft;
       if (wantLeft > maxLeft) wantLeft = maxLeft;
-      var center = wantLeft + rigBox.width / 2;
-      return clamp((center - sceneBox.left) / sceneBox.width, 0.16, 0.96);
+      var mid = wantLeft + rigBox.width / 2;
+      return clamp((mid - sceneBox.left) / sceneBox.width, 0.08, 0.94);
     }
 
     function moveTo(x, ms, done) {
       var from = pos.x;
       var t0 = Date.now();
       var finished = false;
+      var lastT = -1;
       function finish() {
         if (finished || !alive) return;
         finished = true;
@@ -359,6 +393,8 @@
       function frame() {
         if (finished || !alive) return;
         var t = Math.min(1, (Date.now() - t0) / ms);
+        if (t <= lastT) return;
+        lastT = t;
         var eased = 1 - Math.pow(1 - t, 3);
         pos.x = from + (x - from) * eased;
         paint();
@@ -370,24 +406,19 @@
       else finish();
     }
 
-    function sayLines(list) {
-      if (!speak) return;
-      speak.arm();
-      if (speak.lines) speak.lines(list);
-      else speak.speak(list[0]);
-    }
-
     function dropRocks() {
-      var sceneBox = scene.getBoundingClientRect();
-      var truckBox = truck.getBoundingClientRect();
-      var bed = truckBox.left + truckBox.width * 0.7;
-      var leftPct = sceneBox.width ? ((bed - sceneBox.left) / sceneBox.width) * 100 : 60;
+      var sceneBox = scene.getBoundingClientRect ? scene.getBoundingClientRect() : { left: 0, width: 0 };
+      var truckBox = truck.getBoundingClientRect ? truck.getBoundingClientRect() : { left: 0, width: 0 };
+      var bed = truckBox.left + truckBox.width * 0.3;
+      var leftPct = sceneBox.width ? ((bed - sceneBox.left) / sceneBox.width) * 100 : 62;
+      var tones = ["grey", "brown", "slate"];
       var i;
       for (i = 0; i < 7; i++) {
-        var rock = el("span", "falling-rock");
-        rock.style.left = (leftPct - 6 + (i % 4) * 3.2) + "%";
-        rock.style.top = "40%";
-        rock.style.animationDelay = (i * 0.07) + "s";
+        var rock = el("span", "falling-rock " + tones[i % 3]);
+        rock.style.left = (leftPct - 4 + (i % 4) * 3.4) + "%";
+        rock.style.top = "42%";
+        rock.style.animationDelay = (i * 0.08) + "s";
+        rock.style.transform = "rotate(" + ((i * 37) % 50 - 20) + "deg)";
         scene.appendChild(rock);
         (function (node) {
           window.setTimeout(function () {
@@ -397,12 +428,14 @@
       }
     }
 
-    function pop(text) {
-      numeral.textContent = text;
-      numeral.classList.remove("show");
+    function showCount(n) {
+      numeral.textContent = String(n);
+      numeral.classList.remove("stay");
       if (typeof numeral.offsetWidth === "number") void numeral.offsetWidth;
-      numeral.classList.add("show");
-      cheer.textContent = text;
+      numeral.classList.add("stay");
+      stack.innerHTML = "";
+      var i;
+      for (i = 0; i < n; i++) stack.appendChild(el("span", "count-stone stone-" + (i % 3)));
     }
 
     function honk() {
@@ -428,13 +461,22 @@
       } catch (err) { /* a missing speaker should not block the ending */ }
     }
 
+    function hear() {
+      if (!alive || !speak) return;
+      var line = "Scoop!";
+      if (loads >= SCOOPS) line = "You did it!";
+      else if (loads) line = loads + "!";
+      speak.arm();
+      if (speak.lines) speak.lines([line]);
+      else speak.speak(line);
+      if (loads >= SCOOPS) honk();
+    }
+
     function celebrate() {
       banner.hidden = false;
-      numeral.textContent = "";
-      numeral.classList.remove("show");
+      badge.hidden = false;
       cheer.textContent = "";
       rig.classList.add("honk");
-      honk();
       var colors = ["#ffe14a", "#ff5a5a", "#3ecf8e", "#4aa3ff", "#fff"];
       var i;
       for (i = 0; i < 22; i++) {
@@ -451,13 +493,13 @@
       scooping = true;
       loads += 1;
       var n = loads;
-      var done = n >= SCOOPS;
-      var lines = scoopSay(n, SCOOPS);
-      sayLines(lines);
+      var last = n >= SCOOPS;
+      facing = 1;
       pose = "rest";
       shown = "";
-      var pileBox = pile.getBoundingClientRect();
-      var intoPile = pileBox.left + pileBox.width * 0.7;
+      paint();
+      var pileBox = pile.getBoundingClientRect ? pile.getBoundingClientRect() : { left: 0, width: 0 };
+      var intoPile = pileBox.left + pileBox.width * 0.55;
       moveTo(alignBucket(intoPile), 700, function () {
         if (!alive) return;
         pose = "carry";
@@ -465,8 +507,11 @@
         paint();
         window.setTimeout(function () {
           if (!alive) return;
-          var truckBox = truck.getBoundingClientRect();
-          var bed = truckBox.left + truckBox.width * 0.72;
+          facing = -1;
+          shown = "";
+          paint();
+          var truckBox = truck.getBoundingClientRect ? truck.getBoundingClientRect() : { left: 0, width: 0 };
+          var bed = truckBox.left + truckBox.width * 0.16;
           moveTo(alignBucket(bed), 800, function () {
             if (!alive) return;
             pose = "dump";
@@ -476,23 +521,29 @@
             filled = n;
             pile.className = "pile scoop-" + n;
             truck.className = "truck fill-" + n;
-            pop(String(n));
+            showCount(n);
             window.setTimeout(function () {
               if (!alive) return;
-              pose = "rest";
-              shown = "";
-              paint();
-              if (done) {
+              if (last) {
                 scoop.hidden = true;
                 again.hidden = false;
                 celebrate();
+                scooping = false;
+                return;
               }
-              scooping = false;
-            }, 1200);
+              facing = 1;
+              pose = "rest";
+              shown = "";
+              moveTo(parked, 700, function () {
+                scooping = false;
+              });
+            }, last ? 2600 : 1100);
           });
-        }, 520);
+        }, 560);
       });
     });
+
+    speaker.addEventListener("click", hear);
 
     again.addEventListener("click", function () {
       if (again.hidden) return;

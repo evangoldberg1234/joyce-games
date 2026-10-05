@@ -6,8 +6,8 @@
   var PARTS = [
     { id: "rear-wheel", name: "Rear wheel", src: "img/rear-wheel.webp", x: 671, y: 315, w: 252, h: 237, group: "body" },
     { id: "front-wheel", name: "Front wheel", src: "img/front-wheel.webp", x: 163, y: 354, w: 271, h: 259, group: "body" },
-    { id: "engine", name: "Engine", src: "img/engine.webp", x: 111, y: 7, w: 883, h: 534, group: "body" },
-    { id: "cab", name: "Cab", src: "img/cab.webp", x: 472, y: 5, w: 289, h: 251, group: "body" },
+    { id: "engine", name: "Engine", src: "img/engine.webp", x: 154, y: 39, w: 840, h: 442, group: "body" },
+    { id: "cab", name: "Cab", src: "img/cab.webp", x: 451, y: 5, w: 310, h: 251, group: "body" },
     { id: "arms", name: "Lift arms", src: "img/arms.webp", x: 103, y: 170, w: 443, h: 196, group: "arms" },
     { id: "bucket", name: "Bucket", src: "img/bucket.webp", x: 5, y: 214, w: 185, h: 306, group: "bucket" }
   ];
@@ -60,6 +60,12 @@
     if (state.carrying) {
       var dirt = document.createElement("div");
       dirt.className = "scoop-dirt";
+      var r;
+      for (r = 0; r < 5; r++) {
+        var rock = document.createElement("span");
+        rock.className = "stone stone-" + (r % 3);
+        dirt.appendChild(rock);
+      }
       link.appendChild(dirt);
     }
     rig.appendChild(link);
@@ -73,13 +79,11 @@
     ghost: "img/ghost.webp",
     outline: "img/outline.webp",
     finale: "img/finale.webp",
-    yard: "img/yard.webp",
-    pile: "img/pile.webp",
     draw: draw,
     drive: {
-      start: { x: 0.78, y: 0.9 },
-      pile: { x: 0.18, y: 0.9 },
-      dump: { x: 0.58, y: 0.9 },
+      start: { x: 0.46, y: 0.9 },
+      pile: { x: 0.14, y: 0.9 },
+      dump: { x: 0.84, y: 0.9 },
       near: 120
     }
   };
@@ -131,6 +135,39 @@
     back.addEventListener("pointerleave", cancelHold);
     back.addEventListener("pointercancel", cancelHold);
   }
+
+  /* A quick tap must not open the kid menu. Hold the switcher to use it. */
+  function guardSwitcher() {
+    var btn = document.querySelector("#kid-switch .ks-btn");
+    var menu = document.getElementById("kid-switch-menu");
+    if (!btn || !menu || btn.dataset.guarded) return;
+    btn.dataset.guarded = "1";
+    var timer = 0;
+    btn.addEventListener("click", function (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }, true);
+    btn.addEventListener("pointerdown", function () {
+      timer = window.setTimeout(function () {
+        timer = 0;
+        var open = menu.hidden;
+        btn.setAttribute("aria-expanded", open ? "true" : "false");
+        menu.hidden = !open;
+      }, 700);
+    });
+    function cancelSwitch() {
+      if (!timer) return;
+      window.clearTimeout(timer);
+      timer = 0;
+      btn.classList.remove("wiggle");
+      void btn.offsetWidth;
+      btn.classList.add("wiggle");
+    }
+    btn.addEventListener("pointerup", cancelSwitch);
+    btn.addEventListener("pointerleave", cancelSwitch);
+    btn.addEventListener("pointercancel", cancelSwitch);
+  }
+  window.setTimeout(guardSwitcher, 0);
 
   play();
 })();

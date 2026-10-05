@@ -31,10 +31,31 @@
     return [first, second];
   }
 
+  var WHEEL_MATE = { "rear-wheel": "front-wheel", "front-wheel": "rear-wheel" };
+
+  /* Distractors come from the whole loader. Parts already on the machine
+     are used only when two fresh ones are not left. A wheel question
+     never offers the other wheel, so it is not a coin flip. */
+  function poolFor(index) {
+    var answer = ORDER[index];
+    var mate = WHEEL_MATE[answer.id];
+    var fresh = [];
+    var older = [];
+    var i;
+    for (i = 0; i < ORDER.length; i++) {
+      if (ORDER[i].id === answer.id) continue;
+      if (mate && ORDER[i].id === mate) continue;
+      if (i > index) fresh.push(ORDER[i]);
+      else older.push(ORDER[i]);
+    }
+    if (fresh.length >= 2) return fresh;
+    return fresh.concat(older);
+  }
+
   function makeRound(rng, index, previousKey) {
     var random = rng || Math.random;
     var answer = ORDER[index];
-    var pool = ORDER.filter(function (part) { return part.id !== answer.id; });
+    var pool = poolFor(index);
     var tries = 0;
     var round;
     do {

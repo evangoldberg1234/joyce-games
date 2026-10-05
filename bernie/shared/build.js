@@ -41,12 +41,10 @@
     var busy = false;
     var started = false;
     var guess = root.BernieGuess.createState();
-    var audio = null;
 
     var wrap = el("div", "build");
     var hud = el("div", "hud");
     var word = el("p", "prompt-word");
-    var map = el("div", "prompt-map");
     var speaker = el("button", "speaker");
     speaker.type = "button";
     speaker.textContent = "🔊";
@@ -54,7 +52,6 @@
     var pips = el("div", "pips");
     pips.setAttribute("aria-hidden", "true");
     hud.appendChild(word);
-    hud.appendChild(map);
     hud.appendChild(speaker);
     hud.appendChild(pips);
 
@@ -75,23 +72,6 @@
 
     var board = null;
 
-    function findPart(id) {
-      var i;
-      for (i = 0; i < vehicle.parts.length; i++) {
-        if (vehicle.parts[i].id === id) return vehicle.parts[i];
-      }
-      return null;
-    }
-
-    function placeBox(node, part) {
-      if (!part || !vehicle.board || part.x === undefined) return;
-      var box = vehicle.board;
-      node.style.left = (part.x / box.w * 100) + "%";
-      node.style.top = (part.y / box.h * 100) + "%";
-      node.style.width = (part.w / box.w * 100) + "%";
-      node.style.height = (part.h / box.h * 100) + "%";
-    }
-
     function bit(part) {
       var img = el("img", "bit");
       img.src = part.src;
@@ -103,16 +83,6 @@
       img.style.width = (part.w / box.w * 100) + "%";
       img.style.height = (part.h / box.h * 100) + "%";
       return img;
-    }
-
-    function paintPromptPiece() {
-      map.innerHTML = "";
-      if (!round) return;
-      var img = el("img", "prompt-piece");
-      img.src = "img/" + round.id + ".webp";
-      img.alt = "";
-      img.draggable = false;
-      map.appendChild(img);
     }
 
     function paintBoard() {
@@ -129,15 +99,6 @@
       ghost.draggable = false;
       skin.appendChild(ghost);
       board.appendChild(skin);
-      if (started && round && placed.length < questions.order.length) {
-        var target = findPart(round.id);
-        var slot = el("img", "slot");
-        slot.src = target ? target.src : "";
-        slot.alt = "";
-        slot.draggable = false;
-        placeBox(slot, target);
-        board.appendChild(slot);
-      }
       var have = {};
       var i;
       for (i = 0; i < placed.length; i++) have[placed[i]] = true;
@@ -173,7 +134,13 @@
       var i;
       for (i = 0; i < order.length; i++) {
         var on = placed.indexOf(order[i].id) !== -1;
-        pips.appendChild(el("span", "pip pip-" + order[i].id + (on ? " got" : "")));
+        var pip = el("span", "pip" + (on ? " got" : ""));
+        var icon = el("img", "pip-photo");
+        icon.src = "img/tile-" + order[i].id + ".webp";
+        icon.alt = "";
+        icon.draggable = false;
+        pip.appendChild(icon);
+        pips.appendChild(pip);
       }
     }
 
@@ -207,48 +174,22 @@
     function paintPrompt() {
       if (!round) return;
       word.textContent = title(round.name);
-      paintPromptPiece();
       remember();
     }
 
     function showPlay(on) {
       word.hidden = !on;
-      map.hidden = !on;
       speaker.hidden = !on;
       choices.hidden = !on;
       startBtn.hidden = on;
     }
 
-    function say(text) {
-      sayLines(text ? [text] : []);
-    }
-
-    function sayLines(list) {
-      if (!speak || !list || !list.length) return;
+    /* Speech exists only here, and only because the speaker button was tapped. */
+    function hear() {
+      if (!started || !round || !speak) return;
       speak.arm();
-      if (speak.lines) speak.lines(list);
-      else speak.speak(list[0]);
-    }
-
-    function blip() {
-      var Ctx = root.AudioContext || root.webkitAudioContext;
-      if (!Ctx) return;
-      try {
-        if (!audio) audio = new Ctx();
-        if (audio.state === "suspended" && audio.resume) audio.resume();
-        var osc = audio.createOscillator();
-        var gain = audio.createGain();
-        osc.type = "sine";
-        osc.frequency.value = 880;
-        osc.connect(gain);
-        gain.connect(audio.destination);
-        var t = audio.currentTime;
-        gain.gain.setValueAtTime(0.0001, t);
-        gain.gain.exponentialRampToValueAtTime(0.15, t + 0.02);
-        gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
-        osc.start(t);
-        osc.stop(t + 0.18);
-      } catch (err) { /* a missing audio device should not stop the build */ }
+      if (speak.lines) speak.lines([round.say]);
+      else speak.speak(round.say);
     }
 
     function buttonFor(id) {
@@ -275,15 +216,41 @@
       btn.classList.add("wiggle");
     }
 
-    function flyTo(fromBtn, done) {
-      var slot = board && board.querySelector(".slot");
+    function markWrong(id) {
+      var btn = buttonFor(id);
+      if (!btn) return;
+      btn.disabled = true;
+      btn.classList.add("spent", "miss");
+      if (!btn.querySelector(".mark-x")) {
+        var mark = el("span", "mark-x");
+        mark.setAttribute("aria-hidden", "true");
+        mark.textContent = "✕";
+        btn.appendChild(mark);
+      }
+      wiggle(id);
+    }
+
+    function landBox(part) {
+      if (!board || !board.getBoundingClientRect || !part || !vehicle.board) return null;
+      var rect = board.getBoundingClientRect();
+      if (!rect.width || !rect.height) return null;
+      var box = vehicle.board;
+      return {
+        left: rect.left + (part.x / box.w) * rect.width,
+        top: rect.top + (part.y / box.h) * rect.height,
+        width: (part.w / box.w) * rect.width,
+        height: (part.h / box.h) * rect.height
+      };
+    }
+
+    function flyTo(fromBtn, part, done) {
       var photoNode = fromBtn && fromBtn.querySelector(".choice-photo");
-      if (reduced() || !fromBtn || !fromBtn.getBoundingClientRect || !slot || !slot.getBoundingClientRect) {
+      var to = landBox(part);
+      if (reduced() || !fromBtn || !fromBtn.getBoundingClientRect || !to) {
         done();
         return;
       }
       var from = fromBtn.getBoundingClientRect();
-      var to = slot.getBoundingClientRect();
       if (!from.width || !to.width) {
         done();
         return;
@@ -328,15 +295,12 @@
     function finishBuild() {
       choices.hidden = true;
       speaker.hidden = true;
-      map.hidden = true;
       word.hidden = false;
       word.textContent = "You built it!";
       note.textContent = "";
-      art.classList.add("done-build");
+      art.classList.add("done-build", "shine");
       if (board) {
-        board.classList.add("built");
-        var slot = board.querySelector(".slot");
-        if (slot) slot.remove();
+        board.classList.add("built", "shine");
         var skin = board.querySelector(".outline");
         if (skin) skin.remove();
       }
@@ -353,15 +317,11 @@
       var buttons = choices.querySelectorAll(".choice");
       var i;
       for (i = 0; i < buttons.length; i++) buttons[i].disabled = true;
-      var lines = ["Yes! The " + part.name + "!"];
       var willFinish = placed.length + 1 >= questions.order.length;
       if (!willFinish) {
         pendingRound = questions.makeRound(Math.random, placed.length + 1, part.key);
-        lines.push(pendingRound.say);
       }
-      sayLines(lines);
-      blip();
-      flyTo(fromBtn, function () {
+      flyTo(fromBtn, part, function () {
         if (placed.indexOf(part.id) === -1) placed.push(part.id);
         prevKey = part.key;
         if (willFinish) {
@@ -382,26 +342,21 @@
       if (result.ignore || result.revoke) return;
       if (result.greyChoice) {
         grey(id);
-        wiggle(id);
-        note.textContent = result.say;
-        say(result.say);
+        markWrong(id);
+        note.textContent = "";
         return;
       }
       if (!result.earned) return;
       commit(round, buttonFor(id));
     }
 
-    speaker.addEventListener("click", function () {
-      if (!started || !round) return;
-      say(round.say);
-    });
+    speaker.addEventListener("click", hear);
 
     startBtn.addEventListener("click", function () {
       if (started) return;
       started = true;
       showPlay(true);
       paintVehicle();
-      say(round.say);
     });
 
     loadRound();

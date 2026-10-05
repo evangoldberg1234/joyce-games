@@ -64,4 +64,26 @@ var stuck = questions.makeRound(function () { return 0; }, 0, "");
 var other = questions.makeRound(function () { return 0; }, 0, stuck.key);
 assert.notStrictEqual(other.key, stuck.key, "a fixed roll still changes the set");
 
+var mate = { "rear-wheel": "front-wheel", "front-wheel": "rear-wheel" };
+var seed;
+for (seed = 1; seed <= 40; seed++) {
+  var roll = mulberry32(seed);
+  var step;
+  for (step = 0; step < ORDER.length; step++) {
+    var asked = questions.makeRound(roll, step, "");
+    var ids = asked.choices.map(function (choice) { return choice.id; });
+    if (mate[asked.answer]) {
+      assert.ok(ids.indexOf(mate[asked.answer]) === -1, asked.answer + " must not offer " + mate[asked.answer]);
+    }
+    var built = ORDER.slice(0, step);
+    var fresh = ORDER.slice(step + 1).filter(function (id) { return id !== mate[asked.answer]; });
+    if (fresh.length >= 2) {
+      ids.forEach(function (id) {
+        if (id === asked.answer) return;
+        assert.ok(built.indexOf(id) === -1, asked.answer + " distractor " + id + " is already built");
+      });
+    }
+  }
+}
+
 console.log("Bernie question checks passed.");
