@@ -331,15 +331,18 @@
       dirt.setAttribute("y", String(100 - piled * 18));
     }
 
-    function frontAt(mark) {
+    /* Put the bucket (the left edge of the photo) on a point in the scene. */
+    function alignBucket(targetX) {
       var sceneBox = scene.getBoundingClientRect ? scene.getBoundingClientRect() : null;
       var rigBox = rig.getBoundingClientRect ? rig.getBoundingClientRect() : null;
-      if (!sceneBox || !rigBox || !sceneBox.width || !rigBox.width) {
-        return clamp(mark + 0.2, 0.28, 0.9);
-      }
-      var wantLeft = mark * sceneBox.width - rigBox.width * 0.16;
-      var center = (wantLeft + rigBox.width / 2) / sceneBox.width;
-      return clamp(center, 0.24, 0.92);
+      if (!sceneBox || !rigBox || !sceneBox.width || !rigBox.width) return 0.55;
+      var wantLeft = targetX - rigBox.width * 0.12;
+      var minLeft = sceneBox.left + 4;
+      var maxLeft = sceneBox.right - rigBox.width - 4;
+      if (wantLeft < minLeft) wantLeft = minLeft;
+      if (wantLeft > maxLeft) wantLeft = maxLeft;
+      var center = wantLeft + rigBox.width / 2;
+      return clamp((center - sceneBox.left) / sceneBox.width, 0.16, 0.96);
     }
 
     function moveTo(x, ms, done) {
@@ -375,17 +378,21 @@
     }
 
     function dropRocks() {
+      var sceneBox = scene.getBoundingClientRect();
+      var truckBox = truck.getBoundingClientRect();
+      var bed = truckBox.left + truckBox.width * 0.7;
+      var leftPct = sceneBox.width ? ((bed - sceneBox.left) / sceneBox.width) * 100 : 60;
       var i;
-      for (i = 0; i < 6; i++) {
+      for (i = 0; i < 7; i++) {
         var rock = el("span", "falling-rock");
-        rock.style.left = (dumpAt.x * 100 - 6 + (i % 3) * 5) + "%";
-        rock.style.top = "34%";
-        rock.style.animationDelay = (i * 0.08) + "s";
+        rock.style.left = (leftPct - 6 + (i % 4) * 3.2) + "%";
+        rock.style.top = "40%";
+        rock.style.animationDelay = (i * 0.07) + "s";
         scene.appendChild(rock);
         (function (node) {
           window.setTimeout(function () {
             if (node.parentNode) node.remove();
-          }, 1200);
+          }, 1400);
         })(rock);
       }
     }
@@ -449,14 +456,18 @@
       sayLines(lines);
       pose = "rest";
       shown = "";
-      moveTo(frontAt(pileAt.x), 700, function () {
+      var pileBox = pile.getBoundingClientRect();
+      var intoPile = pileBox.left + pileBox.width * 0.7;
+      moveTo(alignBucket(intoPile), 700, function () {
         if (!alive) return;
         pose = "carry";
         shown = "";
         paint();
         window.setTimeout(function () {
           if (!alive) return;
-          moveTo(frontAt(dumpAt.x), 800, function () {
+          var truckBox = truck.getBoundingClientRect();
+          var bed = truckBox.left + truckBox.width * 0.72;
+          moveTo(alignBucket(bed), 800, function () {
             if (!alive) return;
             pose = "dump";
             shown = "";
@@ -477,9 +488,9 @@
                 celebrate();
               }
               scooping = false;
-            }, 1000);
+            }, 1200);
           });
-        }, 420);
+        }, 520);
       });
     });
 

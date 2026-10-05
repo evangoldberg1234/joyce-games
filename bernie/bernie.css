@@ -681,14 +681,14 @@ body.bernie {
   border-radius: 40% 40% 46% 46%;
   background: radial-gradient(circle at 35% 35%, #e7c89a, #6a3c18 70%);
   box-shadow: 0 3px 0 rgba(40, 22, 8, 0.35);
-  animation: drop-rock 0.95s ease-in forwards;
+  animation: drop-rock 1.15s ease-in forwards;
   pointer-events: none;
 }
 
 @keyframes drop-rock {
   0% { transform: translate(0, -30px) scale(1); opacity: 1; }
   75% { opacity: 1; }
-  100% { transform: translate(18px, 130px) scale(0.75); opacity: 0; }
+  100% { transform: translate(10px, 150px) scale(0.8); opacity: 0; }
 }
 
 .pile {

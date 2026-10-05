@@ -15,8 +15,8 @@
      turn lifts the arms and the bucket. */
   var LINK = {
     pivot: { x: 470, y: 210 },
-    carry: 18,
-    dump: 32
+    carry: 24,
+    dump: 36
   };
   var LIFT = { arms: true, bucket: true };
 
