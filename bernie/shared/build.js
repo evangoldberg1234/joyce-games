@@ -16,11 +16,17 @@
     return name.charAt(0).toUpperCase() + name.slice(1);
   }
 
-  var SHAPES = ["bucket", "arm", "cab", "body", "wheel-front", "wheel-rear"];
-
-  function addShapes(host) {
-    var i;
-    for (i = 0; i < SHAPES.length; i++) host.appendChild(el("span", "ol ol-" + SHAPES[i]));
+  function iconButton(className, icon, label) {
+    var btn = el("button", className);
+    btn.type = "button";
+    var mark = el("span", "btn-icon");
+    mark.setAttribute("aria-hidden", "true");
+    mark.textContent = icon;
+    var text = el("span", "btn-label");
+    text.textContent = label;
+    btn.appendChild(mark);
+    btn.appendChild(text);
+    return btn;
   }
 
   function start(opts) {
@@ -43,7 +49,7 @@
     var map = el("div", "prompt-map");
     var speaker = el("button", "speaker");
     speaker.type = "button";
-    speaker.textContent = "Hear it";
+    speaker.textContent = "🔊";
     speaker.setAttribute("aria-label", "Hear it");
     var pips = el("div", "pips");
     pips.setAttribute("aria-hidden", "true");
@@ -56,9 +62,8 @@
     note.setAttribute("role", "status");
     var art = el("div", "art");
     var choices = el("div", "choices");
-    var startBtn = el("button", "start-go");
-    startBtn.type = "button";
-    startBtn.textContent = "Start";
+    var startBtn = iconButton("start-go", "▶", "Start");
+    var pendingRound = null;
 
     wrap.appendChild(hud);
     wrap.appendChild(note);
@@ -76,12 +81,6 @@
         if (vehicle.parts[i].id === id) return vehicle.parts[i];
       }
       return null;
-    }
-
-    function piecesFor(id) {
-      var part = findPart(id);
-      if (part && part.with && part.with.length) return part.with;
-      return [id];
     }
 
     function placeBox(node, part) {
@@ -102,19 +101,18 @@
       img.style.left = (part.x / box.w * 100) + "%";
       img.style.top = (part.y / box.h * 100) + "%";
       img.style.width = (part.w / box.w * 100) + "%";
+      img.style.height = (part.h / box.h * 100) + "%";
       return img;
     }
 
-    function paintOutline(host, part) {
-      host.innerHTML = "";
-      var skin = el("div", "outline");
-      addShapes(skin);
-      if (part) {
-        var slot = el("span", "ol-slot");
-        placeBox(slot, part);
-        skin.appendChild(slot);
-      }
-      host.appendChild(skin);
+    function paintPromptPiece() {
+      map.innerHTML = "";
+      if (!round) return;
+      var img = el("img", "prompt-piece");
+      img.src = "img/" + round.id + ".webp";
+      img.alt = "";
+      img.draggable = false;
+      map.appendChild(img);
     }
 
     function paintBoard() {
@@ -125,20 +123,24 @@
       }
       board.innerHTML = "";
       var skin = el("div", "outline");
-      addShapes(skin);
+      var ghost = el("img", "silhouette");
+      ghost.src = vehicle.outline || "img/outline.webp";
+      ghost.alt = "";
+      ghost.draggable = false;
+      skin.appendChild(ghost);
       board.appendChild(skin);
-      if (started && round) {
-        var slot = el("div", "slot");
-        placeBox(slot, findPart(round.id));
+      if (started && round && placed.length < questions.order.length) {
+        var target = findPart(round.id);
+        var slot = el("img", "slot");
+        slot.src = target ? target.src : "";
+        slot.alt = "";
+        slot.draggable = false;
+        placeBox(slot, target);
         board.appendChild(slot);
       }
       var have = {};
       var i;
-      for (i = 0; i < placed.length; i++) {
-        var ids = piecesFor(placed[i]);
-        var j;
-        for (j = 0; j < ids.length; j++) have[ids[j]] = true;
-      }
+      for (i = 0; i < placed.length; i++) have[placed[i]] = true;
       for (i = 0; i < vehicle.parts.length; i++) {
         if (have[vehicle.parts[i].id]) board.appendChild(bit(vehicle.parts[i]));
       }
@@ -185,7 +187,7 @@
         btn.dataset.id = choice.id;
         btn.setAttribute("aria-label", choice.name);
         var img = el("img", "choice-photo");
-        img.src = "img/inset-" + choice.id + ".webp";
+        img.src = "img/tile-" + choice.id + ".webp";
         img.alt = "";
         img.draggable = false;
         btn.appendChild(img);
@@ -205,7 +207,7 @@
     function paintPrompt() {
       if (!round) return;
       word.textContent = title(round.name);
-      paintOutline(map, findPart(round.id) || round);
+      paintPromptPiece();
       remember();
     }
 
@@ -218,9 +220,14 @@
     }
 
     function say(text) {
-      if (!text || !speak) return;
+      sayLines(text ? [text] : []);
+    }
+
+    function sayLines(list) {
+      if (!speak || !list || !list.length) return;
       speak.arm();
-      speak.speak(text);
+      if (speak.lines) speak.lines(list);
+      else speak.speak(list[0]);
     }
 
     function blip() {
@@ -304,7 +311,12 @@
 
     function loadRound() {
       root.BernieGuess.nextQuestion(guess);
-      round = questions.makeRound(Math.random, placed.length, prevKey);
+      if (pendingRound) {
+        round = pendingRound;
+        pendingRound = null;
+      } else {
+        round = questions.makeRound(Math.random, placed.length, prevKey);
+      }
       roundToken += 1;
       note.textContent = "";
       paintPrompt();
@@ -320,9 +332,13 @@
       word.hidden = false;
       word.textContent = "You built it!";
       note.textContent = "";
+      art.classList.add("done-build");
       if (board) {
+        board.classList.add("built");
         var slot = board.querySelector(".slot");
         if (slot) slot.remove();
+        var skin = board.querySelector(".outline");
+        if (skin) skin.remove();
       }
       paintPips();
       remember();
@@ -337,12 +353,18 @@
       var buttons = choices.querySelectorAll(".choice");
       var i;
       for (i = 0; i < buttons.length; i++) buttons[i].disabled = true;
-      say("Yes! The " + part.name + "!");
+      var lines = ["Yes! The " + part.name + "!"];
+      var willFinish = placed.length + 1 >= questions.order.length;
+      if (!willFinish) {
+        pendingRound = questions.makeRound(Math.random, placed.length + 1, part.key);
+        lines.push(pendingRound.say);
+      }
+      sayLines(lines);
       blip();
       flyTo(fromBtn, function () {
         if (placed.indexOf(part.id) === -1) placed.push(part.id);
         prevKey = part.key;
-        if (placed.length >= questions.order.length) {
+        if (willFinish) {
           paintVehicle();
           paintPips();
           remember();

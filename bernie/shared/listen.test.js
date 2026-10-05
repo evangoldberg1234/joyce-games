@@ -241,7 +241,8 @@ function hasImg(node) {
 }
 
 var start = document.querySelector(".start-go");
-assert.strictEqual(start.textContent, "Start");
+assert.strictEqual(start.querySelector(".btn-label").textContent, "Start");
+assert.strictEqual(start.querySelector(".btn-icon").textContent, "▶");
 assert.strictEqual(start.hidden, false);
 assert.strictEqual(spoken.length, 0, "nothing is read before Start");
 assert.strictEqual(bits(), 0);
@@ -254,12 +255,16 @@ assert.strictEqual(start.hidden, true);
 assert.strictEqual(spoken[0], "Find the rear wheel!");
 assert.strictEqual(times("Find the rear wheel!"), 1);
 assert.strictEqual(document.querySelector(".speaker").hidden, false);
-assert.strictEqual(document.querySelector(".speaker").textContent, "Hear it");
+assert.strictEqual(document.querySelector(".speaker").textContent, "🔊");
+assert.strictEqual(document.querySelector(".speaker")["aria-label"], "Hear it");
 assert.strictEqual(document.querySelector(".prompt-word").textContent, "Rear wheel");
-assert.strictEqual(hasImg(document.querySelector(".prompt-map")), false, "the prompt is not the answer photo");
-assert.ok(document.querySelector(".prompt-map").querySelector(".ol"));
+var promptPiece = document.querySelector(".prompt-piece");
+assert.ok(promptPiece && promptPiece.src.indexOf("rear-wheel.webp") !== -1, "the prompt shows that part");
 assert.strictEqual(choices().length, 3);
-assert.ok(choices().every(function (item) { return item.querySelector(".choice-photo"); }));
+assert.ok(choices().every(function (item) {
+  var src = item.querySelector(".choice-photo").src;
+  return src.indexOf("/tile-") !== -1 && src.indexOf("inset-") === -1;
+}));
 assert.strictEqual(document.querySelectorAll(".pip").length, 6);
 
 document.querySelector(".speaker").click();
@@ -282,7 +287,7 @@ right.poke();
 assert.strictEqual(bits(), 1, "wrong then right awards once");
 assert.strictEqual(times("Yes! The rear wheel!"), 1);
 assert.strictEqual(build().dataset.answer, "front-wheel");
-assert.strictEqual(times("Find the front wheel!"), 0, "the next part is not read aloud");
+assert.strictEqual(times("Find the front wheel!"), 1, "the same tap reads the next part");
 assert.strictEqual(times("Listen first"), 0);
 assert.strictEqual(times("How many rocks?"), 0);
 
@@ -296,7 +301,7 @@ assert.strictEqual(times("Yes! The front wheel!"), 1);
 ["engine", "cab", "arms"].forEach(function (id) {
   var before = spoken.length;
   button(id).click();
-  assert.strictEqual(spoken.length, before + 1);
+  assert.strictEqual(spoken.length, before + 2, id + " says yes and the next find");
 });
 assert.strictEqual(bits(), 5);
 assert.strictEqual(build().dataset.answer, "bucket");

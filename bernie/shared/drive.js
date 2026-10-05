@@ -201,11 +201,11 @@
     var origin = spots.start || { x: 0.5, y: 0.86 };
     var pileAt = spots.pile || { x: 0.82, y: 0.86 };
     var dumpAt = spots.dump || { x: 0.18, y: 0.86 };
-    var pos = { x: 0.12, y: origin.y };
-    var goal = { x: Math.min(0.78, pileAt.x + 0.32), y: origin.y };
+    var pos = { x: origin.x, y: origin.y };
     var facing = 1;
     var pose = "rest";
     var loads = 0;
+    var filled = 0;
     var raf = 0;
     var shown = "";
     var alive = true;
@@ -255,13 +255,25 @@
 
     var play = el("div", "drive-play");
     var bar = el("div", "drive-bar");
-    var scoop = el("button", "scoop");
-    scoop.type = "button";
-    scoop.textContent = "Scoop";
-    var again = el("button", "again");
-    again.type = "button";
-    again.textContent = "Build again";
+    function iconButton(className, icon, label) {
+      var btn = el("button", className);
+      btn.type = "button";
+      var mark = el("span", "btn-icon");
+      mark.setAttribute("aria-hidden", "true");
+      mark.textContent = icon;
+      var text = el("span", "btn-label");
+      text.textContent = label;
+      btn.appendChild(mark);
+      btn.appendChild(text);
+      return btn;
+    }
+
+    var scoop = iconButton("scoop", "🪣", "Scoop");
+    var again = iconButton("again", "↻", "Build again");
     again.hidden = true;
+    var loadMark = el("div", "truck-load");
+    loadMark.setAttribute("aria-hidden", "true");
+    truck.appendChild(loadMark);
     bar.appendChild(scoop);
     bar.appendChild(again);
     play.appendChild(scene);
@@ -305,7 +317,7 @@
         vehicle.draw(art, {
           parts: all,
           bucketUp: pose !== "rest",
-          carrying: pose === "carry",
+          carrying: pose === "carry" || pose === "dump",
           pose: pose,
           just: ""
         });
@@ -314,23 +326,45 @@
       rig.style.left = (pos.x * 100) + "%";
       rig.style.top = (pos.y * 100) + "%";
       rig.style.transform = "translate(-50%, -100%) scaleX(" + facing + ")";
-      var piled = Math.min(loads, SCOOPS);
-      dirt.setAttribute("height", String(piled * 14));
-      dirt.setAttribute("y", String(100 - piled * 14));
+      var piled = Math.min(filled, SCOOPS);
+      dirt.setAttribute("height", String(piled * 18));
+      dirt.setAttribute("y", String(100 - piled * 18));
     }
 
-    function driveIn() {
-      if (!alive) return;
-      var dx = goal.x - pos.x;
-      if (Math.abs(dx) < 0.01) {
-        pos.x = goal.x;
-        raf = 0;
-        paint();
-        return;
+    function frontAt(mark) {
+      var sceneBox = scene.getBoundingClientRect ? scene.getBoundingClientRect() : null;
+      var rigBox = rig.getBoundingClientRect ? rig.getBoundingClientRect() : null;
+      if (!sceneBox || !rigBox || !sceneBox.width || !rigBox.width) {
+        return clamp(mark + 0.2, 0.28, 0.9);
       }
-      pos.x += dx * 0.08;
-      paint();
-      raf = window.requestAnimationFrame(driveIn);
+      var wantLeft = mark * sceneBox.width - rigBox.width * 0.16;
+      var center = (wantLeft + rigBox.width / 2) / sceneBox.width;
+      return clamp(center, 0.24, 0.92);
+    }
+
+    function moveTo(x, ms, done) {
+      var from = pos.x;
+      var t0 = Date.now();
+      var finished = false;
+      function finish() {
+        if (finished || !alive) return;
+        finished = true;
+        pos.x = x;
+        paint();
+        if (done) done();
+      }
+      function frame() {
+        if (finished || !alive) return;
+        var t = Math.min(1, (Date.now() - t0) / ms);
+        var eased = 1 - Math.pow(1 - t, 3);
+        pos.x = from + (x - from) * eased;
+        paint();
+        if (t < 1) raf = window.requestAnimationFrame(frame);
+        else finish();
+      }
+      window.setTimeout(finish, ms + 90);
+      if (window.requestAnimationFrame) frame();
+      else finish();
     }
 
     function sayLines(list) {
@@ -342,16 +376,16 @@
 
     function dropRocks() {
       var i;
-      for (i = 0; i < 3; i++) {
+      for (i = 0; i < 6; i++) {
         var rock = el("span", "falling-rock");
-        rock.style.left = (dumpAt.x * 100 + 6) + "%";
-        rock.style.top = "42%";
-        rock.style.animationDelay = (i * 0.12) + "s";
+        rock.style.left = (dumpAt.x * 100 - 6 + (i % 3) * 5) + "%";
+        rock.style.top = "34%";
+        rock.style.animationDelay = (i * 0.08) + "s";
         scene.appendChild(rock);
         (function (node) {
           window.setTimeout(function () {
             if (node.parentNode) node.remove();
-          }, 900);
+          }, 1200);
         })(rock);
       }
     }
@@ -364,32 +398,89 @@
       cheer.textContent = text;
     }
 
+    function honk() {
+      var Ctx = root.AudioContext || root.webkitAudioContext;
+      if (!Ctx) return;
+      try {
+        var audio = new Ctx();
+        var t = audio.currentTime;
+        [523, 659].forEach(function (freq, index) {
+          var osc = audio.createOscillator();
+          var gain = audio.createGain();
+          osc.type = "square";
+          osc.frequency.value = freq;
+          osc.connect(gain);
+          gain.connect(audio.destination);
+          var startAt = t + index * 0.18;
+          gain.gain.setValueAtTime(0.0001, startAt);
+          gain.gain.exponentialRampToValueAtTime(0.08, startAt + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.0001, startAt + 0.16);
+          osc.start(startAt);
+          osc.stop(startAt + 0.18);
+        });
+      } catch (err) { /* a missing speaker should not block the ending */ }
+    }
+
+    function celebrate() {
+      banner.hidden = false;
+      numeral.textContent = "";
+      numeral.classList.remove("show");
+      cheer.textContent = "";
+      rig.classList.add("honk");
+      honk();
+      var colors = ["#ffe14a", "#ff5a5a", "#3ecf8e", "#4aa3ff", "#fff"];
+      var i;
+      for (i = 0; i < 22; i++) {
+        var bit = el("span", i % 2 ? "confetti star" : "confetti");
+        bit.style.left = (6 + ((i * 17) % 88)) + "%";
+        bit.style.animationDelay = ((i % 6) * 0.08) + "s";
+        bit.style.background = colors[i % colors.length];
+        scene.appendChild(bit);
+      }
+    }
+
     scoop.addEventListener("click", function () {
       if (!alive || scooping || loads >= SCOOPS) return;
       scooping = true;
       loads += 1;
-      var lines = scoopSay(loads, SCOOPS);
-      pose = "carry";
-      shown = "";
-      paint();
-      dropRocks();
-      pop(String(loads));
+      var n = loads;
+      var done = n >= SCOOPS;
+      var lines = scoopSay(n, SCOOPS);
       sayLines(lines);
-      var done = loads >= SCOOPS;
-      window.setTimeout(function () {
+      pose = "rest";
+      shown = "";
+      moveTo(frontAt(pileAt.x), 700, function () {
         if (!alive) return;
-        pose = "rest";
+        pose = "carry";
         shown = "";
         paint();
-        if (done) {
-          scoop.hidden = true;
-          again.hidden = false;
-          banner.hidden = false;
-          numeral.classList.add("parked");
-          cheer.textContent = "You did it!";
-        }
-        scooping = false;
-      }, 700);
+        window.setTimeout(function () {
+          if (!alive) return;
+          moveTo(frontAt(dumpAt.x), 800, function () {
+            if (!alive) return;
+            pose = "dump";
+            shown = "";
+            paint();
+            dropRocks();
+            filled = n;
+            pile.className = "pile scoop-" + n;
+            truck.className = "truck fill-" + n;
+            pop(String(n));
+            window.setTimeout(function () {
+              if (!alive) return;
+              pose = "rest";
+              shown = "";
+              paint();
+              if (done) {
+                scoop.hidden = true;
+                again.hidden = false;
+                celebrate();
+              }
+              scooping = false;
+            }, 1000);
+          });
+        }, 420);
+      });
     });
 
     again.addEventListener("click", function () {
@@ -403,11 +494,6 @@
     document.addEventListener("touchmove", preventScroll, { passive: false });
     lockPage();
     paint();
-    window.setTimeout(function () {
-      if (alive) pos.x = goal.x;
-      paint();
-    }, 1400);
-    raf = window.requestAnimationFrame(driveIn);
   }
 
   root.BernieDrive = { start: start, scoopSay: scoopSay, scoops: SCOOPS };

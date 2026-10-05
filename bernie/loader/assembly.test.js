@@ -32,9 +32,10 @@ assert.strictEqual(earned.length, 6);
 
 var img = path.join(__dirname, "img");
 ORDER.forEach(function (id) {
-  assert.ok(fs.existsSync(path.join(img, "inset-" + id + ".webp")), id);
+  assert.ok(fs.existsSync(path.join(img, "tile-" + id + ".webp")), "tile " + id);
   assert.ok(fs.existsSync(path.join(img, id + ".webp")), id);
 });
+assert.ok(fs.existsSync(path.join(img, "outline.webp")), "outline");
 
 var root = path.join(__dirname, "..", "..");
 var script = [
@@ -74,26 +75,25 @@ var script = [
   "rgb_mae = float(rgb[mask].mean())",
   "alpha_mae = float(alpha[mask].mean())",
   "print('assembly rgb mae %.3f alpha mae %.3f parts %d' % (rgb_mae, alpha_mae, len(parts)))",
-  "limit = 8.0",
+  "limit = 2.0",
   "if rgb_mae > limit or alpha_mae > limit:",
   "    raise SystemExit('assembly diff rgb %.3f alpha %.3f over %.1f' % (rgb_mae, alpha_mae, limit))",
-  "# The named crops sit on the correct end of the finale photo.",
-  "finale = np.array(Image.open(os.path.join(img, 'finale.webp')).convert('RGB')).astype(np.float32)",
-  "fw, fh = finale.shape[1], finale.shape[0]",
-  "def finale_box(x, y, pw, ph):",
-  "    ox0, oy0, ox1, oy1 = 48, 205, 1402, 1042",
-  "    sx0 = (ox0 + (x / 1000.0) * (ox1 - ox0)) * (fw / 1600.0)",
-  "    sy0 = (oy0 + (y / 618.0) * (oy1 - oy0)) * (fh / 1200.0)",
-  "    return sx0, sy0",
+  "ids = [p[0] for p in parts]",
+  "if ids != ['rear-wheel', 'front-wheel', 'engine', 'cab', 'arms', 'bucket']:",
+  "    raise SystemExit('parts are not the six exclusive crops: %s' % ids)",
+  "def centroid(name, x, y, pw, ph):",
+  "    piece = np.array(Image.open(os.path.join(img, name + '.webp')).convert('RGBA'))",
+  "    ys, xs = np.where(piece[:,:,3] > 20)",
+  "    return x + float(xs.mean()), y + float(ys.mean())",
   "bucket = [p for p in parts if p[0] == 'bucket'][0]",
   "engine = [p for p in parts if p[0] == 'engine'][0]",
-  "bx, by = finale_box(bucket[1], bucket[2], bucket[3], bucket[4])",
-  "ex, ey = finale_box(engine[1], engine[2], engine[3], engine[4])",
-  "print('bucket finale x %.0f engine finale x %.0f' % (bx, ex))",
-  "if not bx < fw * 0.45:",
-  "    raise SystemExit('bucket is not on the front of the finale')",
-  "if not ex > fw * 0.55:",
-  "    raise SystemExit('engine is not on the rear of the finale')",
+  "bx, by = centroid(*bucket)",
+  "ex, ey = centroid(*engine)",
+  "print('bucket x %.0f engine x %.0f' % (bx, ex))",
+  "if not bx < w * 0.40:",
+  "    raise SystemExit('bucket is not on the front')",
+  "if not ex > w * 0.55:",
+  "    raise SystemExit('engine is not on the rear')",
 ].join("\n");
 
 var result = spawn("python3", ["-c", script], { encoding: "utf8" });
