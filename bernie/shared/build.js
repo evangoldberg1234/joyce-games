@@ -180,7 +180,7 @@
     function paintWheelCue() {
       var old = hud.querySelector(".wheel-cue");
       if (old) old.remove();
-      if (!round || (round.id !== "front-wheel" && round.id !== "rear-wheel")) return;
+      if (!started || !round || (round.id !== "front-wheel" && round.id !== "rear-wheel")) return;
       var cue = el("div", "wheel-cue");
       cue.setAttribute("aria-hidden", "true");
       var img = el("img");
@@ -206,6 +206,11 @@
       speaker.hidden = !on;
       choices.hidden = !on;
       startBtn.hidden = on;
+      if (on) paintWheelCue();
+      else {
+        var cue = hud.querySelector(".wheel-cue");
+        if (cue) cue.remove();
+      }
     }
 
     /* Speech exists only here, and only because the speaker button was tapped. */

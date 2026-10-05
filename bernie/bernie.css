@@ -742,6 +742,19 @@ body.bernie {
   flex: 1 1 auto;
   min-height: 112px;
   font-size: 40px;
+  transition: opacity 0.55s ease, filter 0.55s ease;
+}
+
+.scoop:disabled,
+.scoop.busy {
+  opacity: 0.34;
+  filter: grayscale(0.8);
+  pointer-events: none;
+}
+
+.again.cooling {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .numeral {
@@ -873,14 +886,13 @@ body.bernie {
   z-index: 4;
   width: 30px;
   height: 22px;
-  animation: drop-rock 1.15s ease-in forwards;
+  animation: drop-rock 1s ease-in forwards;
   pointer-events: none;
 }
 
 @keyframes drop-rock {
-  0% { transform: translate(0, -30px) scale(1); opacity: 1; }
-  75% { opacity: 1; }
-  100% { transform: translate(10px, 150px) scale(0.8); opacity: 0; }
+  0% { transform: translate(0, 0) scale(1); opacity: 1; }
+  100% { transform: translate(var(--dx, 0px), var(--dy, 40px)) scale(0.9); opacity: 1; }
 }
 
 .pile {
@@ -916,12 +928,12 @@ body.bernie {
 
 .confetti {
   position: absolute;
-  top: 76px;
+  top: 48px;
   z-index: 3;
   width: 14px;
   height: 22px;
   border-radius: 3px;
-  animation: confetti-fall 3.6s ease-in forwards;
+  animation: confetti-fall 3.5s linear forwards;
   pointer-events: none;
 }
 
@@ -933,8 +945,8 @@ body.bernie {
 
 @keyframes confetti-fall {
   0% { transform: translateY(0) rotate(0deg); opacity: 1; }
-  78% { opacity: 1; }
-  100% { transform: translateY(70vh) rotate(300deg); opacity: 0; }
+  88% { opacity: 1; }
+  100% { transform: translateY(var(--fall, 520px)) rotate(240deg); opacity: 0; }
 }
 
 .rig.honk .photo-rig {

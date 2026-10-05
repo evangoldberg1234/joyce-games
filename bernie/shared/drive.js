@@ -389,24 +389,54 @@
       else finish();
     }
 
+    function boxOf(node) {
+      if (!node || !node.getBoundingClientRect) return null;
+      var box = node.getBoundingClientRect();
+      if (!box || !box.width || !box.height) return null;
+      return box;
+    }
+
+    /* Stones leave the bucket lip and land in the bed. Nothing is drawn above that path. */
     function dropRocks() {
-      var sceneBox = scene.getBoundingClientRect ? scene.getBoundingClientRect() : { left: 0, width: 0 };
-      var truckBox = truck.getBoundingClientRect ? truck.getBoundingClientRect() : { left: 0, width: 0 };
-      var bed = truckBox.left + truckBox.width * 0.3;
-      var leftPct = sceneBox.width ? ((bed - sceneBox.left) / sceneBox.width) * 100 : 62;
-      var tones = ["grey", "brown", "slate"];
+      var sceneBox = boxOf(scene);
+      var images = art.querySelectorAll ? art.querySelectorAll("img") : [];
+      var bucketNode = null;
       var i;
-      for (i = 0; i < 7; i++) {
+      for (i = 0; i < images.length; i++) {
+        if (String(images[i].src || "").indexOf("bucket") !== -1) bucketNode = images[i];
+      }
+      var lipBox = boxOf(bucketNode) || boxOf(rig);
+      var bedBox = boxOf(truck.querySelector(".truck-load")) || boxOf(truck);
+      var tones = ["grey", "brown", "slate"];
+      var count = 7;
+      for (i = 0; i < count; i++) {
         var rock = el("span", "falling-rock " + tones[i % 3]);
-        rock.style.left = (leftPct - 4 + (i % 4) * 3.4) + "%";
-        rock.style.top = "42%";
-        rock.style.animationDelay = (i * 0.08) + "s";
-        rock.style.transform = "rotate(" + ((i * 37) % 50 - 20) + "deg)";
+        var leftPct = 58 + (i % 4) * 3;
+        var topPct = 72;
+        var dx = (i - 3) * 4;
+        var dy = 36;
+        if (sceneBox && lipBox && bedBox) {
+          var along = (i - (count - 1) / 2) * Math.min(12, lipBox.width * 0.07);
+          var lipX = lipBox.left + lipBox.width * 0.55 + along;
+          var lipY = lipBox.bottom - Math.min(10, lipBox.height * 0.08);
+          var bedX = bedBox.left + bedBox.width * (0.22 + (i % 5) * 0.12);
+          var bedY = bedBox.top + bedBox.height * 0.78;
+          if (bedY < lipY) bedY = lipY;
+          leftPct = ((lipX - sceneBox.left) / sceneBox.width) * 100;
+          topPct = ((lipY - sceneBox.top) / sceneBox.height) * 100;
+          dx = bedX - lipX;
+          dy = bedY - lipY;
+        }
+        rock.style.left = leftPct + "%";
+        rock.style.top = topPct + "%";
+        rock.style["--dx"] = dx + "px";
+        rock.style["--dy"] = dy + "px";
+        rock.style.animationDelay = ((i % 4) * 0.03) + "s";
         scene.appendChild(rock);
         (function (node) {
           window.setTimeout(function () {
             if (node.parentNode) node.remove();
-          }, 1400);
+          }, 1600);
         })(rock);
       }
     }
@@ -466,21 +496,53 @@
       pos.x = 0.4;
       paint();
       rig.classList.add("honk");
+      var sceneBox = boxOf(scene);
+      var fall = sceneBox ? Math.max(120, sceneBox.height - 48) : 520;
+      scene.style["--fall"] = fall + "px";
       var colors = ["#ffe14a", "#ff5a5a", "#3ecf8e", "#4aa3ff", "#fff"];
       var i;
       for (i = 0; i < 46; i++) {
         var bit = el("span", i % 3 === 0 ? "confetti star" : "confetti");
-        bit.style.left = (6 + ((i * 17) % 88)) + "%";
-        bit.style.top = "76px";
-        bit.style.animationDelay = ((i % 10) * 0.05) + "s";
+        bit.style.left = (1 + (i * 96 / 45)) + "%";
+        bit.style.top = "48px";
+        bit.style["--fall"] = fall + "px";
+        bit.style.animationDelay = ((i % 12) * 0.05) + "s";
         bit.style.background = colors[i % colors.length];
         scene.appendChild(bit);
       }
     }
 
-    scoop.addEventListener("click", function () {
-      if (!alive || scooping || loads >= SCOOPS) return;
+    function lockScoop() {
       scooping = true;
+      scoop.disabled = true;
+      scoop.classList.add("busy");
+    }
+
+    function unlockScoop() {
+      scooping = false;
+      if (loads >= SCOOPS) return;
+      scoop.disabled = false;
+      scoop.classList.remove("busy");
+    }
+
+    function showAgain() {
+      scoop.hidden = true;
+      scoop.disabled = true;
+      again.hidden = false;
+      again.disabled = true;
+      again.classList.add("cooling");
+      celebrate();
+      scooping = false;
+      window.setTimeout(function () {
+        if (!alive) return;
+        again.disabled = false;
+        again.classList.remove("cooling");
+      }, 2500);
+    }
+
+    scoop.addEventListener("click", function () {
+      if (!alive || scooping || scoop.disabled || loads >= SCOOPS) return;
+      lockScoop();
       loads += 1;
       var n = loads;
       var last = n >= SCOOPS;
@@ -513,26 +575,29 @@
             filled = n;
             pile.className = "pile scoop-" + n;
             truck.className = "truck fill-" + n;
+            /* Let the rocks land, then start the bucket down, then show the number. */
             window.setTimeout(function () {
               if (!alive) return;
-              showCount(n);
+              pose = "rest";
+              shown = "";
+              paint();
               window.setTimeout(function () {
                 if (!alive) return;
+                showCount(n);
                 if (last) {
-                  scoop.hidden = true;
-                  again.hidden = false;
-                  celebrate();
-                  scooping = false;
+                  window.setTimeout(function () {
+                    if (!alive) return;
+                    showAgain();
+                  }, 1600);
                   return;
                 }
                 facing = 1;
-                pose = "rest";
                 shown = "";
                 moveTo(parked, 700, function () {
-                  scooping = false;
+                  unlockScoop();
                 });
-              }, last ? 1800 : 1000);
-            }, 1300);
+              }, 340);
+            }, 1150);
           });
         }, 560);
       });
@@ -541,7 +606,7 @@
     speaker.addEventListener("click", hear);
 
     again.addEventListener("click", function () {
-      if (again.hidden) return;
+      if (!alive || again.hidden || again.disabled) return;
       alive = false;
       if (raf && window.cancelAnimationFrame) window.cancelAnimationFrame(raf);
       unlockPage();

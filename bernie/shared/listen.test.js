@@ -295,6 +295,7 @@ assert.strictEqual(start.querySelector(".btn-icon").textContent, "▶");
 assert.strictEqual(start.hidden, false);
 assert.strictEqual(spoken.length, 0, "nothing is read before Start");
 assert.strictEqual(bits(), 0);
+assert.strictEqual(document.querySelector(".wheel-cue"), null, "the start screen does not show a wheel outline");
 button(build().dataset.answer).click();
 assert.strictEqual(spoken.length, 0, "a part tap does nothing before Start");
 assert.strictEqual(bits(), 0);
@@ -307,6 +308,8 @@ assert.strictEqual(document.querySelector(".speaker").hidden, false);
 assert.strictEqual(document.querySelector(".speaker").textContent, "🔊");
 assert.strictEqual(document.querySelector(".speaker")["aria-label"], "Hear it");
 assert.strictEqual(document.querySelector(".prompt-word").textContent, "Rear wheel");
+assert.ok(document.querySelector(".wheel-cue"), "a wheel question shows the loader outline");
+assert.ok(document.querySelector(".wheel-cue-dot"), "the outline marks that wheel");
 assert.strictEqual(document.querySelector(".prompt-piece"), null, "the word is not paired with a picture");
 assert.strictEqual(document.querySelector(".prompt-map"), null);
 assert.strictEqual(document.querySelector(".slot"), null, "the slot is not filled in ahead of the tap");
@@ -344,6 +347,7 @@ assert.strictEqual(times("Yes! The rear wheel!"), 0, "a correct tap does not spe
 assert.strictEqual(build().dataset.answer, "rear-wheel", "the next question waits while the piece is showing");
 flush(now + 1600);
 assert.strictEqual(build().dataset.answer, "front-wheel");
+assert.ok(document.querySelector(".wheel-cue"), "the next wheel question still shows the outline");
 assert.strictEqual(times("Find the front wheel!"), 0, "the next part waits for the speaker");
 assert.strictEqual(global.audioMade, 0);
 assert.strictEqual(times("Listen first"), 0);
@@ -355,6 +359,7 @@ front.poke();
 assert.strictEqual(bits(), 2, "a fast second tap does not award another part");
 flush(now + 1600);
 assert.strictEqual(build().dataset.answer, "engine");
+assert.strictEqual(document.querySelector(".wheel-cue"), null, "other questions hide the wheel outline");
 assert.strictEqual(spoken.length, 1, "only the speaker tap has spoken");
 
 ["engine", "cab", "arms"].forEach(function (id) {
@@ -381,35 +386,79 @@ assert.strictEqual(drove, true, "all 6 parts lead to the drive scene");
 assert.strictEqual(spoken.length, 1, "building never speaks on its own");
 assert.strictEqual(global.audioMade, 0, "building never plays audio on its own");
 
-function drain(steps) {
+function until(label, pred, steps) {
   var i;
-  for (i = 0; i < steps; i++) flush(now + 900);
+  for (i = 0; i < steps; i++) {
+    if (pred()) return;
+    flush(now + 200);
+  }
+  assert.ok(pred(), label);
 }
 
 var scoop = document.querySelector(".scoop");
 assert.ok(scoop, "scoop button");
+assert.strictEqual(scoop.disabled, false);
 var heard = spoken.length;
 scoop.click();
-drain(12);
+assert.strictEqual(scoop.disabled, true, "scoop dims as soon as the loader moves");
+assert.ok(scoop.classList.contains("busy"));
+var mash;
+for (mash = 0; mash < 10; mash++) {
+  scoop.click();
+  scoop.poke();
+}
+assert.strictEqual(document.querySelector(".numeral").textContent, "", "mashed scoop taps do not count");
+until("stones leave the bucket", function () {
+  return document.querySelectorAll(".falling-rock").length > 0;
+}, 40);
+var rocks = document.querySelectorAll(".falling-rock");
+var rockI;
+for (rockI = 0; rockI < rocks.length; rockI++) {
+  assert.ok(parseFloat(rocks[rockI].style["--dy"]) >= 0, "a falling stone does not rise above the bucket");
+}
+assert.strictEqual(document.querySelector(".numeral").textContent, "", "the count waits for the rocks to land");
+assert.strictEqual(scoop.disabled, true, "scoop stays dim while the rocks fall");
+until("the first scoop settles", function () {
+  return document.querySelector(".numeral").textContent === "1" && scoop.disabled === false;
+}, 40);
 assert.strictEqual(spoken.length, heard, "a scoop does not speak");
 assert.strictEqual(global.audioMade, 0, "a scoop does not honk");
-assert.strictEqual(document.querySelector(".numeral").textContent, "1");
+assert.strictEqual(document.querySelector(".numeral").textContent, "1", "ten extra taps still make one scoop");
 assert.strictEqual(document.querySelectorAll(".count-stone").length, 1);
+assert.ok(!scoop.classList.contains("busy"));
 
 document.querySelector(".speaker").click();
 assert.strictEqual(spoken[spoken.length - 1], "1!");
 assert.strictEqual(global.audioMade, 0, "the count speaker does not honk early");
 
 scoop.click();
-drain(12);
+until("the second scoop settles", function () {
+  return document.querySelector(".numeral").textContent === "2" && scoop.disabled === false;
+}, 40);
 scoop.click();
-drain(16);
+until("the ending appears", function () {
+  var badge = document.querySelector(".end-badge");
+  return badge && badge.hidden === false;
+}, 60);
 assert.strictEqual(document.querySelector(".numeral").textContent, "3");
 assert.strictEqual(document.querySelectorAll(".count-stone").length, 3);
 assert.strictEqual(document.querySelector(".pile").className, "pile scoop-3");
-assert.strictEqual(document.querySelector(".end-badge").hidden, false);
 assert.strictEqual(document.querySelector(".done-line").textContent, "You did it!");
 assert.strictEqual(global.audioMade, 0, "the ending does not honk by itself");
+var again = document.querySelector(".again");
+assert.strictEqual(again.hidden, false);
+assert.strictEqual(again.disabled, true, "build again ignores taps at first");
+assert.ok(again.classList.contains("cooling"));
+again.click();
+again.poke();
+assert.strictEqual(document.querySelector(".end-badge").hidden, false, "a mashed build again does not skip the ending");
+flush(now + 2000);
+assert.strictEqual(again.disabled, true, "build again stays quiet for about 2.5 seconds");
+again.poke();
+assert.strictEqual(document.querySelector(".end-badge").hidden, false);
+flush(now + 800);
+assert.strictEqual(again.disabled, false, "build again fades in after the pause");
+assert.ok(!again.classList.contains("cooling"));
 var beforeEnd = spoken.length;
 document.querySelector(".speaker").click();
 assert.strictEqual(spoken[spoken.length - 1], "You did it!");
