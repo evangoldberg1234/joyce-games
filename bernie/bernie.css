@@ -719,7 +719,7 @@ body.bernie {
 .tally-board {
   position: absolute;
   left: 50%;
-  top: 6%;
+  top: 52px;
   z-index: 5;
   display: flex;
   flex-direction: column;
@@ -748,13 +748,14 @@ body.bernie {
 
 .count-stack {
   display: flex;
-  gap: 8px;
-  min-height: 28px;
+  gap: 10px;
+  min-height: 44px;
+  align-items: flex-end;
 }
 
 .count-stone {
-  width: 40px;
-  height: 30px;
+  width: 46px;
+  height: 36px;
 }
 
 .end-badge {
@@ -810,6 +811,14 @@ body.bernie {
   height: 18px;
 }
 
+.tally-board .count-stone,
+.tally-board .count-stone.stone-1,
+.tally-board .count-stone.stone-2 {
+  width: 46px;
+  height: 36px;
+  flex: 0 0 46px;
+}
+
 .falling-rock {
   position: absolute;
   z-index: 4;
@@ -858,8 +867,8 @@ body.bernie {
 
 .confetti {
   position: absolute;
-  top: -8px;
-  z-index: 6;
+  top: 76px;
+  z-index: 3;
   width: 14px;
   height: 22px;
   border-radius: 3px;
@@ -1138,20 +1147,34 @@ body.is-driving .scene {
 }
 
 .loader-page .rig {
-  width: clamp(148px, 32vw, 280px);
+  width: clamp(240px, 62vw, 460px);
 }
 
 .loader-page .pile {
-  width: clamp(72px, 16vw, 140px);
+  width: clamp(128px, 30vw, 220px);
   height: auto;
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 240 / 210;
+  z-index: 1;
 }
 
 .loader-page .truck {
-  width: clamp(108px, 24vw, 210px);
+  width: clamp(150px, 34vw, 280px);
   height: auto;
   aspect-ratio: 3 / 1.7;
   transform: translate(-50%, -100%) scaleX(-1);
+  z-index: 1;
+}
+
+.loader-page .done-line {
+  top: 48px;
+  z-index: 5;
+}
+
+.loader-page .end-badge {
+  top: 28%;
+  left: 76%;
+  z-index: 4;
+  font-size: clamp(96px, 22vw, 160px);
 }
 
 @media (max-width: 700px) {

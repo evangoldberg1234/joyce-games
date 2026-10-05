@@ -59,36 +59,20 @@
     lin(defs, "sc-ground", "0", "1", [["0%", "#e6c48a"], ["38%", "#c4924e"], ["100%", "#8d5a2c"]]);
     grit(defs, "sc-grit", "rgba(90,48,18,0.45)", "rgba(255,220,160,0.35)");
     svg("rect", { width: "800", height: "480", fill: "url(#sc-sky)" }, board);
-    svg("circle", { cx: "640", cy: "78", r: "86", fill: "url(#sc-sun)" }, board);
-    svg("circle", { cx: "640", cy: "78", r: "28", fill: "#fff3c4" }, board);
+    svg("circle", { cx: "210", cy: "72", r: "64", fill: "url(#sc-sun)" }, board);
+    svg("circle", { cx: "210", cy: "72", r: "22", fill: "#fff3c4" }, board);
     svg("path", {
-      d: "M0 250 C 120 190, 220 210, 340 176 C 460 140, 560 188, 800 150 L 800 280 L 0 280 Z",
+      d: "M0 168 C 160 132, 300 150, 460 128 C 600 112, 700 146, 800 124 L 800 196 L 0 196 Z",
       fill: "url(#sc-hill)"
     }, board);
-    svg("rect", { y: "248", width: "800", height: "232", fill: "url(#sc-ground)" }, board);
-    svg("rect", { y: "248", width: "800", height: "232", fill: "url(#sc-grit)" }, board);
+    svg("rect", { y: "176", width: "800", height: "304", fill: "url(#sc-ground)" }, board);
+    svg("rect", { y: "176", width: "800", height: "304", fill: "url(#sc-grit)" }, board);
     svg("path", {
-      d: "M0 268 C 140 250, 280 276, 460 258 C 620 244, 720 270, 800 256",
+      d: "M0 196 C 140 184, 280 206, 460 190 C 620 176, 720 202, 800 188",
       fill: "none", stroke: "rgba(255,236,196,0.35)", "stroke-width": "10"
     }, board);
-    svg("ellipse", { cx: "180", cy: "360", rx: "46", ry: "8", fill: "rgba(70,40,16,0.18)" }, board);
-    svg("ellipse", { cx: "520", cy: "400", rx: "70", ry: "10", fill: "rgba(70,40,16,0.16)" }, board);
-    svg("path", {
-      d: "M40 210 L70 150 L130 168 L150 214 Z",
-      fill: "#b7b2a8", stroke: "#6e6962", "stroke-width": "3"
-    }, board);
-    svg("path", {
-      d: "M78 168 L96 142 L118 156 L108 176 Z",
-      fill: "#d9d4ca"
-    }, board);
-    svg("path", {
-      d: "M620 230 L690 160 L760 188 L740 236 Z",
-      fill: "#9aa0a6", stroke: "#5c636a", "stroke-width": "3"
-    }, board);
-    svg("path", {
-      d: "M700 176 L734 148 L758 170 L730 190 Z",
-      fill: "#d5d8dc"
-    }, board);
+    svg("ellipse", { cx: "180", cy: "340", rx: "46", ry: "8", fill: "rgba(70,40,16,0.18)" }, board);
+    svg("ellipse", { cx: "560", cy: "400", rx: "70", ry: "10", fill: "rgba(70,40,16,0.16)" }, board);
     return board;
   }
 
@@ -100,19 +84,19 @@
 
   function pileArt() {
     var board = svg("svg", {
-      viewBox: "0 0 200 150",
+      viewBox: "0 0 240 210",
       "aria-hidden": "true"
     });
-    svg("ellipse", { cx: "100", cy: "136", rx: "78", ry: "10", fill: "rgba(40,32,24,0.28)" }, board);
+    svg("ellipse", { cx: "120", cy: "196", rx: "108", ry: "12", fill: "rgba(40,32,24,0.3)" }, board);
     var rocks = [
-      ["M18 128 C 12 96, 36 78, 58 86 C 70 74, 96 90, 88 128 Z", "#d7d2c8", "#8e8980", "#3e3b36", "rock-3"],
-      ["M70 132 C 64 100, 96 70, 124 84 C 148 74, 168 104, 156 132 Z", "#c4a882", "#7a5a34", "#3d2a16", "rock-3"],
-      ["M130 130 C 124 102, 150 82, 176 96 C 192 108, 194 124, 182 132 Z", "#cfd3d6", "#6e757c", "#34383c", "rock-2"],
-      ["M36 134 C 30 112, 58 96, 78 108 C 96 98, 112 118, 100 136 Z", "#b7b1a6", "#6a6560", "#2e2c29", "rock-2"],
-      ["M96 136 C 90 114, 118 98, 140 112 C 158 122, 150 138, 128 140 Z", "#d2b48a", "#8a6240", "#4a3018", "rock-2"],
-      ["M48 140 C 44 124, 70 112, 92 122 C 108 116, 118 132, 104 142 Z", "#e4e0d8", "#9a958c", "#4a4742", "rock-1"],
-      ["M108 142 C 102 126, 128 114, 150 126 C 166 134, 160 146, 138 146 Z", "#c8c2b8", "#746e66", "#35322e", "rock-1"],
-      ["M78 144 C 74 132, 96 122, 114 132 C 126 140, 118 150, 98 150 Z", "#b98a58", "#6e4c2c", "#3a2814", "rock-1"]
+      ["M86 92 L112 28 L158 40 L176 96 L132 108 Z", "#e4e0d8", "#8e8980", "#3e3b36", "rock-3"],
+      ["M138 100 L168 46 L214 70 L198 118 L150 122 Z", "#d7b48a", "#7a5a34", "#3d2a16", "rock-3"],
+      ["M16 168 L40 108 L102 96 L128 150 L78 176 Z", "#d5d8dc", "#6e757c", "#34383c", "rock-2"],
+      ["M62 176 L96 104 L162 98 L188 158 L112 184 Z", "#c4bfb4", "#6a6560", "#2e2c29", "rock-2"],
+      ["M148 180 L176 112 L230 128 L226 182 L168 192 Z", "#e0c09a", "#8a6240", "#4a3018", "rock-2"],
+      ["M4 200 L24 150 L86 146 L104 202 Z", "#eeeae3", "#9a958c", "#4a4742", "rock-1"],
+      ["M78 204 L102 148 L168 144 L186 204 Z", "#d0cac0", "#746e66", "#35322e", "rock-1"],
+      ["M156 202 L178 152 L236 148 L240 204 Z", "#c99868", "#6e4c2c", "#3a2814", "rock-1"]
     ];
     var i;
     for (i = 0; i < rocks.length; i++) {
@@ -268,7 +252,7 @@
     banner.textContent = "You did it!";
     banner.hidden = true;
     var badge = el("p", "end-badge");
-    badge.textContent = "🚜⭐";
+    badge.textContent = "⭐";
     badge.hidden = true;
     scene.appendChild(tally);
     scene.appendChild(banner);
@@ -473,15 +457,22 @@
     }
 
     function celebrate() {
+      tally.hidden = true;
       banner.hidden = false;
       badge.hidden = false;
       cheer.textContent = "";
+      facing = 1;
+      pose = "rest";
+      shown = "";
+      pos.x = 0.4;
+      paint();
       rig.classList.add("honk");
       var colors = ["#ffe14a", "#ff5a5a", "#3ecf8e", "#4aa3ff", "#fff"];
       var i;
-      for (i = 0; i < 22; i++) {
+      for (i = 0; i < 18; i++) {
         var bit = el("span", i % 2 ? "confetti star" : "confetti");
-        bit.style.left = (6 + ((i * 17) % 88)) + "%";
+        bit.style.left = (28 + ((i * 13) % 52)) + "%";
+        bit.style.top = "76px";
         bit.style.animationDelay = ((i % 6) * 0.08) + "s";
         bit.style.background = colors[i % colors.length];
         scene.appendChild(bit);
