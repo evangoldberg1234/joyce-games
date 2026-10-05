@@ -59,52 +59,46 @@
     lin(defs, "sc-ground", "0", "1", [["0%", "#e6c48a"], ["38%", "#c4924e"], ["100%", "#8d5a2c"]]);
     grit(defs, "sc-grit", "rgba(90,48,18,0.45)", "rgba(255,220,160,0.35)");
     svg("rect", { width: "800", height: "480", fill: "url(#sc-sky)" }, board);
-    svg("circle", { cx: "640", cy: "78", r: "86", fill: "url(#sc-sun)" }, board);
-    svg("circle", { cx: "640", cy: "78", r: "28", fill: "#fff3c4" }, board);
+    svg("circle", { cx: "210", cy: "72", r: "64", fill: "url(#sc-sun)" }, board);
+    svg("circle", { cx: "210", cy: "72", r: "22", fill: "#fff3c4" }, board);
     svg("path", {
-      d: "M0 250 C 120 190, 220 210, 340 176 C 460 140, 560 188, 800 150 L 800 280 L 0 280 Z",
+      d: "M0 228 C 150 196, 300 214, 460 186 C 600 164, 700 198, 800 176 L 800 250 L 0 250 Z",
       fill: "url(#sc-hill)"
     }, board);
-    svg("rect", { y: "248", width: "800", height: "232", fill: "url(#sc-ground)" }, board);
-    svg("rect", { y: "248", width: "800", height: "232", fill: "url(#sc-grit)" }, board);
+    svg("rect", { y: "210", width: "800", height: "270", fill: "url(#sc-ground)" }, board);
+    svg("rect", { y: "210", width: "800", height: "270", fill: "url(#sc-grit)" }, board);
     svg("path", {
-      d: "M0 268 C 140 250, 280 276, 460 258 C 620 244, 720 270, 800 256",
-      fill: "none", stroke: "rgba(255,236,196,0.35)", "stroke-width": "10"
+      d: "M0 228 C 160 214, 320 240, 500 220 C 660 204, 740 232, 800 216",
+      fill: "none", stroke: "rgba(255,236,196,0.35)", "stroke-width": "8"
     }, board);
-    svg("ellipse", { cx: "180", cy: "360", rx: "46", ry: "8", fill: "rgba(70,40,16,0.18)" }, board);
-    svg("ellipse", { cx: "520", cy: "400", rx: "70", ry: "10", fill: "rgba(70,40,16,0.16)" }, board);
     return board;
+  }
+
+  function blob(parent, cx, cy, rx, ry, fill, stroke, group, turn) {
+    var g = svg("g", {
+      class: group,
+      transform: "rotate(" + turn + " " + cx + " " + cy + ")"
+    }, parent);
+    svg("ellipse", {
+      cx: cx, cy: cy, rx: rx, ry: ry,
+      fill: fill, stroke: stroke, "stroke-width": "4"
+    }, g);
   }
 
   function pileArt() {
     var board = svg("svg", {
-      viewBox: "0 0 200 150",
+      viewBox: "0 0 240 200",
       "aria-hidden": "true"
     });
-    var defs = svg("defs", {}, board);
-    lin(defs, "pile-soil", "0", "1", [["0%", "#e2bf86"], ["42%", "#a56b38"], ["100%", "#6a3e1c"]]);
-    lin(defs, "pile-dark", "0", "1", [["0%", "#b88448"], ["100%", "#4e2c12"]]);
-    grit(defs, "pile-grit", "#5a3214", "#e8c99a");
-    svg("ellipse", { cx: "100", cy: "132", rx: "84", ry: "12", fill: "rgba(40,22,8,0.35)" }, board);
-    svg("path", {
-      d: "M16 130 C 28 78, 62 34, 104 30 C 146 26, 176 72, 188 130 Z",
-      fill: "url(#pile-soil)"
-    }, board);
-    svg("path", {
-      d: "M48 130 C 62 92, 96 68, 124 74 C 150 80, 164 104, 172 130 Z",
-      fill: "url(#pile-dark)"
-    }, board);
-    svg("path", {
-      d: "M16 130 C 28 78, 62 34, 104 30 C 146 26, 176 72, 188 130 Z",
-      fill: "url(#pile-grit)"
-    }, board);
-    svg("path", {
-      d: "M48 78 C 70 52, 98 48, 120 66",
-      fill: "none", stroke: "rgba(255,228,180,0.55)", "stroke-width": "7", "stroke-linecap": "round"
-    }, board);
-    svg("ellipse", { cx: "64", cy: "108", rx: "10", ry: "7", fill: "#6d4424" }, board);
-    svg("ellipse", { cx: "132", cy: "96", rx: "8", ry: "6", fill: "#8a5a30" }, board);
-    svg("ellipse", { cx: "108", cy: "118", rx: "6", ry: "4", fill: "#4a2c14" }, board);
+    svg("ellipse", { cx: "120", cy: "188", rx: "108", ry: "14", fill: "rgba(40,32,24,0.28)" }, board);
+    blob(board, 108, 58, 40, 30, "#d7d2c8", "#4a4742", "rock-3", -8);
+    blob(board, 156, 70, 36, 28, "#c4a06a", "#4a3018", "rock-3", 12);
+    blob(board, 58, 108, 46, 34, "#cfd3d6", "#34383c", "rock-2", -14);
+    blob(board, 124, 100, 50, 36, "#b7b1a6", "#3e3b36", "rock-2", 6);
+    blob(board, 186, 116, 42, 32, "#d2b48a", "#5a3a1c", "rock-2", 16);
+    blob(board, 46, 156, 48, 34, "#eeeae3", "#4a4742", "rock-1", -6);
+    blob(board, 118, 162, 54, 36, "#c8c2b8", "#35322e", "rock-1", 4);
+    blob(board, 186, 158, 50, 34, "#b98a58", "#3a2814", "rock-1", -10);
     return board;
   }
 
@@ -186,28 +180,31 @@
     return Math.sqrt(dx * dx + dy * dy) <= limit;
   }
 
+  var SCOOPS = 3;
+
+  function scoopSay(n, total) {
+    var line = n + "!";
+    if (n >= total) return [line, "You did it!"];
+    return [line];
+  }
+
   function start(opts) {
     var vehicle = opts.vehicle;
     var speak = opts.speak;
     var spots = vehicle.drive || {};
-    var origin = spots.start || { x: 0.4, y: 0.62 };
-    var pileAt = spots.pile || { x: 0.8, y: 0.58 };
-    var dumpAt = spots.dump || { x: 0.18, y: 0.62 };
-    function reach() {
-      var rigBox = rig.getBoundingClientRect();
-      return Math.max(96, rigBox.width * 0.95);
-    }
+    var origin = spots.start || { x: 0.5, y: 0.86 };
+    var pileAt = spots.pile || { x: 0.82, y: 0.86 };
+    var dumpAt = spots.dump || { x: 0.18, y: 0.86 };
     var pos = { x: origin.x, y: origin.y };
-    var target = null;
-    var dragging = false;
-    var pointerId = null;
-    var grab = null;
     var facing = 1;
-    var carrying = false;
+    var parked = origin.x;
     var pose = "rest";
     var loads = 0;
+    var filled = 0;
     var raf = 0;
     var shown = "";
+    var alive = true;
+    var scooping = false;
     var all = vehicle.parts.map(function (part) { return part.id; });
 
     var scene = el("div", "scene");
@@ -242,23 +239,59 @@
     scene.appendChild(rig);
     scene.appendChild(cheer);
 
+    var tally = el("div", "tally-board");
+    var numeral = el("p", "numeral");
+    numeral.textContent = "";
+    var stack = el("div", "count-stack");
+    tally.appendChild(numeral);
+    tally.appendChild(stack);
+    var banner = el("p", "done-line");
+    banner.textContent = "You did it!";
+    banner.hidden = true;
+    var badge = el("p", "end-badge");
+    badge.textContent = "⭐";
+    badge.hidden = true;
+    scene.appendChild(tally);
+    scene.appendChild(banner);
+    scene.appendChild(badge);
+
+    var play = el("div", "drive-play");
     var bar = el("div", "drive-bar");
-    var scoop = el("button", "scoop");
-    scoop.type = "button";
-    scoop.textContent = "Scoop";
-    var tally = el("p", "tally");
-    tally.textContent = "0";
-    tally.setAttribute("aria-label", "0 loads");
-    var dump = el("button", "dump");
-    dump.type = "button";
-    dump.textContent = "Dump";
+    function iconButton(className, icon, label) {
+      var btn = el("button", className);
+      btn.type = "button";
+      var mark = el("span", "btn-icon");
+      mark.setAttribute("aria-hidden", "true");
+      mark.textContent = icon;
+      var text = el("span", "btn-label");
+      text.textContent = label;
+      btn.appendChild(mark);
+      btn.appendChild(text);
+      return btn;
+    }
+
+    var scoop = iconButton("scoop", "🪣", "Scoop");
+    var again = iconButton("again", "↻", "Build again");
+    again.hidden = true;
+    var speaker = el("button", "speaker");
+    speaker.type = "button";
+    speaker.textContent = "🔊";
+    speaker.setAttribute("aria-label", "Hear it");
+    var loadMark = el("div", "truck-load");
+    loadMark.setAttribute("aria-hidden", "true");
+    var rockI;
+    for (rockI = 0; rockI < 9; rockI++) {
+      loadMark.appendChild(el("span", "stone stone-" + (rockI % 3)));
+    }
+    truck.appendChild(loadMark);
+    bar.appendChild(speaker);
     bar.appendChild(scoop);
-    bar.appendChild(tally);
-    bar.appendChild(dump);
+    bar.appendChild(again);
+    play.appendChild(scene);
+    play.appendChild(bar);
 
     opts.mount.innerHTML = "";
-    opts.mount.appendChild(scene);
-    opts.mount.appendChild(bar);
+    opts.mount.appendChild(play);
 
     pile.style.left = (pileAt.x * 100) + "%";
     pile.style.top = (pileAt.y * 100) + "%";
@@ -283,13 +316,19 @@
       event.preventDefault();
     }
 
+    function unlockPage() {
+      document.documentElement.classList.remove("no-scroll");
+      document.body.classList.remove("is-driving");
+    }
+
     function paint() {
-      var key = pose + (carrying ? "-full" : "-empty");
+      if (!alive) return;
+      var key = pose + "-" + loads;
       if (shown !== key) {
         vehicle.draw(art, {
           parts: all,
           bucketUp: pose !== "rest",
-          carrying: pose === "carry",
+          carrying: pose === "carry" || pose === "dump",
           pose: pose,
           just: ""
         });
@@ -298,165 +337,291 @@
       rig.style.left = (pos.x * 100) + "%";
       rig.style.top = (pos.y * 100) + "%";
       rig.style.transform = "translate(-50%, -100%) scaleX(" + facing + ")";
-      var piled = Math.min(loads, 6);
-      dirt.setAttribute("height", String(piled * 8));
-      dirt.setAttribute("y", String(100 - piled * 8));
+      var piled = Math.min(filled, SCOOPS);
+      dirt.setAttribute("height", String(piled * 18));
+      dirt.setAttribute("y", String(100 - piled * 18));
     }
 
-    function point(event) {
-      var box = scene.getBoundingClientRect();
-      return {
-        x: (event.clientX - box.left) / box.width,
-        y: (event.clientY - box.top) / box.height
-      };
-    }
-
-    function face(dx) {
-      if (dx > 0.004) facing = 1;
-      else if (dx < -0.004) facing = -1;
-    }
-
-    function step() {
-      raf = 0;
-      if (!target) return;
-      var dx = target.x - pos.x;
-      var dy = target.y - pos.y;
-      var dist = Math.sqrt(dx * dx + dy * dy);
-      if (dist < 0.012) {
-        pos.x = target.x;
-        pos.y = target.y;
-        target = null;
-        paint();
-        return;
+    /* Put a point along the loader on a point in the scene.
+       frac is how far across the rig that point sits (the bucket is the right
+       tip once the photo is flipped). */
+    function alignBucket(targetX, frac) {
+      var sceneBox = scene.getBoundingClientRect ? scene.getBoundingClientRect() : null;
+      var rigBox = rig.getBoundingClientRect ? rig.getBoundingClientRect() : null;
+      if (!sceneBox || !rigBox || !sceneBox.width || !rigBox.width) {
+        return facing < 0 ? 0.5 : 0.34;
       }
-      var hop = Math.min(0.025, dist);
-      pos.x += (dx / dist) * hop;
-      pos.y += (dy / dist) * hop;
-      face(dx);
-      paint();
-      raf = window.requestAnimationFrame(step);
+      if (frac == null) frac = facing < 0 ? 0.84 : 0.12;
+      var wantLeft = targetX - rigBox.width * frac;
+      var minLeft = sceneBox.left + 2;
+      var maxLeft = sceneBox.right - rigBox.width - 2;
+      if (wantLeft < minLeft) wantLeft = minLeft;
+      if (wantLeft > maxLeft) wantLeft = maxLeft;
+      var mid = wantLeft + rigBox.width / 2;
+      return clamp((mid - sceneBox.left) / sceneBox.width, 0.08, 0.94);
     }
 
-    function go(next) {
-      target = {
-        x: clamp(next.x, 0.1, 0.9),
-        y: origin.y
-      };
-      if (!raf) raf = window.requestAnimationFrame(step);
+    function moveTo(x, ms, done) {
+      var from = pos.x;
+      var t0 = Date.now();
+      var finished = false;
+      var lastT = -1;
+      function finish() {
+        if (finished || !alive) return;
+        finished = true;
+        pos.x = x;
+        paint();
+        if (done) done();
+      }
+      function frame() {
+        if (finished || !alive) return;
+        var t = Math.min(1, (Date.now() - t0) / ms);
+        if (t <= lastT) return;
+        lastT = t;
+        var eased = 1 - Math.pow(1 - t, 3);
+        pos.x = from + (x - from) * eased;
+        paint();
+        if (t < 1) raf = window.requestAnimationFrame(frame);
+        else finish();
+      }
+      window.setTimeout(finish, ms + 90);
+      if (window.requestAnimationFrame) frame();
+      else finish();
     }
 
-    scene.addEventListener("pointerdown", function (event) {
-      if (event.target.closest && event.target.closest("button")) return;
+    function boxOf(node) {
+      if (!node || !node.getBoundingClientRect) return null;
+      var box = node.getBoundingClientRect();
+      if (!box || !box.width || !box.height) return null;
+      return box;
+    }
+
+    function cssVar(node, name, value) {
+      if (node.style.setProperty) node.style.setProperty(name, value);
+      else node.style[name] = value;
+    }
+
+    /* Stones leave the bucket lip and land in the bed. Nothing is drawn above that path. */
+    function dropRocks() {
+      var sceneBox = boxOf(scene);
+      var images = art.querySelectorAll ? art.querySelectorAll("img") : [];
+      var bucketNode = null;
+      var i;
+      for (i = 0; i < images.length; i++) {
+        if (String(images[i].src || "").indexOf("bucket") !== -1) bucketNode = images[i];
+      }
+      var lipBox = boxOf(bucketNode) || boxOf(rig);
+      var bedBox = boxOf(truck.querySelector(".truck-load")) || boxOf(truck);
+      var tones = ["grey", "brown", "slate"];
+      var count = 7;
+      for (i = 0; i < count; i++) {
+        var rock = el("span", "falling-rock " + tones[i % 3]);
+        var leftPct = 58 + (i % 4) * 3;
+        var topPct = 72;
+        var dx = (i - 3) * 4;
+        var dy = 36;
+        if (sceneBox && lipBox && bedBox) {
+          var along = (i - (count - 1) / 2) * Math.min(12, lipBox.width * 0.07);
+          var lipX = lipBox.left + lipBox.width * 0.55 + along;
+          var lipY = lipBox.bottom - Math.min(10, lipBox.height * 0.08);
+          var bedX = bedBox.left + bedBox.width * (0.22 + (i % 5) * 0.12);
+          var bedY = bedBox.top + bedBox.height * 0.78;
+          if (bedY < lipY) bedY = lipY;
+          leftPct = ((lipX - sceneBox.left) / sceneBox.width) * 100;
+          topPct = ((lipY - sceneBox.top) / sceneBox.height) * 100;
+          dx = bedX - lipX;
+          dy = bedY - lipY;
+        }
+        rock.style.left = leftPct + "%";
+        rock.style.top = topPct + "%";
+        cssVar(rock, "--dx", dx + "px");
+        cssVar(rock, "--dy", dy + "px");
+        rock.style.animationDelay = ((i % 4) * 0.03) + "s";
+        scene.appendChild(rock);
+        (function (node) {
+          window.setTimeout(function () {
+            if (node.parentNode) node.remove();
+          }, 1600);
+        })(rock);
+      }
+    }
+
+    function showCount(n) {
+      numeral.textContent = String(n);
+      numeral.classList.remove("stay");
+      if (typeof numeral.offsetWidth === "number") void numeral.offsetWidth;
+      numeral.classList.add("stay");
+      stack.innerHTML = "";
+      var i;
+      for (i = 0; i < n; i++) stack.appendChild(el("span", "count-stone stone-" + (i % 3)));
+    }
+
+    function honk() {
+      var Ctx = root.AudioContext || root.webkitAudioContext;
+      if (!Ctx) return;
       try {
-        if (scene.setPointerCapture) scene.setPointerCapture(event.pointerId);
-      } catch (err) {
-        /* A lost pointer should still move the loader. */
-      }
-      pointerId = event.pointerId;
-      var here = point(event);
-      if (event.target.closest && event.target.closest(".rig")) {
-        dragging = true;
-        target = null;
-        grab = { x: here.x, y: here.y, ox: pos.x, oy: pos.y };
-      } else {
-        dragging = false;
-        grab = null;
-        go(here);
-      }
-    });
-
-    scene.addEventListener("pointermove", function (event) {
-      if (pointerId !== event.pointerId) return;
-      var here = point(event);
-      if (dragging && grab) {
-        face(here.x - grab.x);
-        pos.x = clamp(grab.ox + (here.x - grab.x), 0.1, 0.9);
-        pos.y = origin.y;
-        paint();
-        return;
-      }
-      go(here);
-    });
-
-    function endPointer(event) {
-      if (pointerId !== event.pointerId) return;
-      dragging = false;
-      grab = null;
-      pointerId = null;
+        var audio = new Ctx();
+        var t = audio.currentTime;
+        [523, 659].forEach(function (freq, index) {
+          var osc = audio.createOscillator();
+          var gain = audio.createGain();
+          osc.type = "square";
+          osc.frequency.value = freq;
+          osc.connect(gain);
+          gain.connect(audio.destination);
+          var startAt = t + index * 0.18;
+          gain.gain.setValueAtTime(0.0001, startAt);
+          gain.gain.exponentialRampToValueAtTime(0.08, startAt + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.0001, startAt + 0.16);
+          osc.start(startAt);
+          osc.stop(startAt + 0.18);
+        });
+      } catch (err) { /* a missing speaker should not block the ending */ }
     }
 
-    scene.addEventListener("pointerup", endPointer);
-    scene.addEventListener("pointercancel", endPointer);
-    scene.addEventListener("contextmenu", function (event) {
-      event.preventDefault();
-    });
-    scene.addEventListener("wheel", function (event) {
-      event.preventDefault();
-    }, { passive: false });
-    scene.addEventListener("touchmove", preventScroll, { passive: false });
-    document.addEventListener("touchmove", preventScroll, { passive: false });
-
-    function say(text) {
+    function hear() {
+      if (!alive || !speak) return;
+      var line = "Scoop!";
+      if (loads >= SCOOPS) line = "You did it!";
+      else if (loads) line = loads + "!";
       speak.arm();
-      speak.speak(text);
+      if (speak.lines) speak.lines([line]);
+      else speak.speak(line);
+      if (loads >= SCOOPS) honk();
     }
 
-    function pop(text) {
-      cheer.textContent = text;
-      cheer.classList.remove("show");
-      void cheer.offsetWidth;
-      cheer.classList.add("show");
+    function celebrate() {
+      tally.hidden = true;
+      banner.hidden = false;
+      badge.hidden = false;
+      cheer.textContent = "";
+      facing = 1;
+      pose = "rest";
+      shown = "";
+      pos.x = 0.4;
+      paint();
+      rig.classList.add("honk");
+      var sceneBox = boxOf(scene);
+      var fall = sceneBox ? Math.max(120, sceneBox.height - 48) : 520;
+      cssVar(scene, "--fall", fall + "px");
+      var colors = ["#ffe14a", "#ff5a5a", "#3ecf8e", "#4aa3ff", "#fff"];
+      var i;
+      for (i = 0; i < 46; i++) {
+        var bit = el("span", i % 3 === 0 ? "confetti star" : "confetti");
+        bit.style.left = (1 + (i * 96 / 45)) + "%";
+        bit.style.top = "48px";
+        cssVar(bit, "--fall", fall + "px");
+        bit.style.animationDelay = ((i % 12) * 0.05) + "s";
+        bit.style.background = colors[i % colors.length];
+        scene.appendChild(bit);
+      }
+    }
+
+    function lockScoop() {
+      scooping = true;
+      scoop.disabled = true;
+      scoop.classList.add("busy");
+    }
+
+    function unlockScoop() {
+      scooping = false;
+      if (loads >= SCOOPS) return;
+      scoop.disabled = false;
+      scoop.classList.remove("busy");
+    }
+
+    function showAgain() {
+      scoop.hidden = true;
+      scoop.disabled = true;
+      again.hidden = false;
+      again.disabled = true;
+      again.classList.add("cooling");
+      celebrate();
+      scooping = false;
+      window.setTimeout(function () {
+        if (!alive) return;
+        again.disabled = false;
+        again.classList.remove("cooling");
+      }, 2500);
     }
 
     scoop.addEventListener("click", function () {
-      if (!near(center(rig), center(pile), reach())) {
-        say("Drive to the dirt.");
-        pile.classList.remove("wiggle");
-        void pile.offsetWidth;
-        pile.classList.add("wiggle");
-        return;
-      }
-      if (carrying) {
-        say("Dump it.");
-        return;
-      }
-      carrying = true;
-      pose = "carry";
-      paint();
-      say("Scoop!");
-    });
-
-    dump.addEventListener("click", function () {
-      if (!carrying) {
-        say("Scoop some dirt.");
-        return;
-      }
-      if (!near(center(rig), center(truck), reach())) {
-        say("Drive to the truck.");
-        truck.classList.remove("wiggle");
-        void truck.offsetWidth;
-        truck.classList.add("wiggle");
-        return;
-      }
-      carrying = false;
-      pose = "dump";
+      if (!alive || scooping || scoop.disabled || loads >= SCOOPS) return;
+      lockScoop();
       loads += 1;
-      tally.textContent = String(loads);
-      tally.setAttribute("aria-label", loads + " loads");
+      var n = loads;
+      var last = n >= SCOOPS;
+      facing = 1;
+      pose = "rest";
+      shown = "";
       paint();
-      pop("Yay " + loads);
-      say("Yay! " + loads);
-      window.setTimeout(function () {
-        if (pose === "dump") {
-          pose = "rest";
+      var pileBox = pile.getBoundingClientRect ? pile.getBoundingClientRect() : { left: 0, width: 0 };
+      var intoPile = pileBox.left + pileBox.width * 0.55;
+      moveTo(alignBucket(intoPile), 700, function () {
+        if (!alive) return;
+        pose = "carry";
+        shown = "";
+        paint();
+        window.setTimeout(function () {
+          if (!alive) return;
+          facing = -1;
+          shown = "";
           paint();
-        }
-      }, 700);
+          var truckBox = truck.getBoundingClientRect ? truck.getBoundingClientRect() : { left: 0, width: 0 };
+          /* 0.84 is the tire nearest the truck. Stop it short of the truck's
+             back wheel and let the bucket, which sticks out past that tire, hang over the bed. */
+          var tireTarget = truckBox.left + truckBox.width * 0.2 - 36;
+          moveTo(alignBucket(tireTarget, 0.84), 800, function () {
+            if (!alive) return;
+            pose = "dump";
+            shown = "";
+            paint();
+            dropRocks();
+            filled = n;
+            pile.className = "pile scoop-" + n;
+            truck.className = "truck fill-" + n;
+            /* Let the rocks land, then start the bucket down, then show the number. */
+            window.setTimeout(function () {
+              if (!alive) return;
+              pose = "rest";
+              shown = "";
+              paint();
+              window.setTimeout(function () {
+                if (!alive) return;
+                showCount(n);
+                if (last) {
+                  window.setTimeout(function () {
+                    if (!alive) return;
+                    showAgain();
+                  }, 1600);
+                  return;
+                }
+                facing = 1;
+                shown = "";
+                moveTo(parked, 700, function () {
+                  unlockScoop();
+                });
+              }, 340);
+            }, 1150);
+          });
+        }, 560);
+      });
     });
 
+    speaker.addEventListener("click", hear);
+
+    again.addEventListener("click", function () {
+      if (!alive || again.hidden || again.disabled) return;
+      alive = false;
+      if (raf && window.cancelAnimationFrame) window.cancelAnimationFrame(raf);
+      unlockPage();
+      if (opts.onAgain) opts.onAgain();
+    });
+
+    document.addEventListener("touchmove", preventScroll, { passive: false });
     lockPage();
     paint();
   }
 
-  root.BernieDrive = { start: start };
+  root.BernieDrive = { start: start, scoopSay: scoopSay, scoops: SCOOPS };
 })(typeof window !== "undefined" ? window : global);

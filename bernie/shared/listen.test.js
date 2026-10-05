@@ -1,5 +1,5 @@
-/* The question stays quiet until Hear it is tapped. A wrong picture says
-   Try again once and greys that button. Other taps keep working. */
+/* Nothing speaks or beeps unless the speaker button is tapped.
+   A wrong photo shakes and shows a red X. The right photo still awards the part. */
 var assert = require("assert");
 
 var now = 10000;
@@ -33,20 +33,24 @@ function installBrowser() {
     this.dataset = {};
     this.parentNode = null;
     this.listeners = {};
-    var el = this;
+    var self = this;
     this.classList = {
-      add: function (name) {
-        var parts = el.className.split(/\s+/).filter(Boolean);
-        if (parts.indexOf(name) === -1) parts.push(name);
-        el.className = parts.join(" ");
+      add: function () {
+        var parts = self.className.split(/\s+/).filter(Boolean);
+        var i;
+        for (i = 0; i < arguments.length; i++) {
+          if (parts.indexOf(arguments[i]) === -1) parts.push(arguments[i]);
+        }
+        self.className = parts.join(" ");
       },
-      remove: function (name) {
-        el.className = el.className.split(/\s+/).filter(function (part) {
-          return part && part !== name;
+      remove: function () {
+        var drop = Array.prototype.slice.call(arguments);
+        self.className = self.className.split(/\s+/).filter(function (part) {
+          return part && drop.indexOf(part) === -1;
         }).join(" ");
       },
       contains: function (name) {
-        return el.className.split(/\s+/).indexOf(name) !== -1;
+        return self.className.split(/\s+/).indexOf(name) !== -1;
       }
     };
   }
@@ -116,11 +120,20 @@ function installBrowser() {
   var body = new Element("body");
   global.document = {
     body: body,
+    documentElement: body,
     createElement: function (tag) {
       return new Element(tag);
     },
+    createElementNS: function () {
+      return new Element("svg");
+    },
+    addEventListener: function () {},
+    removeEventListener: function () {},
     querySelector: function (sel) {
       return body.querySelector(sel);
+    },
+    querySelectorAll: function (sel) {
+      return body.querySelectorAll(sel);
     }
   };
 
@@ -140,6 +153,33 @@ function installBrowser() {
   global.requestAnimationFrame = function (fn) {
     return global.setTimeout(fn, 0);
   };
+
+  global.audioMade = 0;
+  function AudioCtx() {
+    global.audioMade += 1;
+    this.currentTime = 0;
+    this.destination = {};
+    this.createOscillator = function () {
+      return {
+        type: "",
+        frequency: { value: 0 },
+        connect: function () {},
+        start: function () {},
+        stop: function () {}
+      };
+    };
+    this.createGain = function () {
+      return {
+        connect: function () {},
+        gain: {
+          setValueAtTime: function () {},
+          exponentialRampToValueAtTime: function () {}
+        }
+      };
+    };
+  }
+  global.AudioContext = AudioCtx;
+  global.webkitAudioContext = AudioCtx;
 
   function Utterance(text) {
     this.text = text;
@@ -181,110 +221,300 @@ function installBrowser() {
 installBrowser();
 
 var questions = require("./questions.js");
-var guess = require("./guess.js");
+require("./guess.js");
 require("./speak.js");
 require("./build.js");
+require("./drive.js");
 
-var last = null;
-var realMake = questions.makeQuestion;
-questions.makeQuestion = function () {
-  last = realMake.apply(questions, arguments);
-  return last;
-};
+assert.deepStrictEqual(global.BernieDrive.scoopSay(1, 3), ["1!"]);
+assert.deepStrictEqual(global.BernieDrive.scoopSay(2, 3), ["2!"]);
+assert.deepStrictEqual(global.BernieDrive.scoopSay(3, 3), ["3!", "You did it!"]);
+assert.strictEqual(global.BernieDrive.scoops, 3);
 
-var draws = 0;
+var drove = false;
 var mount = document.createElement("div");
 document.body.appendChild(mount);
 global.BernieBuild.start({
   mount: mount,
   vehicle: {
-    parts: [1, 2, 3, 4, 5, 6, 7, 8].map(function (n) {
-      return { id: "p" + n, name: "Part " + n };
+    parts: questions.order.map(function (step) {
+      return { id: step.id, name: step.name };
     }),
-    draw: function () { draws += 1; }
+    draw: function () {}
   },
   questions: questions,
-  speak: global.BernieSpeak
+  speak: global.BernieSpeak,
+  onDone: function () {
+    drove = true;
+    global.BernieDrive.start({
+      mount: mount,
+      vehicle: {
+        parts: questions.order.map(function (step) {
+          return { id: step.id, name: step.name };
+        }),
+        draw: function () {}
+      },
+      speak: global.BernieSpeak
+    });
+  }
 });
 
 function times(text) {
   return spoken.filter(function (line) { return line === text; }).length;
 }
 
+function bits() {
+  return document.querySelectorAll(".bit").length;
+}
+
+function build() {
+  return document.querySelector(".build");
+}
+
 function choices() {
-  return document.body.querySelectorAll(".choice");
+  return document.querySelectorAll(".choice");
 }
 
-function tap(kind) {
-  var buttons = choices().filter(function (button) {
-    return !button.disabled;
-  });
-  var button = buttons.filter(function (item) {
-    return kind === "right" ? item.dataset.id === last.answer : item.dataset.id !== last.answer;
-  })[0];
-  assert.ok(button, kind + " choice missing for " + last.answer);
-  button.click();
+function button(id) {
+  return choices().filter(function (item) { return item.dataset.id === id; })[0];
 }
 
-function mashDisabled() {
-  choices().forEach(function (button) { button.poke(); });
+function hasImg(node) {
+  if (!node) return false;
+  if (node.tagName === "img") return true;
+  var i;
+  for (i = 0; i < node.children.length; i++) {
+    if (hasImg(node.children[i])) return true;
+  }
+  return false;
 }
 
-assert.strictEqual(document.querySelector(".start-go"), null);
-var hear = document.querySelector(".speaker");
-assert.strictEqual(hear.textContent, "Hear it");
-assert.strictEqual(hear.hidden, false);
-assert.strictEqual(spoken.length, 0, "the question does not play by itself");
-assert.ok(last.say === "How many rocks?" || last.say.indexOf("Find the ") === 0, last.say);
-assert.ok(last.say.indexOf("letter") === -1);
+var start = document.querySelector(".start-go");
+assert.strictEqual(start.querySelector(".btn-label").textContent, "Start");
+assert.strictEqual(start.querySelector(".btn-icon").textContent, "▶");
+assert.strictEqual(start.hidden, false);
+assert.strictEqual(spoken.length, 0, "nothing is read before Start");
+assert.strictEqual(bits(), 0);
+assert.strictEqual(document.querySelector(".wheel-cue"), null, "the start screen does not show a wheel outline");
+button(build().dataset.answer).click();
+assert.strictEqual(spoken.length, 0, "a part tap does nothing before Start");
+assert.strictEqual(bits(), 0);
+
+start.click();
+assert.strictEqual(start.hidden, true);
+assert.strictEqual(spoken.length, 0, "Start does not speak");
+assert.strictEqual(global.audioMade, 0, "Start does not play a sound");
+assert.strictEqual(document.querySelector(".speaker").hidden, false);
+assert.strictEqual(document.querySelector(".speaker").textContent, "🔊");
+assert.strictEqual(document.querySelector(".speaker")["aria-label"], "Hear it");
+assert.strictEqual(document.querySelector(".prompt-word").textContent, "Rear wheel");
+assert.ok(document.querySelector(".wheel-cue"), "a wheel question shows the loader outline");
+assert.ok(document.querySelector(".wheel-cue-dot"), "the outline marks that wheel");
+assert.strictEqual(document.querySelector(".prompt-piece"), null, "the word is not paired with a picture");
+assert.strictEqual(document.querySelector(".prompt-map"), null);
+assert.strictEqual(document.querySelector(".slot"), null, "the slot is not filled in ahead of the tap");
 assert.strictEqual(choices().length, 3);
-if (last.kind === "picture") {
-  assert.ok(document.querySelector(".big-emoji"));
-  assert.ok(choices().every(function (button) { return button.classList.contains("pic"); }));
+assert.ok(choices().every(function (item) {
+  var src = item.querySelector(".choice-photo").src;
+  return src.indexOf("/tile-") !== -1 && src.indexOf("inset-") === -1;
+}));
+assert.strictEqual(document.querySelectorAll(".pip").length, 6);
+assert.strictEqual(document.querySelectorAll(".pip-photo").length, 6);
+
+document.querySelector(".speaker").click();
+assert.strictEqual(spoken[0], "Find the rear wheel!");
+assert.strictEqual(times("Find the rear wheel!"), 1);
+
+var wrongs = choices().filter(function (item) { return item.dataset.id !== build().dataset.answer; });
+assert.strictEqual(wrongs.length, 2, "a question has two wrong tiles");
+var wrong = wrongs[0];
+var otherWrong = wrongs[1];
+var beforeWrong = spoken.length;
+wrong.click();
+assert.strictEqual(spoken.length, beforeWrong, "a wrong tap does not speak");
+assert.strictEqual(times("Try again"), 0);
+assert.strictEqual(times("Listen first"), 0);
+assert.strictEqual(wrong.disabled, true);
+assert.ok(wrong.classList.contains("spent"));
+assert.ok(wrong.classList.contains("wiggle"));
+assert.ok(wrong.classList.contains("miss"));
+assert.strictEqual(wrong.querySelector(".mark-x").textContent, "✕");
+assert.strictEqual(otherWrong.disabled, false, "the other wrong tile stays tappable");
+assert.strictEqual(otherWrong.querySelector(".mark-x"), null, "the other wrong tile is unmarked");
+assert.ok(!otherWrong.classList.contains("miss"));
+assert.ok(!otherWrong.classList.contains("spent"));
+assert.strictEqual(bits(), 0, "a wrong tap awards nothing yet");
+assert.ok(button(build().dataset.answer) && !button(build().dataset.answer).disabled);
+otherWrong.click();
+assert.strictEqual(otherWrong.disabled, true, "the second miss marks only that tile");
+assert.strictEqual(otherWrong.querySelector(".mark-x").textContent, "✕");
+assert.ok(button(build().dataset.answer) && !button(build().dataset.answer).disabled, "the right tile stays tappable after both misses");
+assert.strictEqual(bits(), 0, "two misses still award nothing");
+
+var right = button("rear-wheel");
+right.poke();
+right.poke();
+assert.strictEqual(bits(), 1, "wrong then right awards once");
+assert.strictEqual(times("Yes! The rear wheel!"), 0, "a correct tap does not speak");
+assert.strictEqual(build().dataset.answer, "rear-wheel", "the next question waits while the piece is showing");
+flush(now + 1600);
+assert.strictEqual(build().dataset.answer, "front-wheel");
+assert.ok(document.querySelector(".wheel-cue"), "the next wheel question still shows the outline");
+assert.strictEqual(times("Find the front wheel!"), 0, "the next part waits for the speaker");
+assert.strictEqual(global.audioMade, 0);
+assert.strictEqual(times("Listen first"), 0);
+assert.strictEqual(times("How many rocks?"), 0);
+
+var front = button("front-wheel");
+front.poke();
+front.poke();
+assert.strictEqual(bits(), 2, "a fast second tap does not award another part");
+flush(now + 1600);
+assert.strictEqual(build().dataset.answer, "engine");
+assert.strictEqual(document.querySelector(".wheel-cue"), null, "other questions hide the wheel outline");
+assert.strictEqual(spoken.length, 1, "only the speaker tap has spoken");
+
+["engine", "cab", "arms"].forEach(function (id) {
+  var before = spoken.length;
+  button(id).click();
+  assert.strictEqual(spoken.length, before, id + " does not speak");
+  assert.strictEqual(global.audioMade, 0, id + " does not beep");
+  flush(now + 1600);
+});
+assert.strictEqual(bits(), 5);
+assert.strictEqual(build().dataset.answer, "bucket");
+assert.strictEqual(drove, false);
+
+var miss = choices().filter(function (item) { return item.dataset.id !== "bucket"; })[0];
+miss.click();
+assert.strictEqual(bits(), 5);
+button("bucket").click();
+assert.strictEqual(bits(), 6);
+assert.strictEqual(times("Yes! The bucket!"), 0);
+assert.ok(document.querySelector(".art").classList.contains("shine"), "the finished loader shines");
+assert.strictEqual(drove, false, "the drive waits for the landing");
+flush(now + 2500);
+assert.strictEqual(drove, true, "all 6 parts lead to the drive scene");
+assert.strictEqual(spoken.length, 1, "building never speaks on its own");
+assert.strictEqual(global.audioMade, 0, "building never plays audio on its own");
+
+function until(label, pred, steps) {
+  var i;
+  for (i = 0; i < steps; i++) {
+    if (pred()) return;
+    flush(now + 200);
+  }
+  assert.ok(pred(), label);
 }
 
-hear.click();
-assert.deepStrictEqual(spoken, [last.say]);
-hear.click();
-assert.strictEqual(times(last.say), 2, "Hear it plays the question again");
+var scoop = document.querySelector(".scoop");
+assert.ok(scoop, "scoop button");
+assert.strictEqual(scoop.disabled, false);
+var heard = spoken.length;
+scoop.click();
+assert.strictEqual(scoop.disabled, true, "scoop dims as soon as the loader moves");
+assert.ok(scoop.classList.contains("busy"));
+var mash;
+for (mash = 0; mash < 10; mash++) {
+  scoop.click();
+  scoop.poke();
+}
+assert.strictEqual(document.querySelector(".numeral").textContent, "", "mashed scoop taps do not count");
+until("stones leave the bucket", function () {
+  return document.querySelectorAll(".falling-rock").length > 0;
+}, 40);
+var rocks = document.querySelectorAll(".falling-rock");
+var rockI;
+for (rockI = 0; rockI < rocks.length; rockI++) {
+  assert.ok(parseFloat(rocks[rockI].style["--dy"]) >= 0, "a falling stone does not rise above the bucket");
+}
+assert.strictEqual(document.querySelector(".numeral").textContent, "", "the count waits for the rocks to land");
+assert.strictEqual(scoop.disabled, true, "scoop stays dim while the rocks fall");
+until("the first scoop settles", function () {
+  return document.querySelector(".numeral").textContent === "1" && scoop.disabled === false;
+}, 40);
+assert.strictEqual(spoken.length, heard, "a scoop does not speak");
+assert.strictEqual(global.audioMade, 0, "a scoop does not honk");
+assert.strictEqual(document.querySelector(".numeral").textContent, "1", "ten extra taps still make one scoop");
+assert.strictEqual(document.querySelectorAll(".count-stone").length, 1);
+assert.ok(!scoop.classList.contains("busy"));
 
-var firstSay = last.say;
-now += 30;
-tap("wrong");
-assert.strictEqual(spoken[spoken.length - 1], "Try again");
-assert.strictEqual(times("Try again"), 1);
+document.querySelector(".speaker").click();
+assert.strictEqual(spoken[spoken.length - 1], "1!");
+assert.strictEqual(global.audioMade, 0, "the count speaker does not honk early");
+
+scoop.click();
+until("the second scoop settles", function () {
+  return document.querySelector(".numeral").textContent === "2" && scoop.disabled === false;
+}, 40);
+scoop.click();
+until("the ending appears", function () {
+  var badge = document.querySelector(".end-badge");
+  return badge && badge.hidden === false;
+}, 60);
+assert.strictEqual(document.querySelector(".numeral").textContent, "3");
+assert.strictEqual(document.querySelectorAll(".count-stone").length, 3);
+assert.strictEqual(document.querySelector(".pile").className, "pile scoop-3");
+assert.strictEqual(document.querySelector(".done-line").textContent, "You did it!");
+assert.strictEqual(global.audioMade, 0, "the ending does not honk by itself");
+var again = document.querySelector(".again");
+assert.strictEqual(again.hidden, false);
+assert.strictEqual(again.disabled, true, "build again ignores taps at first");
+assert.ok(again.classList.contains("cooling"));
+again.click();
+again.poke();
+assert.strictEqual(document.querySelector(".end-badge").hidden, false, "a mashed build again does not skip the ending");
+flush(now + 2000);
+assert.strictEqual(again.disabled, true, "build again stays quiet for about 2.5 seconds");
+again.poke();
+assert.strictEqual(document.querySelector(".end-badge").hidden, false);
+flush(now + 800);
+assert.strictEqual(again.disabled, false, "build again fades in after the pause");
+assert.ok(!again.classList.contains("cooling"));
+var beforeEnd = spoken.length;
+document.querySelector(".speaker").click();
+assert.strictEqual(spoken[spoken.length - 1], "You did it!");
+assert.ok(global.audioMade > 0, "a speaker tap at the end may honk");
+assert.ok(spoken.length > beforeEnd);
+
 assert.strictEqual(times("Listen first"), 0);
-var spent = choices().filter(function (button) { return button.classList.contains("spent"); });
-assert.strictEqual(spent.length, 1);
-assert.strictEqual(spent[0].disabled, true);
-assert.ok(choices().some(function (button) { return !button.disabled; }));
-assert.strictEqual(document.querySelector(".choices.dim"), null);
+assert.strictEqual(times("How many rocks?"), 0);
+assert.strictEqual(times("Try again"), 0);
+spoken.forEach(function (line) {
+  assert.ok(line.indexOf("sock") === -1 && line.indexOf("pig") === -1 && line.indexOf("moon") === -1, line);
+});
 
-now += 20;
-tap("wrong");
-assert.strictEqual(times("Try again"), 2);
-assert.strictEqual(times("Listen first"), 0);
-assert.ok(choices().some(function (button) { return !button.disabled && button.dataset.id === last.answer; }));
-
-var drawsBefore = draws;
-tap("right");
-assert.strictEqual(draws, drawsBefore, "a miss earns no part");
-assert.strictEqual(times("Yes!"), 0);
-assert.notStrictEqual(last.say, firstSay);
-assert.strictEqual(times(last.say), 0, "the next question is not read aloud");
-flush(now + 20000);
-assert.strictEqual(times(last.say), 0, "waiting does not start the question");
-
-hear = document.querySelector(".speaker");
-var quiet = spoken.length;
-hear.click();
-assert.strictEqual(spoken[spoken.length - 1], last.say);
-assert.strictEqual(spoken.length, quiet + 1);
-
-tap("right");
-assert.strictEqual(draws, drawsBefore + 1, "a first try earns the part");
-assert.strictEqual(times("Yes!"), 1);
-assert.strictEqual(times("Listen first"), 0);
-assert.ok(draws >= drawsBefore);
+var fs = require("fs");
+var path = require("path");
+function nearestFunction(src, index) {
+  var at = index;
+  while (at > 0) {
+    at = src.lastIndexOf("function ", at - 1);
+    if (at < 0) return "";
+    var end = src.indexOf("(", at);
+    var name = src.slice(at + "function ".length, end).trim();
+    if (name) return name;
+  }
+  return "";
+}
+function eachHit(src, needle, ok) {
+  var at = 0;
+  var found = 0;
+  while ((at = src.indexOf(needle, at)) !== -1) {
+    found += 1;
+    assert.ok(ok.indexOf(nearestFunction(src, at)) !== -1, needle + " is inside " + nearestFunction(src, at));
+    at += needle.length;
+  }
+  return found;
+}
+var buildSrc = fs.readFileSync(path.join(__dirname, "build.js"), "utf8");
+var driveSrc = fs.readFileSync(path.join(__dirname, "drive.js"), "utf8");
+assert.strictEqual(buildSrc.indexOf("AudioContext"), -1, "the build has no sound effect");
+assert.strictEqual(buildSrc.indexOf(".play("), -1);
+assert.ok(eachHit(buildSrc, "speak.", ["hear"]) > 0);
+assert.ok(eachHit(driveSrc, "speak.", ["hear"]) > 0);
+assert.ok(eachHit(driveSrc, "AudioContext", ["honk"]) > 0);
+assert.ok(eachHit(driveSrc, "createOscillator", ["honk"]) > 0);
+assert.strictEqual(nearestFunction(driveSrc, driveSrc.indexOf("honk();")), "hear");
 
 console.log("Bernie listen-loop checks passed.");

@@ -1,42 +1,39 @@
-/* A wrong tap greys that choice and earns no part. Taps are never blocked. */
+/* A wrong tap still leaves the part available. The right tap awards it,
+   and a second tap on that same round does not award it again. */
 var assert = require("assert");
 var guess = require("./guess.js");
 
 var state = guess.createState();
-var firstWrong = guess.answer(state, false);
-assert.strictEqual(firstWrong.greyChoice, true);
-assert.strictEqual(firstWrong.wrong, true);
-assert.strictEqual(firstWrong.earned, false);
-assert.strictEqual(firstWrong.cooldown, false);
-assert.strictEqual(firstWrong.ignore, false);
-assert.strictEqual(firstWrong.say, "Try again");
-assert.strictEqual(firstWrong.revoke, false);
+var missed = guess.answer(state, false);
+assert.strictEqual(missed.greyChoice, true);
+assert.strictEqual(missed.wrong, true);
+assert.strictEqual(missed.earned, false);
+assert.strictEqual(missed.say, "Try again");
+assert.strictEqual(missed.ignore, false);
+assert.strictEqual(missed.revoke, false);
+assert.strictEqual(missed.cooldown, false);
 
-var second = guess.answer(state, false);
-assert.strictEqual(second.say, "Try again");
-assert.strictEqual(second.greyChoice, true);
-assert.strictEqual(second.cooldown, false);
-assert.strictEqual(second.ignore, false);
-assert.strictEqual(second.revoke, false);
+var still = guess.answer(state, true);
+assert.strictEqual(still.earned, true, "wrong then right still awards the part");
+assert.strictEqual(still.say, "Yes!");
+assert.strictEqual(still.revoke, false);
+assert.strictEqual(still.ignore, false);
 
-var wasted = guess.answer(state, true);
-assert.strictEqual(wasted.earned, false);
-assert.strictEqual(wasted.cooldown, false);
-assert.strictEqual(wasted.ignore, false);
-assert.strictEqual(wasted.revoke, false);
-assert.strictEqual(wasted.say, "");
+var extra = guess.answer(state, true);
+assert.strictEqual(extra.ignore, true, "a second tap does not award again");
+assert.strictEqual(extra.earned, false);
+assert.strictEqual(extra.say, "");
+assert.notStrictEqual(extra.say, "Listen first");
+
+var again = guess.answer(state, false);
+assert.strictEqual(again.ignore, true);
+assert.strictEqual(again.earned, false);
+assert.notStrictEqual(again.say, "Listen first");
 
 guess.nextQuestion(state);
-var earned = guess.answer(state, true);
-assert.strictEqual(earned.earned, true);
-assert.strictEqual(earned.say, "Yes!");
-assert.strictEqual(earned.cooldown, false);
-assert.strictEqual(earned.revoke, false);
-
-var fast = guess.createState();
-assert.strictEqual(guess.answer(fast, true).say, "Yes!");
-assert.strictEqual(guess.answer(fast, false).ignore, false);
-assert.strictEqual(guess.answer(fast, false).cooldown, false);
-assert.notStrictEqual(guess.answer(fast, false).say, "Listen first");
+var fresh = guess.answer(state, true);
+assert.strictEqual(fresh.earned, true);
+assert.strictEqual(fresh.say, "Yes!");
+assert.strictEqual(guess.answer(state, true).earned, false);
 
 console.log("Bernie guess checks passed.");
