@@ -2,14 +2,16 @@
    A future car is another folder: its own parts (src, x, y), board, and draw(). */
 (function () {
   var BOARD = { w: 1000, h: 618 };
-  /* Exclusive crops of ghost.webp. Together they rebuild it with no overlap. */
+  /* The arms, wheels, cab, and engine are crops of the side photo.
+     The bucket is the open shovel cut from Evan's Damstrong photo,
+     seated on the front hinge. Together the six parts rebuild ghost.webp. */
   var PARTS = [
     { id: "rear-wheel", name: "Rear wheel", src: "img/rear-wheel.webp", x: 671, y: 315, w: 252, h: 237, group: "body" },
     { id: "front-wheel", name: "Front wheel", src: "img/front-wheel.webp", x: 163, y: 354, w: 271, h: 259, group: "body" },
     { id: "engine", name: "Engine", src: "img/engine.webp", x: 154, y: 39, w: 840, h: 442, group: "body" },
     { id: "cab", name: "Cab", src: "img/cab.webp", x: 451, y: 5, w: 310, h: 251, group: "body" },
     { id: "arms", name: "Lift arms", src: "img/arms.webp", x: 72, y: 170, w: 474, h: 279, group: "arms" },
-    { id: "bucket", name: "Bucket", src: "img/bucket.webp", x: 5, y: 408, w: 170, h: 112, group: "bucket" }
+    { id: "bucket", name: "Bucket", src: "img/bucket.webp", x: 0, y: 340, w: 280, h: 157, group: "bucket" }
   ];
   /* Boom pin on the chassis. The bucket sits left and below it, so a positive
      turn lifts the arms and the bucket. */
