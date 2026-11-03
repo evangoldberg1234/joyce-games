@@ -18,7 +18,7 @@
     "animal-puzzle/index.html": "game.animals",
     "ice-cream-scoop/index.html": "game.icecream",
     "spa-salon/index.html": "game.spa",
-    "marble-sudoku/index.html": "game.marbles"
+    "colorku/index.html": "game.marbles"
   };
 
   function draw() {

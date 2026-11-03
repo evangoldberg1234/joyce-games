@@ -1,4 +1,4 @@
-/* Marble Sudoku rules and puzzle generator.
+/* colorku rules and puzzle generator.
    Numbers stay inside this file. The page draws a colored ball for each one.
    4×4 uses 2×2 boxes, 6×6 uses 2×3 boxes, 9×9 uses 3×3 boxes.
    A generated puzzle is checked to have exactly one completion. */
@@ -197,7 +197,7 @@
 
   function generate(size, seed, options) {
     var info = spec(size);
-    if (!info) throw new Error("Marble Sudoku has no " + size + " board");
+    if (!info) throw new Error("colorku has no " + size + " board");
     options = options || {};
     var usedSeed = seed == null ? ((Date.now() ^ ((Math.random() * 0x100000000) >>> 0)) >>> 0) : (seed >>> 0);
     var rng = mulberry32(usedSeed || 1);

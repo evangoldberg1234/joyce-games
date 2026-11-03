@@ -53,10 +53,10 @@ const JOYCE_GAMES = [
     accent: "#f8c6e4"
   },
   {
-    title: "Marble Sudoku",
+    title: "colorku",
     emoji: "🔮",
     about: "Sudoku played with glossy colored balls. Each color once in every row, column, and box.",
-    href: "marble-sudoku/index.html",
+    href: "colorku/index.html",
     accent: "#d8c6ff"
   }
 ];

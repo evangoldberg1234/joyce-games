@@ -1,4 +1,4 @@
-/* Marble Sudoku. Tap a cell, then a colored ball.
+/* colorku. Tap a cell, then a colored ball.
    Balls stand in for the digits. The engine keeps the numbers. */
 (function () {
   var BALLS = [

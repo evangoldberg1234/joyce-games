@@ -1,5 +1,5 @@
-/* Generated Marble Sudoku boards must be valid and have one solution.
-   Run: node marble-sudoku/engine.test.js */
+/* Generated colorku boards must be valid and have one solution.
+   Run: node colorku/engine.test.js */
 var assert = require("assert");
 var engine = require("./engine.js");
 
@@ -97,4 +97,4 @@ almost[last] = 0;
 assert.strictEqual(engine.assess(almost, 4).solved, false);
 assert.strictEqual(engine.assess(filled.solution, 4).solved, true);
 
-console.log("marble sudoku engine ok");
+console.log("colorku engine ok");
