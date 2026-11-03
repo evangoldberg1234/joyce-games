@@ -14,6 +14,14 @@ The puzzles live in `animal-puzzle/puzzles.js`. Check that each one has a single
 python3 animal-puzzle/puzzle_tool.py verify
 ```
 
+## Marble Sudoku
+
+A Sudoku of glossy colored balls. Tap a cell, then a ball. 4×4, 6×6, and 9×9 boards are generated in the browser, and each one has a single solution. Pink cells mark a repeated color.
+
+```bash
+node marble-sudoku/engine.test.js
+```
+
 ## Add a game
 
 1. Make a new folder with its own `index.html`.

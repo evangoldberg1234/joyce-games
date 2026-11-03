@@ -51,5 +51,12 @@ const JOYCE_GAMES = [
     about: "Compose a look: hair, makeup, skin, and nails. A concealed dig remains, should you want it.",
     href: "spa-salon/index.html",
     accent: "#f8c6e4"
+  },
+  {
+    title: "Marble Sudoku",
+    emoji: "🔮",
+    about: "Sudoku played with glossy colored balls. Each color once in every row, column, and box.",
+    href: "marble-sudoku/index.html",
+    accent: "#d8c6ff"
   }
 ];

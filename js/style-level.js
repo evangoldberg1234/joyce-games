@@ -90,6 +90,127 @@
       older: "Style hair, makeup, skin, and nails. A silly dig is there too.",
       advanced: "Compose a look: hair, makeup, skin, and nails. A concealed dig remains, should you want it."
     },
+    "game.marbles": {
+      young: "Sudoku with shiny colored balls.",
+      older: "Sudoku made of glossy balls. Each color once in every line and box.",
+      advanced: "Sudoku played with glossy colored balls. Each color once in every row, column, and box."
+    },
+    "marble.howtoLead": {
+      young: "Hi {name}. Put each color in once.",
+      older: "Hi {name}. These shiny balls play Sudoku.",
+      advanced: "{name}, these glossy balls follow Sudoku rules."
+    },
+    "marble.steps": {
+      young: [
+        "Tap an empty box.",
+        "Tap a shiny ball to put it there.",
+        "Each color goes once in every row, every column, and every bold box.",
+        "A pink box means that color is already in that line or box.",
+        "Blue boxes are starters. They stay put.",
+        "Tap New puzzle when you want a new board."
+      ],
+      older: [
+        "Tap an empty box.",
+        "Tap a shiny ball to put it there.",
+        "Each color goes once in every row, every column, and every bold box.",
+        "A pink box means that color is already in that line or box.",
+        "Blue boxes are starters. They stay put.",
+        "Tap New puzzle when you want a new board."
+      ],
+      advanced: [
+        "Select an empty cell.",
+        "Choose a ball from the tray.",
+        "Each color appears once in every row, column, and bold box.",
+        "A pink cell marks a color already used in that line or box.",
+        "Blue cells are given. They stay in place.",
+        "New puzzle deals another board."
+      ]
+    },
+    "marble.go": {
+      young: "Let's play",
+      older: "Start",
+      advanced: "Begin"
+    },
+    "marble.legend": {
+      young: "Each color once in every row, column, and bold box.",
+      older: "Each color once in every row, column, and bold box.",
+      advanced: "Each color once in every row, column, and bold box."
+    },
+    "marble.start": {
+      young: "Tap an empty box. Then tap a ball.",
+      older: "Tap an empty box. Then tap a ball.",
+      advanced: "Select an empty cell, then a ball."
+    },
+    "marble.now": {
+      young: "Now tap a ball.",
+      older: "Now tap a ball.",
+      advanced: "Now choose a ball."
+    },
+    "marble.starter": {
+      young: "That box is a starter. Pick an empty one.",
+      older: "That box is a starter. Pick an empty one.",
+      advanced: "That cell is given. Choose an empty one."
+    },
+    "marble.first": {
+      young: "Tap a box first.",
+      older: "Tap a box first.",
+      advanced: "Select a cell first."
+    },
+    "marble.clash": {
+      young: "That color is already in the row, column, or box.",
+      older: "That color is already in the row, column, or box.",
+      advanced: "That color is already in the row, column, or box."
+    },
+    "marble.pink": {
+      young: "A pink box needs a different ball.",
+      older: "A pink box needs a different ball.",
+      advanced: "A pink cell still needs a different ball."
+    },
+    "marble.nice": {
+      young: "Nice.",
+      older: "That works.",
+      advanced: "That placement holds."
+    },
+    "marble.win": {
+      young: "You did it!",
+      older: "You did it!",
+      advanced: "Solved."
+    },
+    "marble.happy": {
+      young: "Every ball is in the right place.",
+      older: "Every ball is in the right place.",
+      advanced: "Every ball sits in its place."
+    },
+    "marble.again": {
+      young: "New puzzle",
+      older: "New puzzle",
+      advanced: "New puzzle"
+    },
+    "marble.see": {
+      young: "See the board",
+      older: "See the board",
+      advanced: "View the board"
+    },
+    "marble.mixing": {
+      young: "Mixing the balls…",
+      older: "Mixing the balls…",
+      advanced: "Mixing the balls…"
+    },
+    "marble.erase": {
+      young: "Erase",
+      older: "Erase",
+      advanced: "Erase"
+    },
+    "marble.new": {
+      young: "New puzzle",
+      older: "New puzzle",
+      advanced: "New puzzle"
+    },
+    "marble.board": {
+      young: "Marble board",
+      older: "Marble board",
+      advanced: "Marble board"
+    },
     "practice.lead": {
       young: "{bot} has more questions. A right answer can earn {n} {unit}.",
       older: "{bot} has extra questions at your level. A right answer can earn {n} {unit}.",
